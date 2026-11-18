@@ -1,7 +1,11 @@
 # secrets / env
 .env
 *.env
+!*.env.example
 config.local.*
+# local analytics db
+data/
+*.db
 # python
 __pycache__/
 *.pyc

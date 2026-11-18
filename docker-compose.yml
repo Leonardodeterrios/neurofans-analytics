@@ -1,0 +1,7 @@
+services:
+  bot:
+    build: .
+    restart: unless-stopped
+    env_file: .env          # BOT_TOKEN, BOT_USERNAME, SHEET_WEBHOOK_URL, ADMIN_CHAT_ID
+    volumes:
+      - ./data:/app/data    # сохраняет базу переходов между перезапусками
