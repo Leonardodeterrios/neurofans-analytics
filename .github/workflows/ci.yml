@@ -14,6 +14,6 @@ jobs:
       - name: Install deps
         run: pip install -r requirements.txt
       - name: Syntax check (compile all)
-        run: python -m compileall -q neurofans_bot.py dashboard.py make_links.py
+        run: python -m compileall -q neurofans_bot.py dashboard.py run_all.py make_links.py
       - name: Smoke test link generator
         run: python make_links.py
