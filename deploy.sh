@@ -7,6 +7,18 @@ set -e
 APP_DIR=/opt/neurofans-analytics
 REPO=https://github.com/Leonardodeterrios/neurofans-analytics
 
+echo "==> 0/4 Добавляю swap (чтобы сборка не упала по памяти на 1 ГБ RAM)…"
+if [ ! -f /swapfile ] && ! swapon --show | grep -q swap; then
+  fallocate -l 2G /swapfile 2>/dev/null || dd if=/dev/zero of=/swapfile bs=1M count=2048
+  chmod 600 /swapfile
+  mkswap /swapfile >/dev/null
+  swapon /swapfile
+  grep -q "/swapfile" /etc/fstab 2>/dev/null || echo "/swapfile none swap sw 0 0" >> /etc/fstab
+  echo "swap 2G включён"
+else
+  echo "swap уже есть, пропускаю"
+fi
+
 echo "==> 1/4 Устанавливаю Docker (если нужно)…"
 if ! command -v docker >/dev/null 2>&1; then
   curl -fsSL https://get.docker.com | sh
