@@ -57,6 +57,14 @@ python neurofans_bot.py      # бот
 python dashboard.py          # дашборд (в отдельном терминале)
 ```
 
+### Сервер 24/7 — в одну команду (Ubuntu VPS)
+На свежем сервере (в его веб-консоли или по SSH) выполни:
+```bash
+curl -fsSL https://raw.githubusercontent.com/Leonardodeterrios/neurofans-analytics/main/deploy.sh | bash
+```
+Скрипт установит Docker, заберёт код, спросит `BOT_TOKEN` и `BOT_USERNAME`, и поднимет бот+дашборд.
+Затем: `/myid` боту → впиши `ADMIN_CHAT_ID` в `/opt/neurofans-analytics/.env` → `docker compose up -d`.
+
 ### Docker (бот + дашборд)
 ```bash
 cp .env.example .env     # заполни
