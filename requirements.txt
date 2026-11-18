@@ -1,3 +1,4 @@
 python-telegram-bot[job-queue]>=20
 httpx>=0.27
 python-dotenv>=1.0
+flask>=3.0

@@ -33,6 +33,10 @@ ADMIN_CHAT_ID      = os.getenv("ADMIN_CHAT_ID", "").strip()
 DB_PATH            = os.getenv("DB_PATH", "data/starts.db")
 DAILY_SUMMARY_TIME = os.getenv("DAILY_SUMMARY_TIME", "").strip()   # напр. "09:00", пусто = выкл
 SUMMARY_TZ         = os.getenv("SUMMARY_TZ", "UTC").strip()
+# алерты «тишина по источнику»
+SILENCE_HOURS      = int(os.getenv("SILENCE_HOURS", "24"))         # нет переходов столько часов -> алерт
+SILENCE_CHECK_MIN  = int(os.getenv("SILENCE_CHECK_MIN", "60"))     # как часто проверять, минут
+SILENCE_MIN_CLICKS = int(os.getenv("SILENCE_MIN_CLICKS", "3"))     # алерт только для источников с таким историческим минимумом
 
 WELCOME_TEXT = (
     "Привет! Это обучающий бот проекта по созданию и ведению AI-моделей.\n\n"
@@ -56,6 +60,9 @@ def init_db():
         c.execute("""CREATE TABLE IF NOT EXISTS starts(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             ts TEXT, source TEXT, user_id INTEGER, username TEXT, first_name TEXT)""")
+        c.execute("""CREATE TABLE IF NOT EXISTS alerts(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ts TEXT, source TEXT, kind TEXT)""")
 
 def record_start(source, user) -> bool:
     with _conn() as c:
@@ -188,6 +195,63 @@ async def about(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Честное описание продукта без обещаний сумм. (заполни)")
 
 
+# ---------- алерты «тишина по источнику» ----------
+def silent_sources():
+    """Источники, которые замолчали дольше SILENCE_HOURS и по которым ещё не алертили
+    с момента последнего перехода. Возвращает [(source, last_click, total, hours_silent)]."""
+    now = dt.datetime.utcnow()
+    threshold = now - dt.timedelta(hours=SILENCE_HOURS)
+    out = []
+    with _conn() as c:
+        rows = c.execute("""SELECT source, MAX(ts) last, COUNT(*) total
+                            FROM starts GROUP BY source""").fetchall()
+        for source, last, total in rows:
+            if total < SILENCE_MIN_CLICKS or not last:
+                continue
+            try:
+                last_dt = dt.datetime.fromisoformat(last)
+            except ValueError:
+                continue
+            if last_dt >= threshold:
+                continue  # ещё активен
+            # уже алертили по этой тишине? (алерт позже последнего перехода)
+            la = c.execute("""SELECT MAX(ts) FROM alerts WHERE source=? AND kind='silence'""",
+                           (source,)).fetchone()[0]
+            if la and dt.datetime.fromisoformat(la) >= last_dt:
+                continue  # уже предупреждали, нового перехода не было
+            hours = (now - last_dt).total_seconds() / 3600
+            out.append((source or "direct", last, total, hours))
+    return out
+
+def record_alert(source, kind):
+    with _conn() as c:
+        c.execute("INSERT INTO alerts(ts,source,kind) VALUES(?,?,?)",
+                  (dt.datetime.utcnow().isoformat(timespec="seconds"), source, kind))
+
+async def silence_check_job(context: ContextTypes.DEFAULT_TYPE):
+    if not ADMIN_CHAT_ID:
+        return
+    for source, last, total, hours in silent_sources():
+        txt = (f"🔕 Тишина по источнику: {source}\n"
+               f"Нет переходов уже ~{int(hours)} ч (последний: {last} UTC).\n"
+               f"Всего по нему было {total}. Проверь ссылку в био / статус аккаунта.")
+        try:
+            await context.bot.send_message(int(ADMIN_CHAT_ID), txt)
+            record_alert(source, "silence")
+        except Exception as e:
+            log.error("silence alert failed for %s: %s", source, e)
+
+def schedule_silence(app):
+    if not ADMIN_CHAT_ID:
+        return
+    if app.job_queue is None:
+        log.warning("JobQueue недоступен — алерты тишины выключены")
+        return
+    app.job_queue.run_repeating(silence_check_job, interval=SILENCE_CHECK_MIN * 60,
+                                first=60)
+    log.info("silence alerts on: >%dh, check every %dmin", SILENCE_HOURS, SILENCE_CHECK_MIN)
+
+
 # ---------- ежедневная авто-сводка ----------
 async def daily_summary_job(context: ContextTypes.DEFAULT_TYPE):
     if not ADMIN_CHAT_ID:
@@ -221,6 +285,7 @@ def main():
     app.add_handler(CommandHandler("about", about))
     app.add_handler(CallbackQueryHandler(on_button))
     schedule_daily(app)
+    schedule_silence(app)
     log.info("bot @%s started (sheet=%s, admin=%s, daily=%s)",
              BOT_USERNAME, bool(SHEET_WEBHOOK_URL), bool(ADMIN_CHAT_ID), DAILY_SUMMARY_TIME or "off")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
