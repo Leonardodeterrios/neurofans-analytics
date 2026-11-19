@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Разворачивает NeuroFans (бот + дашборд) на свежем Ubuntu-сервере.
-# Запуск на сервере:
-#   curl -fsSL https://raw.githubusercontent.com/Leonardodeterrios/neurofans-analytics/main/deploy.sh | bash
+# Запуск на сервере (скачиваем, затем запускаем — чтобы работал ввод токена):
+#   curl -fsSL https://raw.githubusercontent.com/Leonardodeterrios/neurofans-analytics/main/deploy.sh -o deploy.sh && bash deploy.sh
 set -e
 
 APP_DIR=/opt/neurofans-analytics
