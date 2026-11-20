@@ -1,16 +1,9 @@
 services:
-  bot:
+  app:
     build: .
     restart: unless-stopped
-    env_file: .env          # BOT_TOKEN, ADMIN_CHAT_ID, ...
-    volumes:
-      - ./data:/app/data    # общая база переходов
-  dashboard:
-    build: .
-    command: python dashboard.py
-    restart: unless-stopped
-    env_file: .env
+    env_file: .env          # BOT_TOKEN, ADMIN_CHAT_ID, INGEST_TOKEN, ...
     ports:
-      - "8080:8080"         # открой http://localhost:8080
+      - "8080:8080"         # дашборд: http://СЕРВЕР:8080 ; приём: http://СЕРВЕР:8080/track
     volumes:
-      - ./data:/app/data    # тот же файл базы, что у бота
+      - ./data:/app/data    # база переходов хранится на диске сервера

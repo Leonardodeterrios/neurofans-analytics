@@ -4,7 +4,7 @@ import os, re
 from dotenv import load_dotenv
 load_dotenv()
 
-BOT_USERNAME = os.getenv("BOT_USERNAME", "NeuroFansBot")
+BOT_USERNAME = os.getenv("BOT_USERNAME", "AccessGrantedGuide_bot")
 PROFILES = ["Threads_DE_01", "Threads_DE_02", "Threads_DE_03"]  # <-- твои профили
 
 _T = {'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'e','ж':'zh','з':'z','и':'i','й':'y',
