@@ -13,7 +13,7 @@ NeuroFans — партнёрская аналитика переходов (дв
 Каждый день в заданное время — итоги и победитель в Telegram.
 polling не запускаем (используем токен только для sendMessage) — конфликта с PuzzleBot нет.
 """
-import os, io, csv, re, sqlite3, threading, time, logging, datetime as dt
+import os, io, csv, re, hmac, sqlite3, threading, time, logging, datetime as dt
 from urllib.parse import quote
 from zoneinfo import ZoneInfo
 import httpx
@@ -49,7 +49,10 @@ TEAMS = {"A": (TEAM_A_NAME, TEAM_A_PREFIX, TEAM_A_COLOR),
 TG_API = f"https://api.telegram.org/bot{BOT_TOKEN}"
 BOT_UA = re.compile(r"bot|crawler|spider|preview|facebookexternalhit|telegrambot|"
                     r"whatsapp|vkshare|slackbot|skypeuripreview|discordbot|twitterbot", re.I)
-SAFE_START = re.compile(r"[^A-Za-z0-9_-]")
+SAFE_START = re.compile(r"[^A-Za-z0-9_-]")    # допустимое для telegram ?start=
+SAFE_LABEL = re.compile(r"[^A-Za-z0-9_.-]")   # допустимое для метки партнёра (защита от мусора/XSS)
+PUBLIC_TOKEN = os.getenv("PUBLIC_TOKEN", "").strip()   # пароль «только арена» для партнёров
+ARENA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "arena.html")
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("neurofans")
@@ -88,20 +91,42 @@ def record_click(source, ip, ua) -> bool:
                   (dt.datetime.utcnow().isoformat(timespec="seconds"), source, ip, ua))
     return is_new
 
-def _today_start_utc_iso():
-    tz = ZoneInfo(SUMMARY_TZ)
-    start_local = dt.datetime.now(tz).replace(hour=0, minute=0, second=0, microsecond=0)
-    return start_local.astimezone(dt.timezone.utc).replace(tzinfo=None).isoformat(timespec="seconds")
+def _round_hm():
+    if DAILY_SUMMARY_TIME:
+        try:
+            hh, mm = (int(x) for x in DAILY_SUMMARY_TIME.split(":"))
+            return hh, mm
+        except ValueError:
+            pass
+    return 0, 0
 
-def get_stats():
-    today0 = _today_start_utc_iso()
+def round_bounds(at=None):
+    """Раунд = от гонга до гонга (DAILY_SUMMARY_TIME в SUMMARY_TZ). Возвращает (start, end)."""
+    tz = ZoneInfo(SUMMARY_TZ)
+    at = (at or dt.datetime.now(tz)).astimezone(tz)
+    hh, mm = _round_hm()
+    end = at.replace(hour=hh, minute=mm, second=0, microsecond=0)
+    if end <= at:
+        end += dt.timedelta(days=1)
+    return end - dt.timedelta(days=1), end
+
+def _utc_naive(d):
+    return d.astimezone(dt.timezone.utc).replace(tzinfo=None).isoformat(timespec="seconds")
+
+def _utc_z(d):
+    return d.astimezone(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+def get_stats(at=None):
+    """«today» во всех полях = текущий раунд (от прошлого гонга до следующего)."""
+    start, end = round_bounds(at)
     with _conn() as c:
         total = c.execute("SELECT COUNT(*) FROM clicks").fetchone()[0]
         uniq  = c.execute("SELECT COUNT(DISTINCT ip) FROM clicks").fetchone()[0]
         rows = c.execute("""SELECT source, COUNT(*) clicks, COUNT(DISTINCT ip) uniq, MAX(ts) last
                             FROM clicks GROUP BY source""").fetchall()
         today_rows = dict(c.execute(
-            "SELECT source, COUNT(*) FROM clicks WHERE ts>=? GROUP BY source", (today0,)).fetchall())
+            "SELECT source, COUNT(*) FROM clicks WHERE ts>=? AND ts<? GROUP BY source",
+            (_utc_naive(start), _utc_naive(end))).fetchall())
         by_day = [dict(r) for r in c.execute(
             "SELECT substr(ts,1,10) day, COUNT(*) clicks FROM clicks GROUP BY day ORDER BY day")]
     partners = []
@@ -117,11 +142,13 @@ def get_stats():
                       "clicks": sum(p["clicks"] for p in mem),
                       "today": sum(p["today"] for p in mem),
                       "partners": len(mem)})
-    lt = max(partners, key=lambda p: p["today"], default=None)
+    lt = max((p for p in partners if p["team"]), key=lambda p: p["today"], default=None)
     leader_today = ({"source": lt["source"], "team": lt["team"], "clicks": lt["today"]}
                     if lt and lt["today"] > 0 else None)
     return {"total": total, "unique": uniq, "teams": teams, "partners": partners,
-            "leader_today": leader_today, "by_day": by_day}
+            "leader_today": leader_today, "by_day": by_day,
+            "round_start": _utc_z(start), "round_end": _utc_z(end),
+            "server_now": _utc_z(dt.datetime.now(dt.timezone.utc))}
 
 def stats_text() -> str:
     st = get_stats()
@@ -129,29 +156,38 @@ def stats_text() -> str:
         return "📊 Пока нет переходов."
     a, b = st["teams"]
     lines = [f"📊 Всего переходов: {st['total']}  |  уник.: {st['unique']}", "",
-             f"🔵 {a['name']}: {a['clicks']} (сегодня {a['today']})",
-             f"🩷 {b['name']}: {b['clicks']} (сегодня {b['today']})", "", "Топ партнёров:"]
+             f"🔵 {a['name']}: {a['clicks']} (в раунде {a['today']})",
+             f"🩷 {b['name']}: {b['clicks']} (в раунде {b['today']})", "", "Топ партнёров:"]
     for i, p in enumerate(st["partners"][:10], 1):
-        lines.append(f"{i}. {p['source']}: {p['clicks']} (сегодня {p['today']})")
+        lines.append(f"{i}. {p['source']}: {p['clicks']} (в раунде {p['today']})")
     return "\n".join(lines)
 
+def _plural(n, one, few, many):
+    n = abs(n) % 100
+    if 11 <= n <= 14: return many
+    n %= 10
+    return one if n == 1 else few if 2 <= n <= 4 else many
+
 def daily_results_text() -> str:
-    st = get_stats()
-    today = dt.datetime.now(ZoneInfo(SUMMARY_TZ)).date()
+    # гонг только что прозвучал — берём раунд, который закончился
+    at = dt.datetime.now(ZoneInfo(SUMMARY_TZ)) - dt.timedelta(minutes=2)
+    st = get_stats(at)
+    _start, end = round_bounds(at)
     a, b = st["teams"]
-    lines = [f"🏆 Итоги дня {today.strftime('%d.%m.%Y')}", "",
-             f"🔵 {a['name']}: {a['today']} переходов сегодня (всего {a['clicks']})",
-             f"🩷 {b['name']}: {b['today']} переходов сегодня (всего {b['clicks']})", ""]
+    lines = [f"🥊 Гонг! Итоги раунда {end.strftime('%d.%m.%Y')}", "",
+             f"🔵 {a['name']}: {a['today']} {_plural(a['today'],'удар','удара','ударов')} за раунд (всего {a['clicks']})",
+             f"🩷 {b['name']}: {b['today']} {_plural(b['today'],'удар','удара','ударов')} за раунд (всего {b['clicks']})", ""]
     if a["today"] != b["today"]:
         win = a if a["today"] > b["today"] else b
-        lines.append(f"👑 Победитель дня: {win['name']}! 🎉")
+        lines.append(f"👑 Раунд выиграла {win['name']}! 🎉")
     elif a["today"] == 0:
-        lines.append("Сегодня переходов ещё не было.")
+        lines.append("В этом раунде ударов не было.")
     else:
-        lines.append("🤝 Сегодня ничья!")
+        lines.append("🤝 Ничья!")
     lt = st["leader_today"]
     if lt:
-        lines.append(f"🥇 Лучший партнёр дня: {lt['source']} ({lt['clicks']} переходов)")
+        lines.append(f"🥇 Лучший боец раунда: {lt['source']} ({lt['clicks']} {_plural(lt['clicks'],'удар','удара','ударов')})")
+    lines.append("\nНовый раунд уже начался — до следующего гонга 24 часа 💪")
     return "\n".join(lines)
 
 def csv_bytes() -> bytes:
@@ -264,13 +300,25 @@ def _client_ip():
     xff = request.headers.get("X-Forwarded-For", "")
     return xff.split(",")[0].strip() if xff else (request.remote_addr or "")
 
-def _check_dashboard():
-    if DASHBOARD_TOKEN and request.args.get("token", "") != DASHBOARD_TOKEN:
+def _role():
+    """admin — полный доступ (дашборд, CSV); public — только арена/рейтинг (для партнёров)."""
+    tok = request.args.get("token", "")
+    if not DASHBOARD_TOKEN or hmac.compare_digest(tok, DASHBOARD_TOKEN):
+        return "admin"
+    if PUBLIC_TOKEN and hmac.compare_digest(tok, PUBLIC_TOKEN):
+        return "public"
+    return None
+
+def _need(admin=False):
+    r = _role()
+    if r is None or (admin and r != "admin"):
         abort(401)
+    return r
 
 @app.route("/go")
 def go():
-    source = (request.values.get("source") or request.values.get("s") or "direct").strip() or "direct"
+    raw = (request.values.get("source") or request.values.get("s") or "").strip()
+    source = SAFE_LABEL.sub("", raw)[:64] or "direct"   # метка = только безопасные символы
     ua = (request.headers.get("User-Agent", "") or "")[:300]
     if not BOT_UA.search(ua):
         is_new = record_click(source, _client_ip(), ua)
@@ -283,18 +331,49 @@ def go():
 
 @app.route("/api/stats")
 def api_stats():
-    _check_dashboard()
-    return jsonify(get_stats())
+    role = _need()
+    st = get_stats()
+    st["role"] = role
+    return jsonify(st)
+
+@app.route("/api/feed")
+def api_feed():
+    """Лента ударов для арены. Без since — только last_id (историю не проигрываем)."""
+    _need()
+    since = request.args.get("since")
+    with _conn() as c:
+        last = c.execute("SELECT COALESCE(MAX(id),0) FROM clicks").fetchone()[0]
+        items = []
+        if since is not None:
+            try:
+                s = int(since)
+            except ValueError:
+                s = last
+            rows = c.execute("SELECT id, ts, source FROM clicks WHERE id>? ORDER BY id LIMIT 300",
+                             (s,)).fetchall()
+            items = [{"id": r["id"], "ts": r["ts"], "source": r["source"],
+                      "team": team_of(r["source"])} for r in rows]
+    return jsonify(last_id=last, items=items)
+
+@app.route("/arena")
+def arena():
+    _need()
+    try:
+        with open(ARENA_PATH, encoding="utf-8") as f:
+            html = f.read()
+    except OSError:
+        html = "<h1>arena.html не найден</h1>"
+    return Response(html, mimetype="text/html")
 
 @app.route("/export")
 def export():
-    _check_dashboard()
+    _need(admin=True)
     return Response(csv_bytes(), mimetype="text/csv",
                     headers={"Content-Disposition": "attachment; filename=clicks.csv"})
 
 @app.route("/")
 def index():
-    _check_dashboard()
+    _need(admin=True)
     return Response(PAGE, mimetype="text/html")
 
 @app.route("/healthz")
@@ -339,7 +418,7 @@ th{color:var(--mut);font-weight:600}
 .rk{width:34px;font-weight:700}.mut{color:var(--mut)}
 .foot{color:var(--mut);font-size:12px;margin-top:14px}a{color:var(--a)}
 </style></head><body>
-<h1>🏆 NeuroFans — соревнование команд</h1>
+<h1>🏆 NeuroFans — соревнование команд &nbsp;<a id="arenaLink" href="/arena" style="font-size:14px">🥊 Открыть арену</a></h1>
 <p class="sub" id="updated">загрузка…</p>
 
 <div class="teams" id="teams"></div>
@@ -360,7 +439,7 @@ th{color:var(--mut);font-weight:600}
 <div class="card">
   <b>Лидерборд партнёров</b> &nbsp; <a id="csv" href="#">скачать CSV</a>
   <table><thead><tr><th class="rk">#</th><th>Партнёр</th><th>Команда</th>
-    <th>Всего</th><th>Сегодня</th><th>Уник.</th><th>Последний</th></tr></thead>
+    <th>Всего</th><th>Раунд</th><th>Уник.</th><th>Последний</th></tr></thead>
   <tbody id="rows"></tbody></table>
 </div>
 <p class="foot">Обновляется каждые 30 сек. Метка = ссылка партнёра в био. 🔵 — команда A, 🩷 — команда B.</p>
@@ -369,9 +448,11 @@ th{color:var(--mut);font-weight:600}
 const token=new URLSearchParams(location.search).get('token');
 const q=token?('?token='+encodeURIComponent(token)):'';
 document.getElementById('csv').href='/export'+q;
+document.getElementById('arenaLink').href='/arena'+q;
 let dayChart,topChart;
 const medals=['🥇','🥈','🥉'];
 function fmt(ts){return ts?ts.replace('T',' '):'—';}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 async function load(){
   const r=await fetch('/api/stats'+q);
   if(!r.ok){updated.textContent='Нет доступа (проверь token)';return;}
@@ -382,22 +463,22 @@ async function load(){
   const lead = A.clicks===B.clicks?null:(A.clicks>B.clicks?'A':'B');
   document.getElementById('teams').innerHTML=`
     <div class="team a">${lead==='A'?'<div class="crown">👑</div>':''}
-      <div class="nm">🔵 ${A.name}</div><div class="big">${A.clicks}</div>
-      <div class="tod">сегодня: <b>${A.today}</b></div><div class="pc">${A.partners} партнёров</div></div>
+      <div class="nm">🔵 ${esc(A.name)}</div><div class="big">${A.clicks}</div>
+      <div class="tod">за раунд: <b>${A.today}</b></div><div class="pc">${A.partners} партнёров</div></div>
     <div class="vs">VS</div>
     <div class="team b">${lead==='B'?'<div class="crown">👑</div>':''}
-      <div class="nm">🩷 ${B.name}</div><div class="big">${B.clicks}</div>
-      <div class="tod">сегодня: <b>${B.today}</b></div><div class="pc">${B.partners} партнёров</div></div>`;
+      <div class="nm">🩷 ${esc(B.name)}</div><div class="big">${B.clicks}</div>
+      <div class="tod">за раунд: <b>${B.today}</b></div><div class="pc">${B.partners} партнёров</div></div>`;
   const sum=A.clicks+B.clicks; document.getElementById('barA').style.width=(sum?(A.clicks/sum*100):50)+'%';
   const lt=d.leader_today;
   document.getElementById('banner').innerHTML = lt
-    ? `🔥 Лидер дня: <b>${lt.source}</b> — ${lt.clicks} переходов сегодня `+
-      (lt.team?`<span class="badge ${lt.team.toLowerCase()}">${lt.team==='A'?A.name:B.name}</span>`:'')
-    : '😴 Сегодня переходов ещё не было — кто будет первым?';
+    ? `🔥 Лидер раунда: <b>${esc(lt.source)}</b> — ${lt.clicks} переходов `+
+      (lt.team?`<span class="badge ${lt.team.toLowerCase()}">${esc(lt.team==='A'?A.name:B.name)}</span>`:'')
+    : '😴 В этом раунде переходов ещё не было — кто будет первым?';
   // таблица
   document.getElementById('rows').innerHTML=d.partners.map((p,i)=>{
-    const tb=p.team?`<span class="badge ${p.team.toLowerCase()}">${p.team==='A'?A.name:B.name}</span>`:'<span class="mut">—</span>';
-    return `<tr><td class="rk">${medals[i]||(i+1)}</td><td>${p.source||'direct'}</td><td>${tb}</td>
+    const tb=p.team?`<span class="badge ${p.team.toLowerCase()}">${esc(p.team==='A'?A.name:B.name)}</span>`:'<span class="mut">—</span>';
+    return `<tr><td class="rk">${medals[i]||(i+1)}</td><td>${esc(p.source||'direct')}</td><td>${tb}</td>
       <td><b>${p.clicks}</b></td><td>${p.today}</td><td>${p.uniq}</td><td class="mut">${fmt(p.last)}</td></tr>`;
   }).join('')||'<tr><td colspan=7 class="mut">Пока нет данных</td></tr>';
   // графики
