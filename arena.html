@@ -141,6 +141,27 @@ html,body{height:100%;background:#05060f;color:var(--ink);font:500 14px/1.4 Man,
 .radar .h{border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:7px}
 .radar canvas{border-radius:50%;box-shadow:0 0 0 1px rgba(123,92,255,.3),0 0 22px rgba(123,92,255,.22)}
 @media (max-width:700px){.tm{padding:7px 9px 8px}.tm .pw{margin:3px 0 5px}.tm .sub{margin-top:5px}.ticker .lb{border:0;background:none;padding:0 6px 0 0;border-right:1px solid var(--line);border-radius:0}}
+/* вкладка «Карта ударов» */
+body.off-arena #tags,body.off-arena #toasts,body.off-arena #banner,body.off-arena #lbox{visibility:hidden}
+#pg-map{background:radial-gradient(circle at 35% 45%,rgba(40,28,100,.55),rgba(5,6,15,.97) 65%),#05060f;overflow-y:auto;padding:calc(20px + env(safe-area-inset-top)) 16px calc(46px + env(safe-area-inset-bottom))}
+.mp-body{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:14px;height:calc(100% - 64px);min-height:420px}
+.mp-globe{--c:#7b5cff;position:relative;padding:0;min-height:0}.mp-globe canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.mp-hud{position:absolute;left:14px;right:14px;bottom:10px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font:600 10px Oxa;letter-spacing:.12em;color:#b9c0ea;pointer-events:none}
+.mp-hud span{background:rgba(4,5,14,.7);border:1px solid var(--line);border-radius:6px;padding:3px 8px;font-family:Man;font-weight:800}
+.mp-hud i{display:inline-block;width:6px;height:6px;border-radius:50%;background:#3dff9a;box-shadow:0 0 8px #3dff9a;margin-right:6px;animation:blink 1.3s infinite}
+.mp-side{display:grid;gap:12px;align-content:start;overflow-y:auto}
+.mp-box{--c:#7b5cff;padding:11px 14px 12px}.mp-box .ovl{margin-bottom:8px;font-size:9px}
+.mp-kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.mp-kpi b{display:block;font:600 22px/1 Oxa;color:#fff;text-shadow:0 0 12px var(--violet)}.mp-kpi small{font:800 9px Man;color:var(--mut);letter-spacing:.04em}
+.mp-split{grid-column:1/-1;height:6px;border-radius:4px;background:var(--b);box-shadow:0 0 10px rgba(255,79,139,.5);overflow:hidden;margin-top:6px}.mp-split i{display:block;height:100%;background:var(--a);box-shadow:0 0 10px var(--a)}
+.mp-sl{grid-column:1/-1;display:flex;justify-content:space-between;font:800 10px Man}
+.mp-row{display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:2px 8px;align-items:center;padding:5px 0;border-bottom:1px solid rgba(140,160,255,.07)}
+.mp-row .n{font:800 10px Unb;color:var(--mut)}.mp-row .nm{font:800 12.5px Man;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mp-row .nm em{font-style:normal;color:var(--mut);font-size:10px}
+.mp-row .v{font:600 15px Oxa;color:#fff}.mp-row .bar{grid-column:2/4;display:flex;height:3px;border-radius:2px;background:rgba(255,255,255,.06);overflow:hidden}.mp-row .bar i{display:block;height:100%}
+.mp-ev{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;padding:4px 0;font:800 11.5px Man}.mp-ev b{font:800 10px Unb;color:#05060f;background:var(--c);border-radius:5px;padding:2px 5px;box-shadow:0 0 8px var(--c)}
+.mp-ev span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mp-ev em{font-style:normal;color:var(--mut);font-size:10px}
+.mp-empty{font:800 11px Man;color:var(--mut);padding:4px 0}
+.radar{cursor:pointer;pointer-events:auto}
+@media (max-width:760px){.mp-body{grid-template-columns:1fr;height:auto}.mp-globe{height:min(92vw,440px)}.mp-side{overflow:visible}.mp-kpi b{font-size:19px}}
 /* оверлеи */
 .ov{position:fixed;inset:0;display:grid;place-items:center;pointer-events:none;opacity:0;transition:opacity .5s}
 .ov.on{opacity:1}
@@ -250,10 +271,21 @@ html,body{height:100%;background:#05060f;color:var(--ink);font:500 14px/1.4 Man,
     </div>
     <div class="me-chip" id="meChip"></div>
     <div class="tops"><div class="top3 a" id="topA" style="--c:var(--a)"></div><div class="top3 b" id="topB" style="--c:var(--b)"></div></div>
-    <div class="corner"><button class="ui-btn" id="bSnd" title="Звук" aria-label="Звук">🔇</button><button class="ui-btn" id="bRate" title="Рейтинг" aria-label="Рейтинг">☰</button></div>
+    <div class="corner"><button class="ui-btn" id="bSnd" title="Звук" aria-label="Звук">🔇</button><button class="ui-btn" id="bMap" title="Карта ударов" aria-label="Карта ударов">◎</button><button class="ui-btn" id="bRate" title="Рейтинг" aria-label="Рейтинг">☰</button></div>
     <div class="bottom">
       <div class="radar card"><div class="h"><span>КАРТА УДАРОВ</span><i></i></div><canvas id="radar" width="272" height="272"></canvas><div class="c" id="rCity">ждём первый клик</div><div class="s">гео: DB-IP · только город</div></div>
       <div class="ticker card" id="tickerBox"><span class="lb"><i></i>LIVE</span><div class="lst" id="ticker"></div></div>
+    </div>
+  </section>
+  <section class="page" id="pg-map">
+    <div class="rt-top"><div><div class="rt-h">Карта ударов</div><div class="rt-s">живые удары и действия по городам · с момента открытия · гео DB-IP, только город</div></div></div>
+    <div class="mp-body">
+      <div class="mp-globe card"><canvas id="mapC"></canvas><div class="mp-hud" id="mpHud"></div></div>
+      <div class="mp-side">
+        <div class="card mp-box"><div class="ovl">сводка</div><div class="mp-kpi" id="mpKpi"></div></div>
+        <div class="card mp-box"><div class="ovl">топ городов</div><div id="mpTop"></div></div>
+        <div class="card mp-box"><div class="ovl">последние удары</div><div id="mpLast"></div></div>
+      </div>
     </div>
   </section>
   <section class="page" id="pg-rate">
@@ -263,7 +295,7 @@ html,body{height:100%;background:#05060f;color:var(--ink);font:500 14px/1.4 Man,
     <div class="legend" id="legend"></div>
   </section>
 </div>
-<div class="dots"><i class="on"></i><i></i></div>
+<div class="dots"><i class="on"></i><i></i><i></i></div>
 <div class="ov" id="lbox"><span>ПОВТОР</span></div>
 <div class="ov" id="banner"><div class="glow"><div class="ovc"><div class="ovl">серия ударов</div><div class="bt" id="bnT">×5</div><div class="bs" id="bnS"></div><div class="bseg" id="bnSeg"></div></div></div></div>
 <div class="ov" id="fight"><span>БОЙ!</span></div>
@@ -346,20 +378,22 @@ function layoutSigns(){
     {x:512,y:hy+92,w:206,h:44,parts:[['SISKI ',P],['APEX',AMBER]],c:P,accent:1,m:30},
     {x:862,y:hy+86,w:222,h:58,lines:[['ЛЯМ БАКСОВ',AMBER],['НА ПОРНУХЕ',P]],c:P,accent:1,blink:1,usd:1,m:26},
     // противостояние площадок: слева THREADS (Лёня), справа SHORTS / TIK TOK / REELS (Катя)
-    ...(py=>[{x:500,y:py+6,w:204,h:58,t:'THREADS',c:A,tc:'#f4fbff',plat:1},
+    ...(py=>[{x:508,y:py+84,w:194,h:56,t:'THREADS',c:A,tc:'#f4fbff',plat:1},
       {x:890,y:py,w:198,h:40,t:'SHORTS',c:'#ff3d5a',tc:'#fff2f4',plat:1},{x:890,y:py+46,w:198,h:40,parts:[['TIK ','#25f4ee'],['TOK','#fe2c55']],c:'#fe2c55',plat:1},{x:890,y:py+92,w:198,h:40,t:'REELS',c:'#c13cff',tc:'#fbefff',plat:1}])(Math.max(290,hy+158))];
-    SCREENS=[{x:514,y:410,w:50,h:26,c:A,p:1}];
+    SCREENS=[{x:520,y:300,w:50,h:26,c:A,p:1}];
     LEDSTR=[{x0:510,x1:600,m:0},{x0:1000,x1:1090,m:1}]}
   else{const hy=clamp(hudB+16,206,262);L=[
     {hero:1,x:590,y:hy,w:420,h:70,t:'NEUROFANS',c:A,m:34},
     {x:1022,y:298,w:190,h:44,parts:[['SISKI ',P],['APEX',AMBER]],c:P,accent:1},
     {x:392,y:296,w:190,h:56,lines:[['ЛЯМ БАКСОВ',AMBER],['НА ПОРНУХЕ',P]],c:P,accent:1,blink:1,usd:1},
     // противостояние площадок: слева THREADS (Лёня), справа SHORTS / TIK TOK / REELS (Катя)
-    {x:178,y:378,w:248,h:66,t:'THREADS',c:A,tc:'#f4fbff',plat:1},
-    {x:1036,y:354,w:176,h:52,t:'SHORTS',c:'#ff3d5a',tc:'#fff2f4',plat:1},{x:1226,y:378,w:198,h:54,parts:[['TIK ','#25f4ee'],['TOK','#fe2c55']],c:'#fe2c55',plat:1},
-    {x:1036,y:414,w:176,h:48,t:'REELS',c:'#c13cff',tc:'#fbefff',plat:1},
-    {x:1262,y:446,w:170,h:32,t:'AI CREATORS',c:P},{x:905,y:330,w:30,h:160,t:'DUEL',c:P,v:1}];
-    SCREENS=[{x:318,y:476,w:52,h:28,c:A,p:1},{x:1300,y:492,w:56,h:28,c:AMBER,p:4}];
+    // THREADS опущена между эстакадой и парапетом, ниже списка лидеров и в стороне от робота
+    {x:172,y:458,w:262,h:66,t:'THREADS',c:A,tc:'#f4fbff',plat:1},
+    // справа три площадки ровной сеткой: SHORTS и REELS столбиком, крупная TIK TOK рядом
+    {x:1030,y:392,w:184,h:54,t:'SHORTS',c:'#ff3d5a',tc:'#fff2f4',plat:1},{x:1030,y:456,w:184,h:54,t:'REELS',c:'#c13cff',tc:'#fbefff',plat:1},
+    {x:1228,y:412,w:200,h:76,parts:[['TIK ','#25f4ee'],['TOK','#fe2c55']],c:'#fe2c55',plat:1},
+    {x:905,y:330,w:30,h:160,t:'DUEL',c:P,v:1}];
+    SCREENS=[{x:440,y:382,w:52,h:28,c:A,p:1}];
     LEDSTR=[{x0:150,x1:440,m:0},{x0:1160,x1:1450,m:1}]}
   const R=mulberry(5);BILL=L.map(o=>({f:R()*9,m:18,...o}));HERO=BILL.find(b=>b.hero);
   const x0=Math.min(...BILL.map(b=>b.x))-24,y0=Math.max(0,Math.min(...BILL.map(b=>b.y))-24),x1=Math.max(...BILL.map(b=>b.x+b.w))+24,y1=Math.min(HOR+4,Math.max(...BILL.map(b=>b.y+b.h+b.m))+4);SIGNBOX=[x0,y0,x1-x0,y1-y0];
@@ -454,7 +488,7 @@ function buildStatic(){
   hazeBand(b,HOR-300,HOR,'60,30,96',.0,.32);
   // СЛОЙ 2: средние башни — каркасы, уступы, вертикальный неон, бегущие огни
   const towers=[[40,170,330],[230,120,420],[372,90,300],[1100,110,360],[1240,150,450],[1430,160,340],[560,70,240],[960,80,260]];
-  const tiny=['ZONE 7','OPEN','LAB','◀◀','NEO','24','NF'];
+  const tiny=['ZONE 7','OPEN','◀◀','NEO','24','NF'];
   towers.forEach(([tx,tw,th],i)=>{const ty=HOR-th;
     const tg=b.createLinearGradient(tx,0,tx+tw,0);tg.addColorStop(0,'#0c0d22');tg.addColorStop(.5,'#13142f');tg.addColorStop(1,'#0a0a1c');b.fillStyle=tg;b.fillRect(tx,ty,tw,th);
     // уступы и сегменты фасада
@@ -823,6 +857,10 @@ const STANCE={
 // приёмы: кадры {p:поза-переопределение, d:мс, e:плавность, hit:момент удара}
 const MOVES={
  A:{
+  // удары с разворота: корпус поворачивается спиной (flip), клинок проходит широкую дугу сзади и выходит вперёд
+  pivot:[{p:{lean:-6,head:-6,sa1:178,ea1:0,w1:0,sa2:150,ea2:20,dx:-6,hl1:30,kl1:-40,hl2:-24,kl2:-20},d:130,e:'out'},{p:{lean:16,head:4,sa1:30,ea1:-10,w1:-20,sa2:-20,ea2:30,dx:26,hl1:44,kl1:-70,hl2:-30,kl2:-50},d:110,e:'io',flip:1,tl:16},{p:{lean:28,head:6,sa1:104,ea1:-4,w1:-4,dx:78,hl1:60,kl1:-64,hl2:-46,kl2:-6},d:75,e:'in',hit:1,flip:1,h:1,spin:1,tl:18},{p:{lean:20,sa1:150,ea1:-20,w1:-30,dx:74},d:150,e:'out',tl:18},{p:{lean:10,dx:36},d:200,e:'io'}],
+  spinBack:[{p:{lean:4,sa1:40,ea1:80,w1:60,dx:-4,hl1:30,kl1:-46},d:110,e:'out'},{p:{lean:-10,head:-8,sa1:170,ea1:10,w1:20,sa2:120,ea2:30,dx:32,air:12,hl1:24,kl1:-30,hl2:-16,kl2:-24},d:120,e:'io',flip:1,tl:14},{p:{lean:30,head:10,sa1:70,ea1:-10,w1:-26,sa2:40,dx:72,air:0,hl1:60,kl1:-84,hl2:-34,kl2:-62},d:75,e:'in',hit:1,flip:1,v:1,spin:1,tl:16},{p:{lean:24,sa1:34,ea1:-12,w1:-32,dx:66,hl1:56,kl1:-80,hl2:-30,kl2:-58},d:150,e:'out'},{p:{lean:8,dx:34},d:200,e:'io'}],
+  whirlwind:[{p:{lean:-6,sa1:178,ea1:0,w1:0,sa2:150,dx:-6,hl1:30,kl1:-40},d:120,e:'out'},{p:{lean:16,sa1:30,ea1:-10,w1:-20,sa2:-20,dx:24,hl1:44,kl1:-70,hl2:-30,kl2:-50},d:95,e:'io',flip:1,tl:16},{p:{lean:24,sa1:100,ea1:0,w1:-4,dx:60,hl1:56,kl1:-60,hl2:-42},d:65,e:'in',hit:1,flip:1,light:1,spin:1,tl:16},{p:{lean:-4,sa1:176,ea1:4,w1:4,dx:70},d:90,e:'out',tl:16},{p:{lean:18,sa1:34,ea1:-10,w1:-20,dx:88,hl1:48,kl1:-74,hl2:-30,kl2:-54},d:95,e:'io',flip:1,tl:18},{p:{lean:30,sa1:106,ea1:-4,w1:-6,dx:112,hl1:62,kl1:-64,hl2:-48,kl2:-6},d:70,e:'in',hit:1,flip:1,last:1,h:1,spin:1,tl:18},{p:{lean:20,sa1:150,ea1:-20,w1:-30,dx:104},d:150,e:'out',tl:18},{p:{lean:10,dx:40},d:220,e:'io'}],
   // иайдо: низкая стойка → рывок вперёд → широкий горизонтальный разрез с длинным шлейфом
   iaido:[{p:{lean:24,head:10,sa1:-35,ea1:-20,w1:-40,sa2:-30,ea2:40,hl1:64,kl1:-96,hl2:-24,kl2:-74,dx:-14},d:240,e:'io'},{p:{lean:30,head:4,sa1:96,ea1:0,w1:-6,sa2:-60,ea2:20,hl1:66,kl1:-58,hl2:-52,kl2:-4,dx:104},d:70,e:'in',hit:1,h:1,tl:18},{p:{lean:22,sa1:140,ea1:-28,w1:-40,sa2:-50,ea2:30,dx:100,hl1:56,kl1:-50,hl2:-46},d:150,e:'out',tl:18},{p:{lean:12,dx:44},d:220,e:'io'}],
   // оверхед: замах над головой → рубящий сверху вниз с подсадкой корпуса
@@ -841,6 +879,10 @@ const MOVES={
   spin:[{p:{lean:0,sa1:-44,ea1:104,w1:92,dx:-4,sa2:30},d:160,e:'out'},{p:{lean:22,sa1:104,ea1:12,w1:-12,dx:56,hl1:46,kl1:-44,hl2:-36},d:85,e:'in',hit:1},{p:{lean:16,sa1:140,ea1:-10,w1:-30,dx:50},d:130,e:'out'}],
   rising:[{p:{lean:32,sa1:-14,ea1:-26,w1:-64,sa2:-30,ea2:60,hl1:62,kl1:-96,hl2:-14,kl2:-84,dx:-6,head:10},d:280,e:'io',charge:1},{p:{lean:-10,sa1:176,ea1:2,w1:0,sa2:-60,ea2:40,hl1:12,kl1:-4,hl2:-16,kl2:-2,dx:60,air:46,head:-14},d:110,e:'in',hit:1,big:1},{p:{lean:-6,sa1:168,ea1:6,w1:4,dx:62,air:40},d:220},{p:{air:0,dx:30},d:200,e:'io'}]},
  B:{
+  pivotB:[{p:{lean:-6,sa1:176,ea1:0,w1:0,sa2:168,ea2:6,w2:4,dx:-6,hl1:30,kl1:-40,hl2:-24,kl2:-20},d:130,e:'out'},{p:{lean:16,sa1:30,ea1:-10,w1:-20,sa2:20,ea2:-10,w2:-20,dx:26,hl1:44,kl1:-70,hl2:-30,kl2:-50},d:110,e:'io',flip:1,tl:14},{p:{lean:28,sa1:104,ea1:-4,w1:-4,sa2:90,ea2:-2,w2:-4,dx:80,hl1:60,kl1:-64,hl2:-46,kl2:-6},d:75,e:'in',hit:1,flip:1,h:1,spin:1,tl:16},{p:{lean:20,sa1:150,ea1:-20,w1:-30,sa2:136,ea2:-16,w2:-26,dx:76},d:150,e:'out',tl:16},{p:{lean:10,dx:36},d:200,e:'io'}],
+  // хлёсткий удар с разворота: один кинжал сверху, второй снизу
+  spinWhipB:[{p:{lean:4,sa1:40,ea1:80,w1:60,sa2:20,ea2:90,w2:50,dx:-4,hl1:30,kl1:-46},d:110,e:'out'},{p:{lean:-10,sa1:170,ea1:10,w1:20,sa2:-30,ea2:20,w2:-20,dx:34,air:14,hl1:24,kl1:-30,hl2:-16,kl2:-24},d:120,e:'io',flip:1,tl:14},{p:{lean:28,sa1:60,ea1:-10,w1:-30,sa2:130,ea2:-10,w2:-20,dx:74,air:0,hl1:58,kl1:-80,hl2:-34,kl2:-60},d:75,e:'in',hit:1,flip:1,v:1,spin:1,tl:16},{p:{lean:22,sa1:30,ea1:-10,w1:-30,sa2:160,ea2:-14,w2:-24,dx:68},d:150,e:'out'},{p:{lean:8,dx:34},d:200,e:'io'}],
+  whirlwindB:[{p:{lean:-6,sa1:176,ea1:0,w1:0,sa2:168,ea2:6,w2:4,dx:-6,hl1:30,kl1:-40},d:120,e:'out'},{p:{lean:16,sa1:30,ea1:-10,w1:-20,sa2:20,ea2:-10,w2:-20,dx:24,hl1:44,kl1:-70,hl2:-30,kl2:-50},d:95,e:'io',flip:1,tl:14},{p:{lean:24,sa1:100,ea1:0,w1:-4,sa2:84,ea2:0,w2:-4,dx:60,hl1:56,kl1:-60,hl2:-42},d:65,e:'in',hit:1,flip:1,light:1,spin:1,tl:14},{p:{lean:-4,sa1:176,ea1:4,w1:4,sa2:166,ea2:6,w2:4,dx:70},d:90,e:'out',tl:14},{p:{lean:18,sa1:34,ea1:-10,w1:-20,sa2:24,ea2:-10,w2:-20,dx:88,hl1:48,kl1:-74,hl2:-30,kl2:-54},d:95,e:'io',flip:1,tl:16},{p:{lean:30,sa1:106,ea1:-4,w1:-6,sa2:92,ea2:-2,w2:-6,dx:112,hl1:62,kl1:-64,hl2:-48,kl2:-6},d:70,e:'in',hit:1,flip:1,last:1,h:1,spin:1,tl:16},{p:{lean:20,sa1:150,ea1:-20,w1:-30,sa2:136,ea2:-16,w2:-26,dx:104},d:150,e:'out',tl:16},{p:{lean:10,dx:40},d:220,e:'io'}],
   iaidoB:[{p:{lean:26,head:10,sa1:-30,ea1:-20,w1:-40,sa2:-40,ea2:-10,w2:-40,hl1:66,kl1:-98,hl2:-22,kl2:-76,dx:-14},d:230,e:'io'},{p:{lean:30,sa1:96,ea1:-4,w1:-6,sa2:80,ea2:0,w2:-4,dx:106,hl1:66,kl1:-58,hl2:-52,kl2:-4},d:70,e:'in',hit:1,h:1,tl:16},{p:{lean:22,sa1:146,ea1:-30,w1:-40,sa2:126,ea2:-20,w2:-30,dx:102},d:150,e:'out',tl:16},{p:{lean:10,dx:44},d:220,e:'io'}],
   overheadB:[{p:{lean:-12,sa1:176,ea1:14,w1:24,sa2:168,ea2:20,w2:24,dx:-8,air:8,hl1:26,kl1:-30},d:200,e:'out'},{p:{lean:32,head:12,sa1:74,ea1:-6,w1:-30,sa2:64,ea2:-4,w2:-30,dx:60,air:0,hl1:60,kl1:-86,hl2:-34,kl2:-64},d:80,e:'in',hit:1,v:1,tl:13},{p:{lean:28,sa1:44,ea1:-10,w1:-30,sa2:36,ea2:-8,w2:-30,dx:56,hl1:58,kl1:-84,hl2:-32,kl2:-62},d:170,e:'out'}],
   crescentB:[{p:{lean:22,sa1:-8,ea1:-24,w1:-50,sa2:-20,ea2:-10,w2:-50,dx:-6,hl1:52,kl1:-78,hl2:-22,kl2:-58},d:180,e:'out'},{p:{lean:-10,head:-12,sa1:170,ea1:2,w1:4,sa2:150,ea2:10,w2:10,dx:54,air:30,hl1:20,kl1:-30,hl2:-12,kl2:-22},d:85,e:'in',hit:1,arc:1,tl:14},{p:{lean:-6,sa1:176,ea1:4,w1:4,sa2:160,ea2:10,w2:8,dx:58,air:22},d:150},{p:{air:0,dx:36},d:200,e:'io'}],
@@ -852,7 +894,7 @@ const MOVES={
   lunge:[{p:{lean:-4,sa1:18,ea1:16,w1:84,dx:-12,hl1:20},d:160,e:'out'},{p:{lean:28,sa1:94,ea1:0,w1:0,sa2:44,ea2:66,w2:40,dx:80,hl1:60,kl1:-62,hl2:-44,kl2:0},d:80,e:'in',hit:1},{p:{lean:22,sa1:88,ea1:6,w1:4,dx:72},d:120}],
   whirl:[{p:{lean:0,sa1:-52,ea1:92,w1:104,sa2:-60,ea2:94,w2:100,dx:-6},d:160,e:'out'},{p:{lean:20,sa1:112,ea1:2,w1:-10,sa2:96,ea2:4,w2:-8,dx:54,hl1:46,kl1:-44},d:90,e:'in',hit:1},{p:{lean:16,sa1:146,ea1:-14,w1:-26,sa2:132,ea2:-12,w2:-24,dx:50},d:130,e:'out'}],
   twinRise:[{p:{lean:34,sa1:-20,ea1:-22,w1:-60,sa2:-26,ea2:-18,w2:-62,hl1:64,kl1:-98,hl2:-16,kl2:-82,head:10},d:280,e:'io',charge:1},{p:{lean:-12,sa1:172,ea1:4,w1:2,sa2:164,ea2:8,w2:6,hl1:10,kl1:-4,hl2:-18,kl2:0,dx:62,air:48,head:-14},d:110,e:'in',hit:1,big:1},{p:{lean:-8,sa1:160,ea1:10,w1:6,sa2:150,ea2:14,w2:8,dx:62,air:42},d:220},{p:{air:0,dx:30},d:200,e:'io'}]}};
-const ATTACKS={A:['slashH','slashD','thrust','spin','iaido','overhead','crescent','flurry','thrustCut','hitRun'],B:['cross','lunge','whirl','iaidoB','overheadB','crescentB','flurryB','crossX','hitRunB']}, SUPER={A:'rising',B:'twinRise'};
+const ATTACKS={A:['slashH','slashD','thrust','spin','iaido','overhead','crescent','flurry','thrustCut','hitRun','pivot','spinBack','whirlwind'],B:['cross','lunge','whirl','iaidoB','overheadB','crescentB','flurryB','crossX','hitRunB','pivotB','spinWhipB','whirlwindB']}, SUPER={A:'rising',B:'twinRise'};
 /* действия в боте: очки, подпись для ленты/тега и тип анимации */
 const ACT={examples:{pts:8,txt:'смотрит примеры генераций',tag:'примеры',fx:'robot'},guide:{pts:3,txt:'взял гайд',tag:'гайд',fx:'bolt'},
   prompts:{pts:3,txt:'взял базу промтов',tag:'промты',fx:'bolt'},sim:{pts:4,txt:'в симуляторе чаттера',tag:'симулятор',fx:'combo'},
@@ -899,20 +941,23 @@ const REACT={
   victory:[{p:{lean:-4,head:-10,sa1:160,ea1:16,w1:12,sa2:-20,ea2:70},d:500,e:'back'}],
   dash:[{p:{lean:30,sa1:-30,ea1:30,w1:60,hl1:60,kl1:-80,hl2:-20,kl2:-70},d:240,e:'io',charge:1},{p:{lean:24,sa1:110,ea1:0,w1:-20,dx:430,hl1:50,kl1:-40,hl2:-50,kl2:-10},d:90,e:'in',hit:1,big:1,dash:1},{p:{lean:30,sa1:150,ea1:-30,w1:-60,dx:440},d:700,e:'out'}]};
 function mkFighter(team){
-  const f={team,face:team==='A'?1:-1,col:COL[team],pose:{...STANCE[team]},from:null,to:null,tt:0,td:0,te:'io',queue:[],busy:false,
+  const f={team,face:team==='A'?1:-1,home:team==='A'?1:-1,col:COL[team],pose:{...STANCE[team]},from:null,to:null,tt:0,td:0,te:'io',queue:[],busy:false,
     flash:0,charge:0,trail:[],trail2:[],scarf:[],last:null,kneel:false,cb:null,glow:0,streak:0};
   for(let i=0;i<12;i++)f.scarf.push({x:BASE[team],y:FLOOR-200,px:BASE[team],py:FLOOR-200});
   return f;
 }
 const F={A:mkFighter('A'),B:mkFighter('B')};
 function playSeq(f,seq,onHit,done){
+  if(f.face!==f.home)turn(f);
   f.queue=seq.map(k=>({...k}));f.busy=true;f.onHit=onHit;f.done=done;nextKey(f);
 }
 /* темп боя: спокойная очередь — удары читаются глазом; длинная очередь — ускоряемся, чтобы не копить затор */
 function tempo(k){const q=evQ.length,base=q>8?1:q>3?1.2:1.42;return base*(k.hit?1.08:1)}
+function turn(f){f.face=-f.face;for(const key of KEYS)if(key!=='dx'&&key!=='air')f.pose[key]=-f.pose[key]}
 function nextKey(f){
   const k=f.queue.shift();
-  if(!k){f.busy=false;f.from=null;f.charge=0;const d=f.done;f.done=null;d&&d();return}
+  if(!k){if(f.face!==f.home)turn(f);f.busy=false;f.from=null;f.charge=0;const d=f.done;f.done=null;d&&d();return}
+  if(k.flip)turn(f);
   f.from={...f.pose};f.to={...(f.kneel?F_KNEEL(f):STANCE[f.team]),...k.p};f.tt=0;f.td=k.d*tempo(k);f.te=k.e||'io';f.key=k;
   f.trailOn=!!(k.hit||f._prevHit);f._prevHit=!!k.hit;
   if(k.fx&&f.onFx)f.onFx(k.fx);
@@ -941,7 +986,7 @@ function solve(f,t){
   const leg=(hl,kl)=>{const t1=dirv(hl,fc),t2=dirv(hl+kl,fc);return{knee:[t1[0]*LEN.th,t1[1]*LEN.th],foot:[t1[0]*LEN.th+t2[0]*LEN.sh,t1[1]*LEN.th+t2[1]*LEN.sh]}};
   const L1=leg(p.hl1,p.kl1),L2=leg(p.hl2,p.kl2);
   const low=Math.max(L1.foot[1],L2.foot[1]);
-  const hx=BASE[f.team]+p.dx*fc, hy=FLOOR-low-p.air+breath*1.4;
+  const hx=BASE[f.team]+p.dx*f.home, hy=FLOOR-low-p.air+breath*1.4;
   const tv=[Math.sin(lean*Math.PI/180)*fc,-Math.cos(lean*Math.PI/180)];
   const sh=[hx+tv[0]*LEN.to,hy+tv[1]*LEN.to];
   const hd=[sh[0]+tv[0]*24+Math.sin((lean+p.head)*Math.PI/180)*fc*4,sh[1]+tv[1]*24];
@@ -996,6 +1041,8 @@ function blade(A,c,hum,flash,spec,fc){
   // энергетические насечки-«иероглифы» вдоль полотна
   if(Q>0){g.strokeStyle=hexA(c,.75);g.lineWidth=1;for(const s of [.22,.42,.62]){const i=Math.round(s*N),P=bez(A.b0,mid,A.tip,s),q=[n[0]*sp.w*.55,n[1]*sp.w*.55],t2=[bd[0]*2.2,bd[1]*2.2];
       g.beginPath();g.moveTo(P[0]+q[0]-t2[0],P[1]+q[1]-t2[1]);g.lineTo(P[0]+q[0]+t2[0],P[1]+q[1]+t2[1]);if(Q===2){g.moveTo(P[0]+q[0]*.2,P[1]+q[1]*.2);g.lineTo(P[0]+q[0]*1.2+t2[0],P[1]+q[1]*1.2+t2[1])}g.stroke()}}
+  if(Q===2){g.strokeStyle='rgba(235,245,255,.35)';g.lineWidth=.8;g.beginPath();for(let i=1;i<N-1;i++){const s=i/N,P=bez(A.b0,mid,A.tip,s),w=sp.w*(1-.25*s)*(.05+.18*Math.abs(Math.sin(i*1.7)));i>1?g.lineTo(P[0]-n[0]*w,P[1]-n[1]*w):g.moveTo(P[0]-n[0]*w,P[1]-n[1]*w)}g.stroke()}
+  g.strokeStyle=hexA(c,.7);g.lineWidth=1;g.beginPath();g.arc(pm[0],pm[1],4.6,0,7);g.stroke();
   // хабаки — яркое кольцо у основания
   g.fillStyle=hexA(c,.9);g.beginPath();g.arc(A.b0[0]+bd[0]*2,A.b0[1]+bd[1]*2,2.2,0,7);g.fill();
   g.restore();
@@ -1042,18 +1089,22 @@ function kasaHead(f,hd,ang,c,hit,t){
   g.save();g.globalCompositeOperation='lighter';g.lineCap='round';eyeSlit(5,-3.2,8.4,-2.8,c);eyeSlit(10.2,-2.9,13.4,-2.4,c);
   if(Q>0){const eg=g.createRadialGradient(9.5,-3,0,9.5,-3,14);eg.addColorStop(0,hexA(c,.22));eg.addColorStop(1,hexA(c,0));g.fillStyle=eg;g.beginPath();g.arc(9.5,-3,14,0,7);g.fill()}g.restore();
   // каса чуть наклонена вперёд
-  g.translate(0,-5.5);g.rotate(.08);const A=[2,-27],L=[-37,-8],R=[39,-6],U=[2,-1.5];
+  g.translate(0,-6);g.rotate(.08);const A=[2,-35],L=[-54,-5],R=[58,-2],U=[2,1.5];
+  g.strokeStyle='#0a0b14';g.lineWidth=1.4;g.beginPath();g.moveTo(-10,-1);g.quadraticCurveTo(-2,16,10,13);g.stroke();                       // шнурок под подбородок
   const hg=g.createLinearGradient(-18,-27,18,-4);hg.addColorStop(0,hit>0?'#5a6082':'#2e324c');hg.addColorStop(1,hit>0?'#3a3f58':'#131624');
-  g.fillStyle=hg;g.beginPath();g.moveTo(L[0],L[1]);g.quadraticCurveTo(-15,-15,A[0],A[1]);g.quadraticCurveTo(19,-14,R[0],R[1]);g.quadraticCurveTo(U[0],U[1],L[0],L[1]);g.fill();
-  g.fillStyle='#05060b';g.beginPath();g.moveTo(L[0],L[1]);g.quadraticCurveTo(U[0],U[1],R[0],R[1]);g.quadraticCurveTo(2,2.4,L[0],L[1]);g.fill();                 // низ полей
+  g.fillStyle=hg;g.beginPath();g.moveTo(L[0],L[1]);g.quadraticCurveTo(-22,-19,A[0],A[1]);g.quadraticCurveTo(27,-18,R[0],R[1]);g.quadraticCurveTo(U[0],U[1],L[0],L[1]);g.fill();
+  g.fillStyle='#05060b';g.beginPath();g.moveTo(L[0],L[1]);g.quadraticCurveTo(U[0],U[1],R[0],R[1]);g.quadraticCurveTo(2,5,L[0],L[1]);g.fill();                 // низ полей
   if(Q>0){g.strokeStyle='rgba(150,160,220,.15)';g.lineWidth=.8;                                                                           // плетение
-    for(let k=1;k<9;k++){const s=k/9,b=bez(L,U,R,s);g.beginPath();g.moveTo(A[0],A[1]+1.5);g.lineTo(b[0],b[1]-1);g.stroke()}
-    for(const s of [.38,.68]){const l=[lerp(A[0],L[0],s),lerp(A[1],L[1],s)],r=[lerp(A[0],R[0],s),lerp(A[1],R[1],s)];g.beginPath();g.moveTo(l[0],l[1]);g.quadraticCurveTo(lerp(A[0],U[0],s),lerp(A[1],U[1],s),r[0],r[1]);g.stroke()}
-    g.strokeStyle='rgba(215,222,255,.5)';g.lineWidth=1.2;g.beginPath();g.moveTo(L[0],L[1]);g.quadraticCurveTo(-15,-15,A[0],A[1]);g.stroke()}     // блик неба
+    for(let k=1;k<13;k++){const s=k/13,b=bez(L,U,R,s);g.beginPath();g.moveTo(A[0],A[1]+1.5);g.lineTo(b[0],b[1]-1);g.stroke()}
+    for(const s of [.3,.55,.78]){const l=[lerp(A[0],L[0],s),lerp(A[1],L[1],s)],r=[lerp(A[0],R[0],s),lerp(A[1],R[1],s)];g.beginPath();g.moveTo(l[0],l[1]);g.quadraticCurveTo(lerp(A[0],U[0],s),lerp(A[1],U[1],s),r[0],r[1]);g.stroke()}
+    g.strokeStyle='rgba(215,222,255,.5)';g.lineWidth=1.2;g.beginPath();g.moveTo(L[0],L[1]);g.quadraticCurveTo(-22,-19,A[0],A[1]);g.stroke();
+    g.strokeStyle='rgba(150,160,220,.3)';g.lineWidth=1;g.beginPath();g.moveTo(L[0]+4,L[1]-1);g.quadraticCurveTo(U[0],U[1]-2.5,R[0]-4,R[1]-1);g.stroke()}   // внутренняя кромка полей     // блик неба
   g.save();g.globalCompositeOperation='lighter';g.lineCap='round';                                                                         // неон по краю полей и гребню
-  const brim=()=>{g.beginPath();g.moveTo(L[0],L[1]);g.quadraticCurveTo(2,2.4,R[0],R[1])};
+  const brim=()=>{g.beginPath();g.moveTo(L[0],L[1]);g.quadraticCurveTo(2,5,R[0],R[1])};
   if(Q>0){g.strokeStyle=hexA(c,.2);g.lineWidth=4.5;brim();g.stroke()}g.strokeStyle=hexA(c,.9);g.lineWidth=1.3;brim();g.stroke();
-  g.strokeStyle=hexA(c,.55);g.lineWidth=1;g.beginPath();g.moveTo(A[0],A[1]);g.quadraticCurveTo(10,-19,18,-14.5);g.stroke();
+  g.strokeStyle=hexA(c,.55);g.lineWidth=1;g.beginPath();g.moveTo(A[0],A[1]);g.quadraticCurveTo(14,-24,27,-17.5);g.stroke();
+  g.fillStyle=hexA(c,.85);g.beginPath();g.moveTo(16,-17);g.lineTo(19,-20.5);g.lineTo(22,-17);g.lineTo(19,-13.5);g.closePath();g.fill();               // эмблема-ромб на тулье
+  g.fillStyle=hexA(c,.9);g.beginPath();g.arc(10,13,1.1,0,7);g.fill();
   g.fillStyle=hexA(c,.95);g.beginPath();g.arc(A[0],A[1],1.5,0,7);g.fill();if(Q>0){g.fillStyle=hexA(c,.25);g.beginPath();g.arc(A[0],A[1],4.5,0,7);g.fill()}
   g.restore();g.restore();
 }
@@ -1074,6 +1125,7 @@ function girlHead(f,hd,ang,c,hit,t){
     g.strokeStyle=hexA(c,.6);g.lineWidth=.9;g.beginPath();g.moveTo(2.5,-.5);g.lineTo(13.2,-.3);g.stroke()}g.restore();
   g.fillStyle=HAIR;g.beginPath();g.moveTo(-12.5,-1);g.quadraticCurveTo(-12.5,-15.5,1,-15);g.quadraticCurveTo(11.5,-14.5,13.8,-6);                    // макушка и рваная чёлка
   g.lineTo(11,-7.4);g.lineTo(9.6,-5.3);g.lineTo(7.4,-8);g.lineTo(5,-6.2);g.lineTo(3.4,-9.2);g.lineTo(-.5,-6.5);g.lineTo(-3,5);g.closePath();g.fill();
+  g.fillStyle='#262b44';g.fillRect(-11,-9,6,2.4);g.save();g.globalCompositeOperation='lighter';g.fillStyle=hexA(c,.9);g.fillRect(-10,-8.6,1.6,1.6);g.restore();   // заколка
   g.fillStyle='#1d2133';g.beginPath();g.arc(-1.5,.5,3.1,0,7);g.fill();                                                                      // гарнитура
   g.save();g.globalCompositeOperation='lighter';g.fillStyle=hexA(c,.95);g.beginPath();g.arc(-1.5,.5,1.2,0,7);g.fill();
   if(Q>0){g.strokeStyle=hexA(c,.5);g.lineWidth=1.1;g.beginPath();g.arc(0,-2.5,13.3,Math.PI*1.08,Math.PI*1.62);g.stroke();
@@ -1088,6 +1140,8 @@ function sai(A,c,hum,flash){
   if(Q>0){g.strokeStyle='#3b4262';g.lineWidth=1;for(let k=0;k<4;k++){const a=[lerp(pm[0],b0[0],k/4),lerp(pm[1],b0[1],k/4)],b=[lerp(pm[0],b0[0],(k+1)/4),lerp(pm[1],b0[1],(k+1)/4)];
     g.beginPath();g.moveTo(a[0]+n[0]*2.6,a[1]+n[1]*2.6);g.lineTo(b[0]-n[0]*2.6,b[1]-n[1]*2.6);g.stroke()}}
   g.strokeStyle='#8a92b4';g.lineWidth=1.5;g.beginPath();g.arc(pm[0]-bd[0]*2,pm[1]-bd[1]*2,2.8,0,7);g.stroke();
+  if(Q>0){const rt=performance.now()/1000,r0=[pm[0]-bd[0]*4,pm[1]-bd[1]*4];g.strokeStyle='#5a2046';g.lineWidth=1.6;g.beginPath();g.moveTo(r0[0],r0[1]);g.quadraticCurveTo(r0[0]-bd[0]*8+n[0]*4,r0[1]-bd[1]*8+n[1]*4+4,r0[0]-bd[0]*14+Math.sin(rt*9)*3,r0[1]-bd[1]*14+8);g.stroke();
+    g.strokeStyle='rgba(220,225,255,.35)';g.lineWidth=.8;g.beginPath();g.moveTo(pm[0]+n[0]*1.6,pm[1]+n[1]*1.6);g.lineTo(b0[0]+n[0]*1.6,b0[1]+n[1]*1.6);g.stroke()}
   const L=Math.hypot(tip[0]-b0[0],tip[1]-b0[1]);
   if(Q>0){g.save();g.globalCompositeOperation='lighter';g.lineCap='round';g.strokeStyle=hexA(c,.1*gw);g.lineWidth=13;g.beginPath();g.moveTo(b0[0],b0[1]);g.lineTo(tip[0],tip[1]);g.stroke();g.restore()}
   // боковые зубцы: от гарды в стороны и вперёд
@@ -1175,6 +1229,12 @@ function drawFighter(f,t,dt){
   {const a=P(70,W1-4),b=P(14,-W2);g.strokeStyle='#2c3148';g.lineWidth=isB?4:5;g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();
     if(Q>0)glowLine(P(66,W1-6),P(18,-W2+2),c,.8,.55)}
   g.fillStyle='#0d0f18';poly([[4,-W2-3],[4,W2+(isB?3:4)],[10,W2+(isB?3:4)],[10,-W2-3]]);g.fill();
+  // мелкие детали брони: пластины груди (A) / швы корсета (B), подсумки на поясе, заклёпки
+  {const ln=(u0,v0,u1,v1,st,lw)=>{const a=P(u0,v0),b=P(u1,v1);g.strokeStyle=st;g.lineWidth=lw;g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke()};
+    if(!isB){for(const u of [60,66,72]){ln(u,-W1+6,u-2,W1-5,'rgba(8,9,16,.8)',1.2);ln(u+1,-W1+6,u-1,W1-5,'rgba(170,180,230,.14)',.8)}}
+    else{ln(18,-6,50,-8,'rgba(8,9,16,.7)',1);ln(18,6,50,9,'rgba(8,9,16,.7)',1);if(Q>0){ln(22,7,46,10,hexA(c,.35),.8)}}
+    for(const v of [-W2-1,W2+1]){const a=P(9,v);g.fillStyle='#1f2337';g.fillRect(a[0]-3.5,a[1]-3,7,6);g.fillStyle='rgba(170,180,230,.25)';g.fillRect(a[0]-3.5,a[1]-3,7,1)}
+    g.fillStyle='#8f98b6';for(const [u,v] of [[74,-W1+5],[74,W1-6],[46,-W1+3]]){const a=P(u,v);g.beginPath();g.arc(a[0],a[1],1,0,7);g.fill()}}
   g.save();g.globalCompositeOperation='lighter';{const bk=P(7,4);g.fillStyle=hexA(c,.95);g.fillRect(bk[0]-3,bk[1]-3,6,6)}
   const core=P(56,isB?6:8),cr=(isB?2.2:2.6)+Math.sin(t*4)*.5+f.charge*2.5;const cg=g.createRadialGradient(core[0],core[1],0,core[0],core[1],cr*5);cg.addColorStop(0,'rgba(255,255,255,.9)');cg.addColorStop(.3,hexA(c,.8));cg.addColorStop(1,hexA(c,0));g.fillStyle=cg;g.beginPath();g.arc(core[0],core[1],cr*5,0,7);g.fill();g.restore();
   // ===== передняя нога =====
@@ -1197,6 +1257,8 @@ function drawFighter(f,t,dt){
   {const d=unit(A1.el,A1.ha);plate([lerp(A1.el[0],A1.ha[0],.25),lerp(A1.el[1],A1.ha[1],.25)],[lerp(A1.el[0],A1.ha[0],.85),lerp(A1.el[1],A1.ha[1],.85)],7.5*k,6.5*k,'#23273b');
     if(Q>0){const nn=[-d[1],d[0]];for(const o of [-2.5*k,2.5*k])glowLine([lerp(A1.el[0],A1.ha[0],.3)+nn[0]*o,lerp(A1.el[1],A1.ha[1],.3)+nn[1]*o],[lerp(A1.el[0],A1.ha[0],.8)+nn[0]*o,lerp(A1.el[1],A1.ha[1],.8)+nn[1]*o],c,.7,.75)}}
   joint(A1.el,5.5*k,c,.8);
+  {const w0=[lerp(A1.el[0],A1.ha[0],.82),lerp(A1.el[1],A1.ha[1],.82)];g.save();g.globalCompositeOperation='lighter';g.fillStyle=hexA(c,.9);g.beginPath();g.arc(w0[0],w0[1],1.6,0,7);g.fill();if(Q>0){g.fillStyle=hexA(c,.25);g.beginPath();g.arc(w0[0],w0[1],4,0,7);g.fill()}g.restore()}
+  g.fillStyle='rgba(220,228,255,.28)';g.fillRect(S.F1[0]+fc*(6*k),S.F1[1]-4,fc*7*k,1.2);
   g.fillStyle='#0b0c14';g.beginPath();g.arc(A1.ha[0],A1.ha[1],6*k,0,7);g.fill();
   // ===== неоновый контур силуэта =====
   if(Q>0){g.save();g.globalCompositeOperation='lighter';g.lineCap='round';
@@ -1213,7 +1275,7 @@ function drawFighter(f,t,dt){
   if(f.hitT>0&&Q>0){const hc=f.hitCol||'#ffffff',a=f.hitT*f.hitT;
     for(const [p0,p1] of [[S.hip,S.K1],[S.K1,S.F1],[S.hip,S.K2],[S.sh,A1.el],[A1.el,A1.ha],[S.sh,A2.el]])glowLine(p0,p1,hc,2.2,a*.8);
     glowLine(P(2,W2+3),P(76,W1-2),hc,2.6,a);glowLine(P(2,-W2-2),P(80,-W1+3),hc,2.6,a);
-    g.save();g.globalCompositeOperation='lighter';const hr=isB?17:24,hy=S.hd[1]-(isB?4:9);for(const [lw,aa] of [[9,.18],[3.5,.5],[1.4,1]]){g.strokeStyle=hexA(hc,aa*a);g.lineWidth=lw;g.beginPath();g.arc(S.hd[0],hy,hr,0,7);g.stroke()}g.restore()}
+    g.save();g.globalCompositeOperation='lighter';const hr=isB?17:30,hy=S.hd[1]-(isB?4:12);for(const [lw,aa] of [[9,.18],[3.5,.5],[1.4,1]]){g.strokeStyle=hexA(hc,aa*a);g.lineWidth=lw;g.beginPath();g.arc(S.hd[0],hy,hr,0,7);g.stroke()}g.restore()}
   if(f.charge>0){g.save();g.globalCompositeOperation='lighter';const r=40+Math.sin(t*30)*6;const cg2=g.createRadialGradient(S.hip[0],S.hip[1]-40,0,S.hip[0],S.hip[1]-40,r*2.4);cg2.addColorStop(0,hexA(c,.35));cg2.addColorStop(1,hexA(c,0));g.fillStyle=cg2;g.beginPath();g.arc(S.hip[0],S.hip[1]-40,r*2.4,0,7);g.fill();
     for(let i=0;i<3;i++){const a=t*8+i*2.1;g.strokeStyle=hexA(c,.7);g.lineWidth=1.5;g.beginPath();g.arc(S.hip[0],S.hip[1]-40,60+i*14,a,a+1.2);g.stroke()}g.restore()}
 }
@@ -1268,7 +1330,7 @@ function spawnRobot(team,label){robots.push({team,label,t:0,fired:0,hits:0,recoi
 const RB_FIRE=[1.25,1.37,1.49,1.61,1.73,1.85];
 function drawRobots(dt){
   for(let i=robots.length-1;i>=0;i--){const r=robots[i];r.t+=dt;const att=F[r.team],side=att.face,c=att.col;
-    const hx=BASE[r.team]-side*(portrait?92:210),sx=hx-side*560,L=3.5;
+    const hx=BASE[r.team]-side*(portrait?92:150),sx=hx-side*560,L=3.5;
     let x,walk=0,crouch=0;
     if(r.t<.95){const k=ease.out(r.t/.95);x=lerp(sx,hx,k);walk=1-k*.6}else if(r.t<2.65){x=hx;crouch=Math.min(1,(r.t-.95)/.25)*(r.t<2.3?1:Math.max(0,1-(r.t-2.3)/.35))}
     else{const k=ease.in(clamp((r.t-2.65)/.85,0,1));x=lerp(hx,sx,k);walk=.4+k*.6}
@@ -1529,6 +1591,7 @@ function strike(team,kind='hit',label='',opts={}){
       else if(mode==='dodge'){playSeq(def,REACT.dodge);sparks(cx,cy-30,att.col,14,260,30);snd.whoosh(false)}
       else{const k=light?.6:1;impact(cx,cy,att.col,false);if(Q>0)flare(cx,cy,att.col,(.38+ARENA.tension*.2)*k);sparks(cx,cy,att.col,Math.round(52*k),500,90);ring(cx,cy,att.col,90*k,4);shake(11*k);kick(.028*k);flash(.14*k,att.col);snd.hit();hitStop(light?.03:.055);
         if(hk.v)slashMark(cx,cy,att.col,Math.PI/2+att.face*.18);if(hk.h)slashMark(cx,cy,att.col,att.face*.08);
+        if(hk.spin){sparks(cx,cy,'#ffffff',Q?22:8,620,40);ring(cx,cy,att.col,130,3)}
         if(hk.arc)waves.push({x:cx-att.face*20,y:cy-20,v:att.face*260,t:0,c:att.col,f:att.face,s:.55,L:.35});
         def.flash=1;def.hitT=1;def.hitCol=att.col;playSeq(def,(hk.last||hk.v)?REACT.stagger:REACT.hit)}
     }
@@ -1650,8 +1713,95 @@ function radarTick(dt){
     const k=(p.t%1.5)/1.5;rx.strokeStyle=hexA(p.c,(1-k)*.9*(1-p.t/6));rx.lineWidth=2;rx.beginPath();rx.arc(x,y,3+k*16,0,7);rx.stroke();rx.fillStyle=hexA(p.c,1-p.t/6);rx.beginPath();rx.arc(x,y,p.big?4:2.6,0,7);rx.fill()}
   rx.restore();
 }
-function addPulse(ev){if(ev.lat==null||ev.lon==null)return;pulses.push({lat:ev.lat,lon:ev.lon,c:COL[ev.team]||AMBER,t:0,big:ev.kind==='start'});if(pulses.length>40)pulses.shift();
+function addPulse(ev){geoAdd(ev);if(ev.lat==null||ev.lon==null)return;pulses.push({lat:ev.lat,lon:ev.lon,c:COL[ev.team]||AMBER,t:0,big:ev.kind==='start'});if(pulses.length>40)pulses.shift();
   if(ev.city){lastCity=ev.city;$('rCity').textContent=`${ev.city} · ${ev.source}`}rot=-ev.lon*Math.PI/180+rot*.0;}
+
+/* ================= вкладка «Карта ударов»: тактический глобус, скан-луч, дуги к штабу арены, сводка по географии ================= */
+const GEO={cities:{},n:0,A:0,B:0,cc:new Set(),recent:[],last:[]};
+const HQ={lat:13.8,lon:100.5,name:'ARENA HQ'};
+const mp={cv:null,x:null,w:0,h:0,rot:-1.05,tRot:-1.05,tilt:.78,arcs:[],rings:[],scan:0,t:0,dirty:true,hudT:0};
+function geoAdd(ev){if(ev.lat==null||ev.lon==null)return;const key=(ev.city||'?')+'|'+(ev.cc||'');
+  const c=GEO.cities[key]||(GEO.cities[key]={name:ev.city||'—',cc:ev.cc||'',lat:ev.lat,lon:ev.lon,A:0,B:0,n:0,last:0});
+  const pts=evPts(ev);c.n+=1;c[ev.team==='B'?'B':'A']+=1;c.last=Date.now();GEO.n++;GEO[ev.team==='B'?'B':'A']++;if(ev.cc)GEO.cc.add(ev.cc);
+  GEO.recent.push(Date.now());if(GEO.recent.length>500)GEO.recent.shift();
+  GEO.last.unshift({city:c.name,cc:c.cc,src:ev.source,team:ev.team,kind:ev.kind,pts,at:Date.now()});if(GEO.last.length>7)GEO.last.pop();
+  const col=COL[ev.team]||AMBER,big=ev.kind!=='hit';
+  mp.rings.push({lat:ev.lat,lon:ev.lon,c:col,t:0,big});if(mp.rings.length>40)mp.rings.shift();
+  mp.arcs.push({a:[ev.lat,ev.lon],c:col,t:0,big});if(mp.arcs.length>(Q?14:6))mp.arcs.shift();
+  mp.tRot=-ev.lon*Math.PI/180+.35;mp.dirty=true}
+function mapVisible(){const p=$('pager');return p&&Math.abs(p.scrollLeft/p.clientWidth-1)<.98}
+function mapResize(){const cv=$('mapC');if(!cv)return;const r=cv.getBoundingClientRect(),d=Math.min(2,devicePixelRatio||1)*(Q===0?.75:1);cv.width=Math.max(10,Math.round(r.width*d));cv.height=Math.max(10,Math.round(r.height*d));mp.cv=cv;mp.x=cv.getContext('2d');mp.w=cv.width;mp.h=cv.height;mp.d=d}
+const v3=(lat,lon)=>{const la=lat*Math.PI/180,lo=lon*Math.PI/180;return[Math.cos(la)*Math.sin(lo),Math.sin(la),Math.cos(la)*Math.cos(lo)]};
+function mapTick(dt){
+  if(!mapVisible()){return}
+  if(!mp.x||Math.round(mp.cv.clientWidth*mp.d)!==mp.w)mapResize();if(!mp.x)return;
+  const x=mp.x,W=mp.w,H=mp.h,d=mp.d,cx=W/2,cy=H/2,R=Math.min(W,H)*.40;mp.t+=dt;
+  // поворот: медленное вращение + доворот к последнему удару
+  let dr=mp.tRot-mp.rot;dr=Math.atan2(Math.sin(dr),Math.cos(dr));mp.rot+=dr*Math.min(1,dt*1.6)+(REDUCED?0:dt*.06);mp.tRot+=REDUCED?0:dt*.06;
+  const rot=mp.rot,tilt=mp.tilt,ct=Math.cos(tilt),st=Math.sin(tilt);
+  const P=([X,Y,Z])=>{const x1=X*Math.cos(rot)+Z*Math.sin(rot),z1=-X*Math.sin(rot)+Z*Math.cos(rot),y2=Y*ct-z1*st,z2=Y*st+z1*ct;return[cx+x1*R,cy-y2*R,z2]};
+  const LL=(lat,lon)=>P(v3(lat,lon));
+  x.setTransform(1,0,0,1,0,0);x.clearRect(0,0,W,H);
+  // фон: тактическая сетка
+  x.strokeStyle='rgba(120,140,255,.06)';x.lineWidth=1;const gs=28*d;for(let gx=(cx%gs);gx<W;gx+=gs){x.beginPath();x.moveTo(gx,0);x.lineTo(gx,H);x.stroke()}for(let gy=(cy%gs);gy<H;gy+=gs){x.beginPath();x.moveTo(0,gy);x.lineTo(W,gy);x.stroke()}
+  const bg=x.createRadialGradient(cx,cy,R*.2,cx,cy,R*1.6);bg.addColorStop(0,'rgba(60,40,140,.22)');bg.addColorStop(1,'rgba(5,6,15,0)');x.fillStyle=bg;x.fillRect(0,0,W,H);
+  // кольца дальности с делениями и вращающимся пунктиром
+  x.strokeStyle='rgba(140,160,255,.22)';for(const k of [1.1,1.22]){x.beginPath();x.arc(cx,cy,R*k,0,7);x.stroke()}
+  x.save();x.translate(cx,cy);x.rotate(REDUCED?0:mp.t*.15);x.setLineDash([4*d,10*d]);x.strokeStyle='rgba(123,92,255,.5)';x.beginPath();x.arc(0,0,R*1.16,0,7);x.stroke();x.setLineDash([]);x.restore();
+  x.strokeStyle='rgba(180,190,255,.35)';for(let a=0;a<360;a+=5){const r0=R*1.1,r1=R*(a%45?1.13:1.16),ra=a*Math.PI/180;x.beginPath();x.moveTo(cx+Math.cos(ra)*r0,cy+Math.sin(ra)*r0);x.lineTo(cx+Math.cos(ra)*r1,cy+Math.sin(ra)*r1);x.stroke()}
+  x.fillStyle='rgba(180,190,255,.55)';x.font=`600 ${10*d}px Oxa`;x.textAlign='center';x.textBaseline='middle';[['N',-90],['E',0],['S',90],['W',180]].forEach(([s,a])=>{const ra=a*Math.PI/180;x.fillText(s,cx+Math.cos(ra)*R*1.29,cy+Math.sin(ra)*R*1.29)});
+  // диск глобуса
+  const gg=x.createRadialGradient(cx-R*.3,cy-R*.35,R*.1,cx,cy,R);gg.addColorStop(0,'#1b1e4a');gg.addColorStop(.7,'#0c0d26');gg.addColorStop(1,'#07081a');x.fillStyle=gg;x.beginPath();x.arc(cx,cy,R,0,7);x.fill();
+  x.save();x.beginPath();x.arc(cx,cy,R,0,7);x.clip();
+  // градусная сетка
+  const step=Q===2?15:30;
+  const line=(pts,st,lw)=>{x.strokeStyle=st;x.lineWidth=lw;x.beginPath();let pen=false;for(const p of pts){if(p[2]>0){pen?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1]);pen=true}else pen=false}x.stroke()};
+  for(let lat=-75;lat<=75;lat+=step){const pts=[];for(let lon=-180;lon<=180;lon+=6)pts.push(LL(lat,lon));line(pts,lat===0?'rgba(150,170,255,.45)':'rgba(120,140,255,.16)',lat===0?1.4*d:1*d)}
+  for(let lon=-180;lon<180;lon+=step){const pts=[];for(let lat=-90;lat<=90;lat+=6)pts.push(LL(lat,lon));line(pts,'rgba(120,140,255,.14)',1*d)}
+  // сканирующий луч
+  mp.scan+=REDUCED?0:dt*1.1;const sa=mp.scan%(Math.PI*2);x.globalCompositeOperation='lighter';
+  for(let i=0;i<(Q?10:4);i++){const a0=sa-i*.06,a1=sa-(i+1)*.06;x.fillStyle=`rgba(123,92,255,${(.16*(1-i/(Q?10:4))).toFixed(3)})`;x.beginPath();x.moveTo(cx,cy);x.arc(cx,cy,R,a1,a0);x.closePath();x.fill()}
+  x.strokeStyle='rgba(190,170,255,.7)';x.lineWidth=1.2*d;x.beginPath();x.moveTo(cx,cy);x.lineTo(cx+Math.cos(sa)*R,cy+Math.sin(sa)*R);x.stroke();
+  // города: узлы, размер ~ числу ударов, цвет — перевес команды; лучом «подсвечиваются»
+  const list=Object.values(GEO.cities).sort((a,b)=>b.n-a.n),placed=[];
+  list.forEach((c,i)=>{const [px,py,pz]=LL(c.lat,c.lon);if(pz<=-.05)return;const a=pz>0?1:.25,share=c.n?c.A/c.n:.5,col=share>=.5?COL.A:COL.B,r=(2.4+Math.sqrt(c.n)*1.6)*d;
+    let ang=Math.atan2(py-cy,px-cx);ang=((ang%(2*Math.PI))+2*Math.PI)%(2*Math.PI);const sw=((sa%(2*Math.PI))-ang+2*Math.PI)%(2*Math.PI),lit=sw<.5?1-sw/.5:0;
+    x.fillStyle=hexA(col,(.25+lit*.4)*a);x.beginPath();x.arc(px,py,r*2.6,0,7);x.fill();
+    x.fillStyle=hexA(col,.95*a);x.save();x.translate(px,py);x.rotate(Math.PI/4);x.fillRect(-r*.6,-r*.6,r*1.2,r*1.2);x.restore();
+    const lw=110*d,lh=16*d,lx=px+r+6*d,ly=py-12*d,free=!placed.some(b=>lx<b[0]+b[2]&&lx+lw>b[0]&&ly<b[1]+b[3]&&ly+lh>b[1]);
+    if(Q>0&&pz>0&&i<(W<700*d?6:10)&&free){placed.push([lx,ly,lw,lh]);x.globalCompositeOperation='source-over';x.font=`800 ${10.5*d}px Man`;x.textAlign='left';x.fillStyle='rgba(235,240,255,.92)';x.fillText(`${c.name} · ${c.n}`,px+r+6*d,py-4*d);
+      x.fillStyle=hexA(col,.9);x.fillRect(px+r+6*d,py+3*d,Math.min(70,6+c.n*3)*d*share,2*d);x.fillStyle=hexA(COL.B,.9);x.fillRect(px+r+6*d+Math.min(70,6+c.n*3)*d*share,py+3*d,Math.min(70,6+c.n*3)*d*(1-share),2*d);x.globalCompositeOperation='lighter'}});
+  // штаб арены
+  {const [hx,hy,hz]=LL(HQ.lat,HQ.lon);if(hz>0){const pu=.6+.4*Math.sin(mp.t*3);x.strokeStyle=`rgba(255,181,71,${.9*pu})`;x.lineWidth=1.6*d;x.beginPath();x.moveTo(hx,hy-8*d);x.lineTo(hx+7*d,hy+5*d);x.lineTo(hx-7*d,hy+5*d);x.closePath();x.stroke();
+    x.globalCompositeOperation='source-over';x.fillStyle='rgba(255,210,150,.9)';x.font=`600 ${9*d}px Oxa`;x.textAlign='left';x.fillText(HQ.name,hx+10*d,hy+2*d);x.globalCompositeOperation='lighter'}}
+  // дуги активности: город → штаб, по дуге бежит импульс
+  for(let i=mp.arcs.length-1;i>=0;i--){const ar=mp.arcs[i];ar.t+=dt;const L=ar.big?3.2:2.4;if(ar.t>L){mp.arcs.splice(i,1);continue}
+    const A=v3(ar.a[0],ar.a[1]),B=v3(HQ.lat,HQ.lon),dot=Math.max(-1,Math.min(1,A[0]*B[0]+A[1]*B[1]+A[2]*B[2])),om=Math.acos(dot)||1e-3,so=Math.sin(om),N=28,pts=[];
+    for(let k=0;k<=N;k++){const s=k/N,w1=Math.sin((1-s)*om)/so,w2=Math.sin(s*om)/so,lift=1+.18*Math.sin(Math.PI*s)*Math.min(1,om);pts.push(P([(A[0]*w1+B[0]*w2)*lift,(A[1]*w1+B[1]*w2)*lift,(A[2]*w1+B[2]*w2)*lift]))}
+    const fade=1-ar.t/L;line(pts,hexA(ar.c,.55*fade),(ar.big?2:1.3)*d);
+    const hp=Math.min(1,ar.t/1.1),hi=Math.round(hp*N),q=pts[hi];if(q&&q[2]>0&&hp<1){x.fillStyle='rgba(255,255,255,.95)';x.beginPath();x.arc(q[0],q[1],2.4*d,0,7);x.fill();x.fillStyle=hexA(ar.c,.4);x.beginPath();x.arc(q[0],q[1],7*d,0,7);x.fill()}}
+  // импульсы-кольца на новых ударах
+  for(let i=mp.rings.length-1;i>=0;i--){const r=mp.rings[i];r.t+=dt;if(r.t>2.4){mp.rings.splice(i,1);continue}const [px,py,pz]=LL(r.lat,r.lon);if(pz<=0)continue;
+    for(const off of r.big?[0,.35]:[0]){const k=((r.t+off)%1.2)/1.2;x.strokeStyle=hexA(r.c,(1-k)*(1-r.t/2.4)*.9);x.lineWidth=(r.big?2:1.4)*d;x.beginPath();x.arc(px,py,(4+k*(r.big?34:22))*d,0,7);x.stroke()}}
+  x.restore();
+  // ободок и блик
+  x.globalCompositeOperation='lighter';x.strokeStyle='rgba(140,160,255,.55)';x.lineWidth=1.4*d;x.beginPath();x.arc(cx,cy,R,0,7);x.stroke();
+  if(Q>0){const rg=x.createRadialGradient(cx,cy,R*.92,cx,cy,R*1.08);rg.addColorStop(0,'rgba(123,92,255,0)');rg.addColorStop(.5,'rgba(123,92,255,.25)');rg.addColorStop(1,'rgba(123,92,255,0)');x.fillStyle=rg;x.beginPath();x.arc(cx,cy,R*1.08,0,7);x.fill()}
+  x.globalCompositeOperation='source-over';
+  // уголки-прицел
+  x.strokeStyle='rgba(180,190,255,.5)';x.lineWidth=1.5*d;const m=14*d,cl=22*d;for(const [ax,ay,sx,sy] of [[m,m,1,1],[W-m,m,-1,1],[m,H-m,1,-1],[W-m,H-m,-1,-1]]){x.beginPath();x.moveTo(ax+sx*cl,ay);x.lineTo(ax,ay);x.lineTo(ax,ay+sy*cl);x.stroke()}
+  mp.hudT-=dt;if(mp.dirty||mp.hudT<=0){mp.dirty=false;mp.hudT=1;mapPanel()}
+}
+function mapPanel(){
+  const now=Date.now(),last5=GEO.recent.filter(t=>now-t<300000).length,list=Object.values(GEO.cities).sort((a,b)=>b.n-a.n),sa=GEO.n?GEO.A/GEO.n:.5;
+  $('mpKpi').innerHTML=`<div><b>${GEO.n}</b><small>ударов на карте</small></div><div><b>${list.length}</b><small>городов</small></div><div><b>${GEO.cc.size||'—'}</b><small>стран</small></div><div><b>${last5}</b><small>за 5 мин</small></div>
+    <div class="mp-split"><i style="width:${(sa*100).toFixed(1)}%"></i></div><div class="mp-sl"><span style="color:var(--a)">${esc(teamName('A'))} · ${GEO.A}</span><span style="color:var(--b)">${GEO.B} · ${esc(teamName('B'))}</span></div>`;
+  const mx=list[0]?list[0].n:1;
+  $('mpTop').innerHTML=list.length?list.slice(0,8).map((c,i)=>`<div class="mp-row"><span class="n">${i+1}</span><span class="nm">${esc(c.name)}${c.cc?` <em>${esc(c.cc)}</em>`:''}</span><span class="v">${c.n}</span><span class="bar"><i style="width:${(c.A/mx*100).toFixed(1)}%;background:var(--a)"></i><i style="width:${(c.B/mx*100).toFixed(1)}%;background:var(--b)"></i></span></div>`).join(''):'<div class="mp-empty">ждём первые удары — точки появятся на глобусе</div>';
+  const ago=t=>{const s=Math.round((now-t)/1000);return s<60?s+' с':Math.round(s/60)+' мин'};
+  $('mpLast').innerHTML=GEO.last.length?GEO.last.map(e=>`<div class="mp-ev" style="--c:${COL[e.team]||AMBER}"><b>+${e.pts}</b><span>${esc(e.src||'')} · ${esc(e.city)}</span><em>${ago(e.at)}</em></div>`).join(''):'<div class="mp-empty">пока тихо</div>';
+  const top=list[0];$('mpHud').innerHTML=`<span><i></i>SCAN · LIVE</span><span>${top?`ЛИДЕР ГЕО: ${esc(top.name.toUpperCase())} · ${top.n}`:'ОЖИДАНИЕ СИГНАЛА'}</span><span>HQ ${HQ.lat.toFixed(1)}° N · ${HQ.lon.toFixed(1)}° E</span>`;
+}
 
 /* ================= конец раунда: нокаут ================= */
 let koActive=false,lastKo=0;
@@ -1724,8 +1874,9 @@ const snd=(()=>{let ac=null,on=false,master=null,comp=null,rainN=null,nbuf=null;
     rank(){[392,523,659,1046].forEach((f,i)=>osc('triangle',f,f,.005,.25,.12,{at:i*.09}))}};
 })();
 $('bSnd').onclick=()=>{const on=snd.toggle();$('bSnd').textContent=on?'🔊':'🔇';$('bSnd').classList.toggle('on',on)};
-$('bRate').onclick=()=>{const p=$('pager');p.style.pointerEvents='auto';p.scrollTo({left:p.scrollLeft>10?0:p.clientWidth,behavior:'smooth'})};
-$('pager').addEventListener('scroll',()=>{const p=$('pager'),i=Math.round(p.scrollLeft/p.clientWidth);[...document.querySelectorAll('.dots i')].forEach((d,k)=>d.classList.toggle('on',k===i));if(!TOUCH)p.style.pointerEvents=i?'auto':'none'},{passive:true});
+const goPage=i=>{const p=$('pager');p.style.pointerEvents='auto';const cur=Math.round(p.scrollLeft/p.clientWidth);p.scrollTo({left:(cur===i?0:i)*p.clientWidth,behavior:'smooth'})};
+$('bRate').onclick=()=>goPage(2);$('bMap').onclick=()=>goPage(1);document.querySelector('.radar').onclick=()=>goPage(1);addEventListener('resize',()=>{mp.x=null});
+$('pager').addEventListener('scroll',()=>{const p=$('pager'),i=Math.round(p.scrollLeft/p.clientWidth);document.body.classList.toggle('off-arena',i>0);[...document.querySelectorAll('.dots i')].forEach((d,k)=>d.classList.toggle('on',k===i));if(!TOUCH)p.style.pointerEvents=i?'auto':'none'},{passive:true});
 
 /* ================= данные: SSE + запасной опрос ================= */
 let cur={c:null,s:null,a:null},es=null,esFails=0,pollT=null;
@@ -1750,7 +1901,7 @@ function openStream(){
 function startPolling(){if(pollT)return;pollT=setInterval(async()=>{try{const f=await api(`/api/feed?since_c=${cur.c??''}&since_s=${cur.s??''}&since_a=${cur.a??''}`);cur={c:f.last_c,s:f.last_s,a:f.last_a??cur.a};onItems(f.items)}catch(e){netOk=false}statusTick()},3000)}
 
 /* ================= демо ================= */
-const CITIES=[['Москва',55.8,37.6],['Санкт-Петербург',59.9,30.3],['Казань',55.8,49.1],['Алматы',43.2,76.9],['Минск',53.9,27.6],['Бангкок',13.8,100.5],['Дубай',25.2,55.3],['Тбилиси',41.7,44.8],['Новосибирск',55,82.9],['Ереван',40.2,44.5],['Стамбул',41,29],['Берлин',52.5,13.4],['Пхукет',7.9,98.4],['Екатеринбург',56.8,60.6]];
+const CITIES=[['Москва',55.8,37.6,'RU'],['Санкт-Петербург',59.9,30.3,'RU'],['Казань',55.8,49.1,'RU'],['Алматы',43.2,76.9,'KZ'],['Минск',53.9,27.6,'BY'],['Бангкок',13.8,100.5,'TH'],['Дубай',25.2,55.3,'AE'],['Тбилиси',41.7,44.8,'GE'],['Новосибирск',55,82.9,'RU'],['Ереван',40.2,44.5,'AM'],['Стамбул',41,29,'TR'],['Берлин',52.5,13.4,'DE'],['Пхукет',7.9,98.4,'TH'],['Екатеринбург',56.8,60.6,'RU']];
 function demoStats(){
   const mk=(pref,team,n)=>Array.from({length:n},(_,i)=>({source:pref+String(i+1).padStart(2,'0'),team,today:0,power:Math.floor(Math.random()*90),hits:0,starts:0,badges:[],rank:0,rank_name:'Новичок'}));
   const partners=[...mk('leo','A',9),...mk('kate','B',9)];
@@ -1771,7 +1922,7 @@ function demoTick(dt){
   if(demoFirst){p.badges=[...p.badges,'first_blood'];demoFirst=false}
   const old=p.rank;p.power+=evPts({kind});state.ranks.forEach((x,i)=>{if(p.power>=x.min)p.rank=i});p.rank_name=state.ranks[p.rank].name;
   if(p.rank>old){rankToast(p.source,p.rank_name,COL[team]);snd.rank()}
-  onItems([{kind,source:p.source,team,city:c[0],lat:c[1],lon:c[2]}]);
+  onItems([{kind,source:p.source,team,city:c[0],lat:c[1],lon:c[2],cc:c[3]}]);
 }
 
 /* ================= заставка ================= */
@@ -1833,7 +1984,7 @@ function frame(now){
   if(glitchT>0&&!REDUCED){glitchT-=rdt;for(let i=0;i<6;i++){const y=Math.random()*cv.height,h=rand(6,40)*DPR,off=rand(-30,30)*DPR;try{g.drawImage(cv,0,y,cv.width,h,off,y,cv.width,h)}catch(e){}}}
   // виньетка
   const vg=g.createRadialGradient(cv.width/2,cv.height*.55,cv.height*.3,cv.width/2,cv.height*.55,cv.height*.95);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,`rgba(0,0,0,${.55+ARENA.tension*.18})`);g.fillStyle=vg;g.fillRect(0,0,cv.width,cv.height);
-  numbersTick(rdt);radarTick(rdt);moodTick(rdt);
+  numbersTick(rdt);radarTick(rdt);moodTick(rdt);mapTick(rdt);
   if(!introOn){if(DEMO)demoTick(rdt);gapT-=rdt;if(gapT<=0&&!F.A.busy&&!F.B.busy){pumpQueue();gapT=evQ.length>8?.12:evQ.length>3?.3:.55}}
 }
 setInterval(clockTick,250);setInterval(statusTick,2000);
