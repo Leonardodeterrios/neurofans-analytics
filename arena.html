@@ -145,6 +145,7 @@ ul.list li:last-child{border-bottom:0}
 .mini{flex:1;height:6px;border-radius:9px;background:rgba(255,255,255,.07);margin:0 10px;overflow:hidden;min-width:40px}
 .mini i{display:block;height:100%;border-radius:9px}
 .pn{font:900 15px var(--disp)}
+.cvb{font:700 10px var(--disp);padding:3px 7px;border-radius:999px;background:rgba(125,255,176,.12);color:#9dffc4;margin-right:8px;white-space:nowrap}
 .rules{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
 @media(max-width:820px){.rules{grid-template-columns:1fr}}
 .rule{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:18px;background:rgba(255,255,255,.04);border:1px solid var(--line);font-size:13px;color:#d8ece9}
@@ -211,8 +212,8 @@ ul.list li:last-child{border-bottom:0}
   </section>
 
   <section class="rules">
-    <div class="rule"><span class="ic">🥊</span><div><b>Переход = удар</b>Каждый клик по твоей ссылке — удар твоей команды и +1 к силе.</div></div>
-    <div class="rule"><span class="ic">🔥</span><div><b>Серия = колено или тип</b>5 ударов подряд от одной команды — коронный приём муай-тай.</div></div>
+    <div class="rule"><span class="ic">🥊</span><div><b>Человек = удар</b>Новый человек по твоей ссылке — удар и +1 к силе. Один человек засчитывается один раз за раунд, боты не считаются.</div></div>
+    <div class="rule"><span class="ic">💥</span><div><b>Дошёл до бота = апперкот</b>Если человек нажал «Старт» в боте — апперкот и +3 к силе. Качественный трафик бьёт сильнее.</div></div>
     <div class="rule"><span class="ic">🔔</span><div><b>Гонг решает</b>В конце раунда побеждает команда с большей силой, лучший боец получает 🥇.</div></div>
   </section>
 
@@ -234,7 +235,7 @@ var TOKEN=P.get('token')||'', TQ=TOKEN?('token='+encodeURIComponent(TOKEN)):'', 
 var $=function(id){return document.getElementById(id);};
 var T={A:{name:'Команда Лёни',color:'#19d3c5',power:0,emoji:'🌊'},B:{name:'Команда Кати',color:'#ff4f8b',power:0,emoji:'🌺'}};
 var tally={},teamMap={},feedItems=[],combo={team:null,n:0},queue=[],busy=false,sound=false,live=false;
-var lastId=0,roundEnd=Date.now()+60000,koShown=false,actx=null,clock=0,timeScale=1,lastFrame=0,frozen=false;
+var lastC=0,lastS=0,START_POWER=3,convMap={},hitsMap={},startsMap={},roundEnd=Date.now()+60000,koShown=false,actx=null,clock=0,timeScale=1,lastFrame=0,frozen=false;
 var cam={z:1,base:1,cx:600,cy:390};
 function camBase(){cam.base=window.innerWidth<700?1.42:1;}
 var F={};
@@ -283,6 +284,9 @@ var POSE_DEF={
   knee:{t:-94,hd:-2,px:64,py:-16,fa1:-12,fa2:34,ba1:-6,ba2:38,fl1:-36,fl2:96,bl1:100,bl2:91},
   hitHead:{t:-108,hd:-28,px:-18,py:0,fa1:74,fa2:20,ba1:108,ba2:40,fl1:72,fl2:96,bl1:118,bl2:100},
   hitBody:{t:-64,hd:16,px:-30,py:7,fa1:62,fa2:-58,ba1:72,ba2:-72,fl1:74,fl2:101,bl1:121,bl2:104},
+  dip:{t:-82,hd:6,px:2,py:12,fa1:40,fa2:-104,ba1:78,ba2:-40,fl1:76,fl2:106,bl1:112,bl2:102},
+  upper:{t:-78,hd:2,px:76,py:-8,fa1:40,fa2:-104,ba1:30,ba2:-78,fl1:56,fl2:98,bl1:122,bl2:104},
+  hitUpper:{t:-116,hd:-44,px:-24,py:-6,fa1:82,fa2:30,ba1:114,ba2:52,fl1:70,fl2:94,bl1:118,bl2:100},
   win:{t:-90,hd:-10,px:0,py:-3,fa1:-74,fa2:-96,ba1:-106,ba2:-88,fl1:70,fl2:93,bl1:110,bl2:96},
   ko:{t:-96,hd:-24,px:-10,py:0,fa1:150,fa2:168,ba1:168,ba2:176,fl1:46,fl2:30,bl1:70,bl2:48,rot:-76}
 };
@@ -293,7 +297,8 @@ var MOVES={
   cross:{pose:'cross',label:'КРОСС',icon:'🥊',hit:'hitHead',tgt:'head',pt:'bGlove'},
   elbow:{pose:'elbow',label:'ЛОКОТЬ',icon:'💥',hit:'hitHead',tgt:'head',pt:'fElbow'},
   teep:{pose:'teep',label:'ТИП',icon:'🦵',hit:'hitBody',tgt:'body',pt:'fFoot',big:true},
-  knee:{pose:'knee',label:'КОЛЕНО',icon:'🔥',hit:'hitBody',tgt:'body',pt:'fKnee',big:true}
+  knee:{pose:'knee',label:'КОЛЕНО',icon:'🔥',hit:'hitBody',tgt:'body',pt:'fKnee',big:true},
+  upper:{pose:'upper',wind:'dip',label:'АППЕРКОТ',icon:'💥',hit:'hitUpper',tgt:'head',pt:'bGlove',big:true,start:true}
 };
 var WORDS=['БАМ!','ХРЯСЬ!','ТЫЩ!','БУМ!','ПОУ!','ВЖУХ!'];
 
@@ -664,7 +669,8 @@ function renderTop(){
   $('top').innerHTML=arr.length?arr.map(function(x,i){
     var col=x.team&&T[x.team]?T[x.team].color:'#a9c2bf';
     return '<li><span><span class="rank">'+(m[i]||((i+1)+'.'))+'</span><span class="dot" style="background:'+col+';color:'+col+'"></span>'+esc(x.source)+'</span>'+
-      '<span class="mini"><i style="width:'+(x.n/mx*100)+'%;background:'+col+'"></i></span><span class="pn">'+x.n+'</span></li>';
+      '<span class="mini"><i style="width:'+(x.n/mx*100)+'%;background:'+col+'"></i></span>'+
+      (convMap[x.source]!=null?'<span class="cvb" title="доходимость до бота">'+convMap[x.source]+'%</span>':'')+'<span class="pn">'+x.n+'</span></li>';
   }).join(''):'<li class="mut">Пока пусто</li>';
 }
 function pushFeed(ev,mv){
@@ -686,9 +692,9 @@ function chooseMove(n){
 function strike(ev){
   var team=ev.team,other=team==='A'?'B':'A';
   if(combo.team===team)combo.n++;else combo={team:team,n:1};
-  var mv=chooseMove(combo.n),A=F[team],D=F[other],big=!!mv.big;
+  var isStart=ev.kind==='start',mv=isStart?MOVES.upper:chooseMove(combo.n),A=F[team],D=F[other],big=!!mv.big,pw=isStart?START_POWER:1;
   A.trailPt=mv.pt;A.trailUntil=Date.now()+(big?330:260);A.hist=[];
-  play(A,[{pose:'wind',d:big?90:60,e:'out'},{pose:mv.pose,d:big?130:95,h:big?110:70,e:'back'},{pose:'idle',d:big?320:220,e:'inout'}]);
+  play(A,[{pose:mv.wind||'wind',d:big?110:60,e:'out'},{pose:mv.pose,d:big?130:95,h:big?110:70,e:'back'},{pose:'idle',d:big?320:220,e:'inout'}]);
   setTimeout(function(){
     play(D,[{pose:mv.hit,d:big?110:85,h:big?90:55,e:'out'},{pose:'idle',d:big?420:280,e:'inout'}]);
     var R=D.R,tp=mv.tgt==='head'?W(D,R.H):W(D,add(R.N,mul(R.u,-48)));
@@ -700,16 +706,18 @@ function strike(ev){
     if(big){shake();flashScreen(tp);cheer();roar();cam.z=cam.base*1.05;fxAt('callout',[600,95],null,mv.label+'!',true);}
     thump(big);
   },big?220:155);
-  T[team].power++;bump(team==='A'?'pwA':'pwB');
+  T[team].power+=pw;bump(team==='A'?'pwA':'pwB');
   if(ev.partner){
-    tally[ev.partner]=(tally[ev.partner]||0)+1;
-    var hp=W(A,A.R?A.R.H:[0,-230]);fxAt('chip',[hp[0],hp[1]-46],{'--c':T[team].color},'+1 · '+ev.partner);
+    tally[ev.partner]=(tally[ev.partner]||0)+pw;
+    if(isStart)startsMap[ev.partner]=(startsMap[ev.partner]||0)+1;else hitsMap[ev.partner]=(hitsMap[ev.partner]||0)+1;
+    if(!live&&hitsMap[ev.partner])convMap[ev.partner]=Math.min(100,Math.round((startsMap[ev.partner]||0)/hitsMap[ev.partner]*1000)/10);
+    var hp=W(A,A.R?A.R.H:[0,-230]);fxAt('chip',[hp[0],hp[1]-46],{'--c':T[team].color},(isStart?'+'+pw+' · в бот! · ':'+1 · ')+ev.partner);
   }
   if(combo.n>=3){var cp=W(A,[-60,-150]);fxAt('combo',cp,null,'🔥 КОМБО ×'+combo.n);}
   pushFeed(ev,mv);render();renderTop();
 }
 function enqueue(ev){
-  if(queue.length>120){T[ev.team].power++;if(ev.partner)tally[ev.partner]=(tally[ev.partner]||0)+1;render();renderTop();return;}
+  if(queue.length>120){var p2=ev.kind==='start'?START_POWER:1;T[ev.team].power+=p2;if(ev.partner)tally[ev.partner]=(tally[ev.partner]||0)+p2;render();renderTop();return;}
   queue.push(ev);pump();
 }
 function pump(){
@@ -783,7 +791,8 @@ function applyStats(d,reset){
   if(!d||!d.teams||d.teams.length<2)throw new Error('bad stats');
   T.A.name=d.teams[0].name;T.B.name=d.teams[1].name;
   T.A.color=d.teams[0].color||T.A.color;T.B.color=d.teams[1].color||T.B.color;applyColors();
-  (d.partners||[]).forEach(function(p){teamMap[p.source]=p.team;});
+  if(d.start_power)START_POWER=d.start_power;
+  (d.partners||[]).forEach(function(p){teamMap[p.source]=p.team;if(p.conv!=null)convMap[p.source]=Math.min(100,p.conv);});
   if(reset||!queue.length){
     T.A.power=d.teams[0].today;T.B.power=d.teams[1].today;tally={};
     (d.partners||[]).forEach(function(p){if(p.today>0)tally[p.source]=p.today;});
@@ -794,12 +803,13 @@ function applyStats(d,reset){
 }
 function refreshStats(reset){return getJSON('/api/stats').then(function(d){applyStats(d,reset);}).catch(function(){});}
 function pollFeed(){
-  getJSON('/api/feed?since='+lastId).then(function(d){
+  getJSON('/api/feed?since_c='+lastC+'&since_s='+lastS).then(function(d){
     (d.items||[]).forEach(function(it){
-      lastId=Math.max(lastId,it.id);teamMap[it.source]=it.team;
-      if(it.team==='A'||it.team==='B')enqueue({team:it.team,partner:it.source});
+      teamMap[it.source]=it.team;
+      if(it.team==='A'||it.team==='B')enqueue({team:it.team,partner:it.source,kind:it.kind});
     });
-    if(typeof d.last_id==='number')lastId=Math.max(lastId,d.last_id);
+    if(typeof d.last_c==='number')lastC=Math.max(lastC,d.last_c);
+    if(typeof d.last_s==='number')lastS=Math.max(lastS,d.last_s);
   }).catch(function(){});
 }
 
@@ -817,7 +827,7 @@ function demoLoop(){
     if(!koShown){
       var bias=Math.sin(Date.now()/9000)*.18,burstN=Math.random()<.14?(3+Math.floor(Math.random()*4)):1;
       var team=Math.random()<.5+bias?'A':'B';
-      for(var b=0;b<burstN;b++)enqueue({team:team,partner:pick(team==='A'?'leo':'kate')});
+      for(var b=0;b<burstN;b++)enqueue({team:team,partner:pick(team==='A'?'leo':'kate'),kind:Math.random()<.13?'start':'hit'});
     }
     setTimeout(step,600+Math.random()*1100);
   }
@@ -847,7 +857,7 @@ function start(isLive){
   requestAnimationFrame(frame);
   intro('РАУНД ДНЯ','БОЙ!',1500);
   if(live){
-    getJSON('/api/feed').then(function(f){lastId=f.last_id||0;}).catch(function(){}).then(function(){
+    getJSON('/api/feed').then(function(f){lastC=f.last_c||0;lastS=f.last_s||0;}).catch(function(){}).then(function(){
       setInterval(pollFeed,3000);
       setInterval(function(){if(!queue.length&&!koShown)refreshStats(false);},15000);
     });
