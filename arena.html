@@ -113,13 +113,18 @@ html,body{height:100%;background:#05060f;color:var(--ink);font:500 14px/1.4 Man,
 @media (max-width:700px){.tm{padding:7px 9px 8px}.tm .pw{margin:3px 0 5px}.tm .sub{margin-top:5px}.ticker .lb{border:0;background:none;padding:0 6px 0 0;border-right:1px solid var(--line);border-radius:0}}
 /* вкладка «Карта ударов» */
 body.off-arena #tags,body.off-arena #toasts,body.off-arena #banner,body.off-arena #lbox{visibility:hidden}
-/* ===== вкладка «Штаб»: слева рейтинг бойцов, справа «Карта ударов» ===== */
-#pg-hq{background:radial-gradient(circle at 72% 38%,rgba(40,28,100,.42),rgba(5,6,15,.97) 62%),#05060f;padding:calc(16px + env(safe-area-inset-top)) 16px calc(30px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px}
-.hq-tabs{display:none;gap:6px;padding:4px;border:1px solid var(--line);border-radius:12px;background:rgba(4,5,14,.7);align-self:center}
-.hq-tabs button{font:800 12px Man;color:var(--mut);background:none;border:0;border-radius:9px;padding:8px 16px;cursor:pointer;letter-spacing:.02em}
-.hq-tabs button.on{color:#05060f;background:linear-gradient(90deg,var(--a),var(--violet));box-shadow:0 0 14px rgba(123,92,255,.5)}
-.hq-grid{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,44fr) minmax(0,56fr);gap:18px}
-.hq-col{min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(123,92,255,.4) transparent;padding:0 4px 20px 0}
+/* ===== боковые вкладки: слева «Карта ударов», справа «Рейтинг бойцов» ===== */
+.page.sub{background:radial-gradient(circle at 60% 35%,rgba(40,28,100,.42),rgba(5,6,15,.97) 62%),#05060f;padding:calc(16px + env(safe-area-inset-top)) 18px calc(34px + env(safe-area-inset-bottom));display:flex;flex-direction:column;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(123,92,255,.4) transparent}
+.back{font:800 12px Man;color:var(--ink);background:rgba(4,5,14,.7);border:1px solid rgba(123,92,255,.45);border-radius:10px;padding:8px 14px;cursor:pointer;box-shadow:0 0 12px rgba(123,92,255,.25);white-space:nowrap;align-self:center}
+.back:hover{background:rgba(123,92,255,.2)}
+.mp-wrap{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px}
+.mp-wrap .mp-globe{height:auto;min-height:440px}
+.mp-wrap .mp-side{grid-template-columns:1fr;overflow-y:auto;min-height:0}
+.rt-wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,400px);gap:18px;align-items:start}
+.rt-aside{position:sticky;top:0}.rt-aside .ach{margin-top:0}.rt-aside .ach-grid{grid-template-columns:1fr 1fr}
+@media (max-width:1000px){.mp-wrap{display:block}.mp-wrap .mp-globe{height:min(92vw,480px);min-height:0;margin-bottom:12px}.mp-wrap .mp-side{grid-template-columns:1fr 1fr;overflow:visible}.mp-wrap .mp-side .mp-box:first-child{grid-column:1/-1}
+  .rt-wrap{display:block}.rt-aside{position:static;margin-top:14px}.rt-aside .ach-grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}}
+@media (max-width:560px){.mp-wrap .mp-side{grid-template-columns:1fr}.mp-kpi{grid-template-columns:1fr 1fr}.page.sub{padding:calc(12px + env(safe-area-inset-top)) 12px calc(34px + env(safe-area-inset-bottom))}.back{padding:7px 11px;font-size:11px}}
 .hq-h{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:12px;flex-wrap:wrap}
 .rt-h{font:800 22px Unb;letter-spacing:.01em}.rt-s{color:var(--mut);font:800 11.5px Man;margin-top:4px}
 .rt-filter{display:flex;gap:4px;padding:3px;border:1px solid var(--line);border-radius:10px;background:rgba(4,5,14,.6)}
@@ -172,7 +177,6 @@ body.off-arena #tags,body.off-arena #toasts,body.off-arena #banner,body.off-aren
 .ach .ranks{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font:800 10.5px Man;color:var(--mut);margin-top:10px}
 .ach .ranks span{padding:3px 8px;border-radius:6px;border:1px solid var(--line);color:var(--ink)}
 /* карта */
-.hq-map{display:flex;flex-direction:column;gap:12px}
 .mp-globe{--c:#7b5cff;position:relative;padding:0;height:min(64vh,580px);flex:none}.mp-globe canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .mp-hud{position:absolute;left:14px;right:14px;bottom:10px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;pointer-events:none}
 .mp-hud span{font:800 10px Man;letter-spacing:.08em;color:#c9cff2;background:rgba(4,5,14,.78);border:1px solid rgba(123,92,255,.35);border-radius:6px;padding:3px 8px}
@@ -193,8 +197,6 @@ body.off-arena #tags,body.off-arena #toasts,body.off-arena #banner,body.off-aren
 .mp-empty{font:800 11px Man;color:var(--mut);padding:4px 0}
 .radar{cursor:pointer;pointer-events:auto}
 @media (max-width:1100px){
-  .hq-tabs{display:flex}.hq-grid{display:block}.hq-col{height:100%}
-  #pg-hq:not(.v-map) .hq-map{display:none}#pg-hq.v-map .hq-rate{display:none}
   .mp-globe{height:min(92vw,480px)}.mp-side{grid-template-columns:1fr 1fr}.mp-side .mp-box:first-child{grid-column:1/-1}.mp-kpi{grid-template-columns:repeat(4,1fr)}
 }
 @media (max-width:560px){.mp-side{grid-template-columns:1fr}.mp-kpi b{font-size:19px}.rt-card{padding:10px 11px 11px 8px;gap:6px 10px}.rt-card .t{font-size:20px}.rt-h{font-size:19px}.rt-tm b{font-size:22px}}
@@ -299,6 +301,17 @@ body.off-arena #tags,body.off-arena #toasts,body.off-arena #banner,body.off-aren
 <canvas id="scene"></canvas>
 <div id="tags"></div>
 <div id="pager">
+  <section class="page sub" id="pg-map">
+    <div class="hq-h"><div><div class="rt-h">Карта ударов</div><div class="rt-s">живые удары и действия по городам · с момента открытия · гео DB-IP, только город</div></div><button class="back" data-go="1">Арена →</button></div>
+    <div class="mp-wrap">
+      <div class="mp-globe card"><canvas id="mapC"></canvas><div class="mp-hud" id="mpHud"></div></div>
+      <div class="mp-side">
+        <div class="card mp-box"><div class="ovl"><span>сводка</span><span id="mpClock"></span></div><div class="mp-kpi" id="mpKpi"></div></div>
+        <div class="card mp-box"><div class="ovl"><span>топ городов</span></div><div id="mpTop"></div></div>
+        <div class="card mp-box"><div class="ovl"><span>последние удары</span></div><div id="mpLast"></div></div>
+      </div>
+    </div>
+  </section>
   <section class="page" id="pg-arena">
     <div class="hud">
       <div class="tm a card" id="tA" style="--c:var(--a)"><div class="hd"><div class="nm" id="nA">Команда A</div><span class="tg">СИЛА</span></div><div class="pw"><span id="pA">0</span></div><div class="cells" id="cA"></div><div class="sub" id="sA">—</div></div>
@@ -313,30 +326,16 @@ body.off-arena #tags,body.off-arena #toasts,body.off-arena #banner,body.off-aren
       <div class="ticker card" id="tickerBox"><span class="lb"><i></i>LIVE</span><div class="lst" id="ticker"></div></div>
     </div>
   </section>
-  <section class="page" id="pg-hq">
-    <div class="hq-tabs" id="hqTabs"><button data-v="rate" class="on">Рейтинг бойцов</button><button data-v="map">Карта ударов</button></div>
-    <div class="hq-grid">
-      <div class="hq-col hq-rate">
-        <div class="hq-h"><div><div class="rt-h">Рейтинг бойцов</div><div class="rt-s" id="rtS">сила в текущем раунде · ранг — по силе за всё время</div></div>
-          <div class="rt-filter" id="rtF"><button data-t="" class="on">Все</button><button data-t="A" id="rtFA">A</button><button data-t="B" id="rtFB">B</button></div></div>
-        <div class="rt-teams" id="rtTeams"></div>
-        <div id="rtMe"></div>
-        <div id="rtList"></div>
-        <div class="ach card" id="ach"></div>
-      </div>
-      <div class="hq-col hq-map">
-        <div class="hq-h"><div><div class="rt-h">Карта ударов</div><div class="rt-s">живые удары и действия по городам · с момента открытия · гео DB-IP, только город</div></div></div>
-        <div class="mp-globe card"><canvas id="mapC"></canvas><div class="mp-hud" id="mpHud"></div></div>
-        <div class="mp-side">
-          <div class="card mp-box"><div class="ovl"><span>сводка</span><span id="mpClock"></span></div><div class="mp-kpi" id="mpKpi"></div></div>
-          <div class="card mp-box"><div class="ovl"><span>топ городов</span></div><div id="mpTop"></div></div>
-          <div class="card mp-box"><div class="ovl"><span>последние удары</span></div><div id="mpLast"></div></div>
-        </div>
-      </div>
+  <section class="page sub" id="pg-rate">
+    <div class="hq-h"><button class="back" data-go="1">← Арена</button><div style="flex:1;min-width:200px"><div class="rt-h">Рейтинг бойцов</div><div class="rt-s" id="rtS">сила в текущем раунде · ранг — по силе за всё время</div></div>
+      <div class="rt-filter" id="rtF"><button data-t="" class="on">Все</button><button data-t="A" id="rtFA">A</button><button data-t="B" id="rtFB">B</button></div></div>
+    <div class="rt-wrap">
+      <div class="rt-main"><div class="rt-teams" id="rtTeams"></div><div id="rtMe"></div><div id="rtList"></div></div>
+      <div class="rt-aside"><div class="ach card" id="ach"></div></div>
     </div>
   </section>
 </div>
-<div class="dots"><i class="on"></i><i></i></div>
+<div class="dots"><i></i><i class="on"></i><i></i></div>
 <div class="ov" id="lbox"><span>ПОВТОР</span></div>
 <div class="ov" id="banner"><div class="glow"><div class="ovc"><div class="ovl">серия ударов</div><div class="bt" id="bnT">×5</div><div class="bs" id="bnS"></div><div class="bseg" id="bnSeg"></div></div></div></div>
 <div class="ov" id="fight"><span>БОЙ!</span></div>
@@ -1826,7 +1825,7 @@ function mapAim(){if(mp.focus)return;const now=Date.now();let sx=0,sy=0,sz=0;con
   const l=Math.hypot(sx,sy,sz);if(!l)return;const lat=Math.asin(sy/l),lon=Math.atan2(sx,sz);mp.tRot=lon;mp.tTilt=clamp(lat,.05,1.05);
   let spread=0;for(const c of cs){const v=v3(c.lat,c.lon);spread=Math.max(spread,Math.acos(clamp((v[0]*sx+v[1]*sy+v[2]*sz)/l,-1,1)))}
   mp.tZoom=clamp(.95/(Math.sin(Math.min(spread,1.4))+.3),1,2.1)}
-function mapVisible(){const p=$('pager');if(!p||Math.abs(p.scrollLeft/p.clientWidth-1)>=.98)return false;return innerWidth>1100||$('pg-hq').classList.contains('v-map')}
+function mapVisible(){const p=$('pager');return !!p&&p.scrollLeft/p.clientWidth<.98}
 function mapResize(){const cv=$('mapC');if(!cv)return;const r=cv.getBoundingClientRect(),d=Math.min(2,devicePixelRatio||1)*(Q===0?.75:1);cv.width=Math.max(10,Math.round(r.width*d));cv.height=Math.max(10,Math.round(r.height*d));mp.cv=cv;mp.x=cv.getContext('2d');mp.w=cv.width;mp.h=cv.height;mp.d=d}
 function mapFocus(key){const c=GEO.cities[key];if(!c)return;mp.focus=key;mp.focusT=4;mp.tRot=c.lon*Math.PI/180;mp.tTilt=clamp(c.lat*Math.PI/180,.05,1.05);mp.dirty=true}
 function mapTick(dt){
@@ -1970,19 +1969,33 @@ function closeKo(){if(!koActive)return;$('ko').classList.remove('on');koActive=f
   fightIntro()}
 
 /* ================= звук (WebAudio, без файлов) ================= */
-const snd=(()=>{let ac=null,on=false,master=null,comp=null,rainN=null,nbuf=null,mus=null,musG=.15,delay=null,mT=null,step=0,nextT=0;
-  // фоновый кибер-луп: 116 BPM, Am–F–C–G; бас пульсирует восьмыми, мягкая «бочка», хэт на слабые доли, арпеджио с эхом, пэд
-  const BPM=116,S16=60/BPM/4,PROG=[[45,57,60,64],[41,53,57,60],[48,55,60,64],[43,55,59,62]],mf=n=>440*Math.pow(2,(n-69)/12);
+const snd=(()=>{let ac=null,on=false,master=null,comp=null,rainN=null,nbuf=null,mus=null,musG=.17,delay=null,mT=null,step=0,nextT=0;
+  // фоновый драм-н-бейс: 174 BPM, брейк «кик–снейр» с призрачными долями, хэты восьмыми с роллами, ривз-бас (две расстроенные пилы + саб) с «вау»-фильтром, стэбы и пэд
+  const BPM=174,S16=60/BPM/4,PROG=[[45,57,60,64],[41,53,57,60],[48,55,60,64],[43,55,59,62]],BASS=[33,29,36,31],mf=n=>440*Math.pow(2,(n-69)/12);
   function mnote(type,f,t,d,g,lp,dst){const o=ac.createOscillator(),gn=ac.createGain();o.type=type;o.frequency.setValueAtTime(f,t);let n=o;
     if(lp){const fl=ac.createBiquadFilter();fl.type='lowpass';fl.frequency.setValueAtTime(lp[0],t);fl.frequency.exponentialRampToValueAtTime(lp[1],t+d);fl.Q.value=lp[2]||4;o.connect(fl);n=fl}
     gn.gain.setValueAtTime(0,t);gn.gain.linearRampToValueAtTime(g,t+.008);gn.gain.exponentialRampToValueAtTime(.0001,t+d);n.connect(gn);gn.connect(dst||mus);o.start(t);o.stop(t+d+.02)}
-  function mstep(i,t){const bar=Math.floor(i/16)%4,s16=i%16,ch=PROG[bar],q=Q,red=REDUCED;
-    if(s16%2===0)mnote('sawtooth',mf(ch[0]-12+(s16%8===6?12:0)),t,S16*1.8,.5,[900,120,6]);                       // пульсирующий бас
-    if(s16%4===0){const o=ac.createOscillator(),gn=ac.createGain();o.frequency.setValueAtTime(120,t);o.frequency.exponentialRampToValueAtTime(40,t+.18);gn.gain.setValueAtTime(.7,t);gn.gain.exponentialRampToValueAtTime(.001,t+.22);o.connect(gn);gn.connect(mus);o.start(t);o.stop(t+.25)}   // кибер-пульс
-    if(q>0&&s16%4===2){const sN=ac.createBufferSource();sN.buffer=noise(.1);const hp=ac.createBiquadFilter();hp.type='highpass';hp.frequency.value=7000;const gn=ac.createGain();gn.gain.setValueAtTime(.12,t);gn.gain.exponentialRampToValueAtTime(.001,t+.05);sN.connect(hp);hp.connect(gn);gn.connect(mus);sN.start(t,Math.random()*.5);sN.stop(t+.06)}
-    if(q>0&&!red){const arp=[1,2,3,2,1,3,2,3][s16%8];mnote(q===2?'square':'triangle',mf(ch[arp]+12),t,S16*.9,.11,[3200,900,2],delay)}   // арпеджио с эхом
-    if(q===2&&s16===0)for(const n of [ch[1],ch[2],ch[3]])for(const dt2 of [-6,6]){const o=ac.createOscillator(),gn=ac.createGain(),fl=ac.createBiquadFilter();o.type='sawtooth';o.frequency.value=mf(n);o.detune.value=dt2;fl.type='lowpass';fl.frequency.value=900;
-      const L=S16*16;gn.gain.setValueAtTime(0,t);gn.gain.linearRampToValueAtTime(.035,t+L*.4);gn.gain.linearRampToValueAtTime(0,t+L);o.connect(fl);fl.connect(gn);gn.connect(mus);o.start(t);o.stop(t+L+.05)}}   // пэд
+  function kick(t,v=1){const o=ac.createOscillator(),gn=ac.createGain();o.frequency.setValueAtTime(160,t);o.frequency.exponentialRampToValueAtTime(42,t+.12);gn.gain.setValueAtTime(.95*v,t);gn.gain.exponentialRampToValueAtTime(.001,t+.28);o.connect(gn);gn.connect(mus);o.start(t);o.stop(t+.3)}
+  function snare(t,v=1){const s=ac.createBufferSource();s.buffer=noise(.3);const bp=ac.createBiquadFilter();bp.type='bandpass';bp.frequency.value=1900;bp.Q.value=.8;const gn=ac.createGain();gn.gain.setValueAtTime(.55*v,t);gn.gain.exponentialRampToValueAtTime(.001,t+.17);s.connect(bp);bp.connect(gn);gn.connect(mus);s.start(t,Math.random()*.5);s.stop(t+.2);
+    const o=ac.createOscillator(),og=ac.createGain();o.frequency.setValueAtTime(230,t);o.frequency.exponentialRampToValueAtTime(150,t+.06);og.gain.setValueAtTime(.3*v,t);og.gain.exponentialRampToValueAtTime(.001,t+.09);o.connect(og);og.connect(mus);o.start(t);o.stop(t+.1)}
+  function hat(t,v=1,open){const s=ac.createBufferSource();s.buffer=noise(.2);const hp=ac.createBiquadFilter();hp.type='highpass';hp.frequency.value=8000;const gn=ac.createGain();gn.gain.setValueAtTime(.13*v,t);gn.gain.exponentialRampToValueAtTime(.001,t+(open?.16:.035));s.connect(hp);hp.connect(gn);gn.connect(mus);s.start(t,Math.random()*.5);s.stop(t+.18)}
+  function reese(f,t,d){const out=ac.createGain(),fl=ac.createBiquadFilter();fl.type='lowpass';fl.Q.value=7;fl.frequency.setValueAtTime(180,t);fl.frequency.linearRampToValueAtTime(900,t+d*.35);fl.frequency.exponentialRampToValueAtTime(220,t+d);
+    out.gain.setValueAtTime(0,t);out.gain.linearRampToValueAtTime(.32,t+.015);out.gain.setValueAtTime(.32,t+d*.8);out.gain.exponentialRampToValueAtTime(.0001,t+d);fl.connect(out);out.connect(mus);
+    for(const dt2 of [-14,14]){const o=ac.createOscillator();o.type='sawtooth';o.frequency.value=f;o.detune.value=dt2;o.connect(fl);o.start(t);o.stop(t+d+.02)}
+    const sub=ac.createOscillator(),sg=ac.createGain();sub.frequency.value=f;sg.gain.setValueAtTime(0,t);sg.gain.linearRampToValueAtTime(.38,t+.01);sg.gain.exponentialRampToValueAtTime(.0001,t+d);sub.connect(sg);sg.connect(mus);sub.start(t);sub.stop(t+d+.02)}
+  function mstep(i,t){const bar=Math.floor(i/16)%4,s16=i%16,ch=PROG[bar],q=Q,red=REDUCED,sw=s16%2?S16*.06:0;t+=sw;
+    // ударные: двухшаговый брейк
+    if(s16===0||s16===10||(bar%2&&s16===7))kick(t,s16===7?.75:1);
+    if(s16===4||s16===12)snare(t,1);else if(q>0&&((s16===7&&bar%2===0)||(s16===14&&bar===3)||s16===15&&bar%2))snare(t,.28);
+    if(s16%2===0)hat(t,s16%4===2?1:.6,q>0&&s16===6);else if(q>0&&(bar===3&&s16>=13))hat(t,.5);
+    // ривз-бас: корень, перебивка, октава
+    const r=mf(BASS[bar]);if(s16===0)reese(r,t,S16*5.6);if(s16===6)reese(r,t,S16*1.8);if(s16===10)reese(r*(bar%2?1.5:2),t,S16*5.4);
+    // стэбы аккорда с эхом и лёгкое арпеджио
+    if(q>0&&(s16===2||(s16===11&&bar%2)))for(const n of ch.slice(1))mnote('sawtooth',mf(n+12),t,S16*1.6,.045,[2600,700,3],delay);
+    if(q===2&&!red&&bar%2===1&&s16%2===1)mnote('triangle',mf(ch[[1,2,3,2,1,3,2,3][s16>>1]]+24),t,S16*.8,.04,[4000,1500,2],delay);
+    // пэд на весь такт
+    if(q===2&&s16===0)for(const n of [ch[1],ch[2]])for(const dt2 of [-7,7]){const o=ac.createOscillator(),gn=ac.createGain(),fl=ac.createBiquadFilter();o.type='sawtooth';o.frequency.value=mf(n);o.detune.value=dt2;fl.type='lowpass';fl.frequency.value=1100;
+      const L=S16*16;gn.gain.setValueAtTime(0,t);gn.gain.linearRampToValueAtTime(.022,t+L*.3);gn.gain.linearRampToValueAtTime(0,t+L);o.connect(fl);fl.connect(gn);gn.connect(mus);o.start(t);o.stop(t+L+.05)}}
   function musStart(){if(mus)return;mus=ac.createGain();mus.gain.value=0;mus.gain.setTargetAtTime(musG,ac.currentTime,.8);mus.connect(master);
     delay=ac.createDelay(1);delay.delayTime.value=S16*3;const fb=ac.createGain();fb.gain.value=.32;const dg=ac.createGain();dg.gain.value=.5;delay.connect(fb);fb.connect(delay);delay.connect(dg);dg.connect(mus);
     nextT=ac.currentTime+.1;step=0;mT=setInterval(()=>{if(!on||document.hidden)return;while(nextT<ac.currentTime+.25){mstep(step++,nextT);nextT+=S16}},60)}
@@ -2030,12 +2043,14 @@ const snd=(()=>{let ac=null,on=false,master=null,comp=null,rainN=null,nbuf=null,
     rank(){[392,523,659,1046].forEach((f,i)=>osc('triangle',f,f,.005,.25,.12,{at:i*.09}))}};
 })();
 $('bSnd').onclick=()=>{const on=snd.toggle();$('bSnd').textContent=on?'🔊':'🔇';$('bSnd').classList.toggle('on',on)};
-const hqView=v=>{$('pg-hq').classList.toggle('v-map',v==='map');[...$('hqTabs').children].forEach(b=>b.classList.toggle('on',b.dataset.v===v));mp.x=null};
-const goPage=(i,v)=>{const p=$('pager');p.style.pointerEvents='auto';const cur=Math.round(p.scrollLeft/p.clientWidth),same=cur===i&&(!v||($('pg-hq').classList.contains('v-map')?'map':'rate')===v||innerWidth>1100);if(v)hqView(v);p.scrollTo({left:(same?0:i)*p.clientWidth,behavior:'smooth'})};
-$('bRate').onclick=()=>goPage(1,'rate');$('bMap').onclick=()=>goPage(1,'map');document.querySelector('.radar').onclick=()=>goPage(1,'map');
-$('hqTabs').onclick=e=>{const b=e.target.closest('button');if(b)hqView(b.dataset.v)};
-$('rtF').onclick=e=>{const b=e.target.closest('button');if(!b)return;rtFilter=b.dataset.t;[...$('rtF').children].forEach(x=>x.classList.toggle('on',x===b));rating()};addEventListener('resize',()=>{mp.x=null});
-$('pager').addEventListener('scroll',()=>{const p=$('pager'),i=Math.round(p.scrollLeft/p.clientWidth);document.body.classList.toggle('off-arena',i>0);[...document.querySelectorAll('.dots i')].forEach((d,k)=>d.classList.toggle('on',k===i));if(!TOUCH)p.style.pointerEvents=i?'auto':'none'},{passive:true});
+let curPage=1;const pgr=$('pager');
+const goPage=i=>{pgr.style.pointerEvents='auto';const cur=Math.round(pgr.scrollLeft/pgr.clientWidth),to=cur===i?1:i;pgr.scrollTo({left:to*pgr.clientWidth,behavior:'smooth'})};
+$('bRate').onclick=()=>goPage(2);$('bMap').onclick=()=>goPage(0);document.querySelector('.radar').onclick=()=>goPage(0);
+document.querySelectorAll('.back').forEach(b=>b.onclick=()=>goPage(+b.dataset.go));
+const toArena=()=>{pgr.style.scrollBehavior='auto';pgr.scrollLeft=curPage*pgr.clientWidth;pgr.style.scrollBehavior=''};toArena();requestAnimationFrame(toArena);
+addEventListener('resize',()=>{mp.x=null;toArena()});
+$('rtF').onclick=e=>{const b=e.target.closest('button');if(!b)return;rtFilter=b.dataset.t;[...$('rtF').children].forEach(x=>x.classList.toggle('on',x===b));rating()};
+$('pager').addEventListener('scroll',()=>{const p=$('pager'),i=Math.round(p.scrollLeft/p.clientWidth);curPage=i;document.body.classList.toggle('off-arena',i!==1);[...document.querySelectorAll('.dots i')].forEach((d,k)=>d.classList.toggle('on',k===i));if(!TOUCH)p.style.pointerEvents=i!==1?'auto':'none';if(i===0)mp.x=null},{passive:true});
 
 /* ================= данные: SSE + запасной опрос ================= */
 let cur={c:null,s:null,a:null},es=null,esFails=0,pollT=null;
