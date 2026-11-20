@@ -52,7 +52,7 @@ docker compose up -d --build
 IP=$(curl -fsS ifconfig.me 2>/dev/null || echo "<IP-сервера>")
 echo
 echo "================ ГОТОВО ================"
-echo "Бот запущен. Дашборд: http://$IP:8080"
+echo "Готово. Дашборд: http://$IP/  (после настройки DOMAIN в .env — https://ДОМЕН/)"
 echo
 echo "Дальше, чтобы включить уведомления и /stats:"
 echo "  1) Напиши своему боту в Telegram команду /myid — он вернёт твой chat_id."

@@ -1,0 +1,21 @@
+# HTTPS для трекера: Caddy сам получает и продлевает бесплатный сертификат Let's Encrypt.
+# Домен берётся из DOMAIN в .env (например go.ai-creators.ru). Cloudflare не используем:
+# с июня 2025 российские провайдеры режут сайты за Cloudflare.
+
+{$DOMAIN} {
+	reverse_proxy app:8080 {
+		header_up X-Real-IP {remote_host}
+	}
+}
+
+# http://домен → https://домен (тот же путь)
+http://{$DOMAIN} {
+	redir https://{host}{uri} 308
+}
+
+# Всё остальное по http (старые ссылки на голый IP, старый URL в PuzzleBot) продолжает работать.
+:80 {
+	reverse_proxy app:8080 {
+		header_up X-Real-IP {remote_host}
+	}
+}

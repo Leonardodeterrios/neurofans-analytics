@@ -76,6 +76,13 @@ app.TRUST_CF=False
 flask.request.headers=H({"CF-Connecting-IP":"6.6.6.6","X-Forwarded-For":"7.7.7.7"}); flask.request.remote_addr="1.2.3.4"
 assert app._client_ip()=="1.2.3.4"; app.TRUST_CF=True
 assert app._client_ip()=="6.6.6.6"; print("подделка IP через заголовки: не проходит без Cloudflare ✅")
+app.TRUST_CF=False
+flask.request.headers=H({"X-Real-IP":"8.8.8.8"}); flask.request.remote_addr="1.2.3.4"
+assert app._client_ip()=="1.2.3.4"            # из интернета X-Real-IP игнорируется
+flask.request.remote_addr="172.18.0.3"
+assert app._client_ip()=="8.8.8.8"            # от нашего caddy — берём
+flask.request.remote_addr="1.2.3.4"; app.TRUST_CF=True
+print("X-Real-IP: верим только нашему caddy ✅")
 # встроенные браузеры приложений — люди, превью и скрипты — нет
 HUMANS=["Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 309.0.0.40.113 (iPhone14,5; iOS 17_0; ru_RU)",
  "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Barcelona 307.0.0.30.109 (iPhone15,2; iOS 17_1)",

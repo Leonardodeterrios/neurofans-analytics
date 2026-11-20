@@ -2,8 +2,22 @@ services:
   app:
     build: .
     restart: unless-stopped
-    env_file: .env          # BOT_TOKEN, BOT_USERNAME, ADMIN_CHAT_ID, ...
-    ports:
-      - "80:8080"           # ссылка-считалка: http://СЕРВЕР/go?source=... ; дашборд: http://СЕРВЕР/
+    env_file: .env          # BOT_TOKEN, BOT_USERNAME, ADMIN_CHAT_ID, DOMAIN, ...
+    expose:
+      - "8080"              # наружу не открыт: снаружи к приложению ходит только caddy
     volumes:
       - ./data:/app/data    # база переходов хранится на диске сервера
+
+  caddy:                    # HTTPS-вход: 443 (домен) и 80 (http и старые ссылки на IP)
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}   # из .env; пока не задан — работает только http
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy:/data       # сертификаты, чтобы не получать их заново при перезапуске

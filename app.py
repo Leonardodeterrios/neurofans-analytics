@@ -18,7 +18,7 @@ PuzzleBot на /start шлёт GET /bot/start?p=<start-параметр>&uid=<te
 Сила = засчитанные удары + START_POWER × новые люди, дошедшие до бота («апперкот»).
 polling не запускаем: токен бота нужен только для уведомлений (sendMessage), с PuzzleBot не конфликтует.
 """
-import os, io, csv, re, hmac, hashlib, sqlite3, threading, time, logging, datetime as dt
+import os, io, csv, re, hmac, ipaddress, hashlib, sqlite3, threading, time, logging, datetime as dt
 from urllib.parse import quote
 from zoneinfo import ZoneInfo
 import httpx
@@ -466,11 +466,23 @@ def scheduler_loop():
 
 
 # ---------- веб ----------
+def _from_local_proxy():
+    """Запрос пришёл от нашего caddy (внутренняя сеть docker), а не напрямую из интернета."""
+    try:
+        return ipaddress.ip_address((request.remote_addr or "").strip()).is_private
+    except ValueError:
+        return False
+
 def _client_ip():
-    """Настоящий IP посетителя. Заголовки прокси подделываются кем угодно, поэтому верим им
-    только когда сайт стоит за Cloudflare (TRUST_CF=1); иначе — адрес TCP-соединения."""
+    """Настоящий IP посетителя. Заголовки прокси подделываются кем угодно, поэтому верим:
+    X-Real-IP — только от нашего caddy (он перезаписывает заголовок адресом соединения),
+    CF-Connecting-IP — только при TRUST_CF=1; иначе — адрес TCP-соединения."""
     if TRUST_CF:
         v = request.headers.get("CF-Connecting-IP", "")
+        if v:
+            return v.strip()
+    if _from_local_proxy():
+        v = request.headers.get("X-Real-IP", "")
         if v:
             return v.strip()
     return request.remote_addr or ""
