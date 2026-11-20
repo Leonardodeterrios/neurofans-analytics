@@ -161,6 +161,28 @@ try:
     print("карточки: story", len(png)//1024, "КБ, og", len(ogp)//1024, "КБ ✅")
 except ImportError:
     print("Pillow нет — карточки пропущены")
+# 12) действия в боте
+def act(uid,a,key="k123"):
+    flask.request.values={"uid":str(uid),"act":a,"key":key}
+    return json.loads(app.bot_action().content)
+flask.request.values={"uid":"1","act":"site","key":"bad"}
+try: app.bot_action(); raise SystemExit("без ключа должно быть 403")
+except flask._Abort as e: assert e.code==403
+assert act(999999,"site")["reason"]=="uid_not_attributed"          # человек без засчитанного /start — тихо игнорируем
+assert act(555,"nonsense")["reason"]=="unknown_act"
+u7=[r for r in sqlite3.connect(DB).execute("SELECT tg_uid,label FROM starts WHERE scored=1 AND label='leo07'")][0][0]
+p0=next(p for p in app.get_stats()["partners"] if p["source"]=="leo07")["power"]
+flask.request.args={"token":"pub"}; base=json.loads(app.api_feed().content)
+r1=act(u7,"site"); r2=act(u7,"site"); r3=act(u7,"examples")
+assert r1["ok"] and r1["points"]==8 and r1["label"]=="leo07" and r2["reason"]=="duplicate" and r3["points"]==2, (r1,r2,r3)
+st=app.get_stats(); P7=next(p for p in st["partners"] if p["source"]=="leo07")
+assert P7["power"]==p0+10 and P7["act_points"]==10 and P7["act_points_today"]==10, P7
+flask.request.args={"token":"pub","since_c":str(base["last_c"]),"since_s":str(base["last_s"]),"since_a":str(base["last_a"])}
+fa=json.loads(app.api_feed().content); kinds=[(i["kind"],i.get("points")) for i in fa["items"]]
+assert ("site",8) in kinds and ("examples",2) in kinds, kinds
+flask.request.args={"token":"pub","since_c":str(base["last_c"]),"since_s":str(base["last_s"]),"since_a":str(base["last_a"])}
+gen=app.api_stream().content; next(gen); ev=next(gen); assert '"site"' in ev and '"points": 8' in ev, ev
+print("действия в боте: +8 сайт, +2 примеры, повтор игнор, чужой uid игнор, в ленте и SSE ✅")
 print("\n"+app.daily_results_text())
 print("\n"+app.stats_text())
 print("\nВСЕ ПРОВЕРКИ ПРОШЛИ ✅")

@@ -55,6 +55,7 @@ PORT               = _int("DASHBOARD_PORT", 8080)
 SHEET_WEBHOOK_URL  = _str("SHEET_WEBHOOK_URL")
 NOTIFY_CLICKS      = _flag("NOTIFY_CLICKS", "1")
 NOTIFY_STARTS      = _flag("NOTIFY_STARTS", "1")
+NOTIFY_ACTIONS     = _flag("NOTIFY_ACTIONS", "0")   # уведомлять о каждом действии в боте (по умолчанию нет — их много)
 DAILY_SUMMARY_TIME = _str("DAILY_SUMMARY_TIME")
 SUMMARY_TZ         = _str("SUMMARY_TZ", "Asia/Bangkok") or "Asia/Bangkok"
 SILENCE_HOURS      = _int("SILENCE_HOURS", 24)
@@ -96,6 +97,16 @@ ARENA_PATH = os.path.join(HERE, "arena.html")
 PARTNER_PATH = os.path.join(HERE, "partner.html")
 
 # Ранги по силе за всё время и ачивки (значки рядом с меткой партнёра)
+# Целевые действия в боте (кнопки PuzzleBot → /bot/action): код → (очки, подпись для ленты)
+ACTIONS = {
+    "examples": (2, "смотрит примеры генераций"),
+    "guide":    (3, "взял бесплатный гайд"),
+    "prompts":  (3, "открыл базу промтов"),
+    "sim":      (4, "в симуляторе чаттера"),
+    "channel":  (4, "в Telegram-канале"),
+    "reviews":  (5, "читает отзывы учеников"),
+    "site":     (8, "перешёл на сайт"),
+}
 RANKS = [(0, "Новичок"), (10, "Боец"), (30, "Воин"), (75, "Мастер"), (150, "Чемпион"), (300, "Легенда")]
 BADGES = {
     "first_blood": ("🩸", "Первая кровь", "первый удар этого раунда"),
@@ -200,6 +211,9 @@ def init_db():
         c.execute("""CREATE TABLE IF NOT EXISTS starts(
             id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT, label TEXT, click_id INTEGER,
             tg_uid INTEGER, ch TEXT, scored INTEGER)""")
+        c.execute("""CREATE TABLE IF NOT EXISTS actions(
+            id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT, tg_uid INTEGER, act TEXT, label TEXT,
+            points INTEGER, start_id INTEGER, UNIQUE(tg_uid, act))""")
         c.execute("""CREATE TABLE IF NOT EXISTS alerts(
             id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT, source TEXT, kind TEXT)""")
         c.execute("CREATE INDEX IF NOT EXISTS ix_clicks_src_vid ON clicks(source, vid, rnd)")
@@ -208,6 +222,8 @@ def init_db():
         c.execute("CREATE INDEX IF NOT EXISTS ix_clicks_ts ON clicks(ts)")
         c.execute("CREATE INDEX IF NOT EXISTS ix_starts_uid ON starts(tg_uid)")
         c.execute("CREATE INDEX IF NOT EXISTS ix_starts_ts ON starts(ts)")
+        c.execute("CREATE INDEX IF NOT EXISTS ix_actions_ts ON actions(ts)")
+        c.execute("CREATE INDEX IF NOT EXISTS ix_actions_label ON actions(label)")
 
 def record_click(source, ch, ip, ua, vid, geo=None):
     """Пишет клик. Возвращает (id клика, засчитан ли удар, новый ли человек)."""
@@ -255,6 +271,27 @@ def record_start(raw_payload, uid):
     return {"label": label, "click_id": cid, "ch": ch, "scored": bool(scored)}
 
 
+def record_action(uid, act):
+    """Кнопка в боте. Очки идут партнёру, который привёл этого человека (его засчитанный старт).
+    Один tg_uid получает очки за каждое действие один раз за всё время. Неизвестный uid — тихо игнорируем."""
+    act = (act or "").strip().lower()
+    if act not in ACTIONS:
+        return {"ok": False, "reason": "unknown_act"}
+    if not uid:
+        return {"ok": False, "reason": "no_uid"}
+    with _conn() as c:
+        st = c.execute("SELECT id, label FROM starts WHERE tg_uid=? AND scored=1 ORDER BY id LIMIT 1", (uid,)).fetchone()
+        if st is None or not team_of(st["label"]):
+            return {"ok": False, "reason": "uid_not_attributed"}
+        pts = ACTIONS[act][0]
+        cur = c.execute("INSERT OR IGNORE INTO actions(ts,tg_uid,act,label,points,start_id) VALUES(?,?,?,?,?,?)",
+                        (_now_iso(), uid, act, st["label"], pts, st["id"]))
+        if cur.rowcount == 0:
+            return {"ok": False, "reason": "duplicate", "label": st["label"], "act": act}
+    _stats_cache.clear()
+    return {"ok": True, "label": st["label"], "act": act, "points": pts}
+
+
 # ---------- статистика ----------
 def _conv(starts, hits):
     return round(starts / hits * 100, 1) if hits else None
@@ -277,19 +314,22 @@ def round_history(c):
     A, h = _anchor(), {}
     for lab, r, n in c.execute("SELECT source, (CAST(strftime('%s', ts) AS INTEGER) - ?) / 86400, SUM(scored) "
                                "FROM clicks WHERE scored=1 GROUP BY 1, 2", (A,)):
-        h.setdefault(lab, {}).setdefault(r, [0, 0])[0] += n or 0
+        h.setdefault(lab, {}).setdefault(r, [0, 0, 0])[0] += n or 0
     for lab, r, n in c.execute("SELECT label, (CAST(strftime('%s', ts) AS INTEGER) - ?) / 86400, SUM(scored) "
                                "FROM starts WHERE scored=1 GROUP BY 1, 2", (A,)):
-        h.setdefault(lab, {}).setdefault(r, [0, 0])[1] += n or 0
+        h.setdefault(lab, {}).setdefault(r, [0, 0, 0])[1] += n or 0
+    for lab, r, n in c.execute("SELECT label, (CAST(strftime('%s', ts) AS INTEGER) - ?) / 86400, SUM(points) "
+                               "FROM actions GROUP BY 1, 2", (A,)):
+        h.setdefault(lab, {}).setdefault(r, [0, 0, 0])[2] += n or 0
     h.pop("direct", None)
     return h
 
 def _pw(v):
-    return v[0] + START_POWER * v[1]
+    return v[0] + START_POWER * v[1] + (v[2] if len(v) > 2 else 0)
 
 def round_summary(hist, idx):
     """Итоги одного раунда: сила команд, удары/апперкоты, топ-3 партнёров."""
-    teams = {k: {"key": k, "name": n, "color": col, "power": 0, "hits": 0, "starts": 0}
+    teams = {k: {"key": k, "name": n, "color": col, "power": 0, "hits": 0, "starts": 0, "actions": 0}
              for k, (n, _p, col) in TEAMS.items()}
     rows = []
     for lab, rr in hist.items():
@@ -297,8 +337,8 @@ def round_summary(hist, idx):
         tk = team_of(lab)
         if not v or not tk:
             continue
-        t = teams[tk]; t["power"] += _pw(v); t["hits"] += v[0]; t["starts"] += v[1]
-        rows.append({"source": lab, "team": tk, "power": _pw(v), "hits": v[0], "starts": v[1]})
+        t = teams[tk]; t["power"] += _pw(v); t["hits"] += v[0]; t["starts"] += v[1]; t["actions"] += v[2]
+        rows.append({"source": lab, "team": tk, "power": _pw(v), "hits": v[0], "starts": v[1], "actions": v[2]})
     rows.sort(key=lambda x: (-x["power"], x["source"]))
     a, b = teams["A"], teams["B"]
     win = None if a["power"] == b["power"] else ("A" if a["power"] > b["power"] else "B")
@@ -348,6 +388,10 @@ def _get_stats(at=None):
             "SELECT COALESCE(ch,''), COUNT(*), SUM(scored) FROM clicks GROUP BY 1")}
         ch_starts = {r[0]: r[1] or 0 for r in c.execute(
             "SELECT COALESCE(ch,''), SUM(scored) FROM starts GROUP BY 1")}
+        act_all = {r[0]: r[1] or 0 for r in c.execute("SELECT label, SUM(points) FROM actions GROUP BY label")}
+        act_r = {r[0]: r[1] or 0 for r in c.execute(
+            "SELECT label, SUM(points) FROM actions WHERE ts>=? AND ts<? GROUP BY label", (s0, e0))}
+        act_n = c.execute("SELECT COUNT(*), COALESCE(SUM(points),0) FROM actions").fetchone()
         fb = c.execute("SELECT source FROM clicks WHERE scored=1 AND source!='direct' AND ts>=? AND ts<? "
                        "ORDER BY id LIMIT 1", (s0, e0)).fetchone()
         hist = round_history(c)
@@ -357,14 +401,16 @@ def _get_stats(at=None):
     week = {lab: sum(_pw(v) for r, v in rr.items() if cur - 6 <= r <= cur) for lab, rr in hist.items()}
     belt = max(week.items(), key=lambda kv: (kv[1], kv[0]), default=(None, 0))
     partners = []
-    for label in (set(src) | set(st_all)) - {"direct"}:
+    for label in (set(src) | set(st_all) | set(act_all)) - {"direct"}:
         r = src.get(label)
         clicks, hits, uq, last = (r["clicks"], r["hits"], r["uniq"], r["last"]) if r else (0, 0, 0, None)
         st, hr, sr = st_all.get(label, 0), hits_r.get(label, 0), st_r.get(label, 0)
+        ap, apr = act_all.get(label, 0), act_r.get(label, 0)
         partners.append({"source": label, "team": team_of(label), "clicks": clicks, "hits": hits,
                          "uniq": uq, "starts": st, "last": last,
                          "hits_today": hr, "starts_today": sr,
-                         "today": hr + START_POWER * sr, "power": hits + START_POWER * st,
+                         "act_points": ap, "act_points_today": apr,
+                         "today": hr + START_POWER * sr + apr, "power": hits + START_POWER * st + ap,
                          "conv": _conv(st, hits)})
     for p in partners:
         ri, rn, nxt = rank_of(p["power"])
@@ -387,6 +433,8 @@ def _get_stats(at=None):
                       "today": sum(p["today"] for p in mem),           # сила за раунд
                       "hits": hits, "starts": st, "conv": _conv(st, hits),
                       "hits_today": sum(p["hits_today"] for p in mem),
+                      "act_points": sum(p["act_points"] for p in mem),
+                      "act_points_today": sum(p["act_points_today"] for p in mem),
                       "starts_today": sum(p["starts_today"] for p in mem),
                       "partners": len(mem)})
     lt = max((p for p in partners if p["team"]), key=lambda p: p["today"], default=None)
@@ -402,6 +450,8 @@ def _get_stats(at=None):
             "teams": teams, "partners": partners, "leader_today": leader_today,
             "by_day": by_day, "channels": channels,
             "round_start": _utc_z(start), "round_end": _utc_z(end),
+            "actions": act_n[0], "action_points": act_n[1],
+            "action_defs": {k: {"points": v[0], "text": v[1]} for k, v in ACTIONS.items()},
             "round_no": cur - first + 1, "prev_round": {k: v for k, v in prev.items() if k != "all"},
             "ranks": [{"min": t, "name": n} for t, n in RANKS],
             "badge_defs": {k: {"icon": i, "name": n, "desc": d} for k, (i, n, d) in BADGES.items()},
@@ -439,7 +489,9 @@ def daily_results_text() -> str:
         conv = _conv(t["starts_today"], t["hits_today"])
         return (f"{t['emoji']} {t['name']}: сила {t['today']} — {t['hits_today']} "
                 f"{_plural(t['hits_today'], 'удар', 'удара', 'ударов')} + {t['starts_today']} "
-                f"{_plural(t['starts_today'], 'апперкот', 'апперкота', 'апперкотов')}, доходимость {_pct(conv)}")
+                f"{_plural(t['starts_today'], 'апперкот', 'апперкота', 'апперкотов')}"
+                + (f" + {t['act_points_today']} за действия в боте" if t.get("act_points_today") else "")
+                + f", доходимость {_pct(conv)}")
     lines = [f"🥊 Гонг! Итоги раунда {end.strftime('%d.%m.%Y')}", "", line(a), line(b), ""]
     if a["today"] != b["today"]:
         win = a if a["today"] > b["today"] else b
@@ -599,6 +651,11 @@ def notify_start(label, ch):
     chs = f"\nКанал: {CHANNEL_NAMES.get(ch, ch)}" if ch else ""
     notify_all(f"💥 Апперкот! +{START_POWER} к силе\n{label} привёл нового человека в бота\n"
                f"Команда: {_team_label(label)}{chs}")
+
+def notify_action(label, act, pts):
+    if not (ADMIN_IDS and NOTIFY_ACTIONS):
+        return
+    notify_all(f"⚡ {label}: человек {ACTIONS[act][1]} (+{pts})\nКоманда: {_team_label(label)}")
 
 def push_sheet(payload):
     if not SHEET_WEBHOOK_URL:
@@ -782,6 +839,26 @@ def bot_start():
     log.info("start label=%s cid=%s scored=%s", res["label"], res["click_id"], res["scored"])
     return jsonify(ok=True, **res)
 
+@app.route("/bot/action", methods=["GET", "POST"])
+def bot_action():
+    """Кнопка в боте (PuzzleBot «Отправить запрос»): ?act=<код>&uid=<telegram id>&key=<INGEST_TOKEN>.
+    Всегда отвечает 200 (кроме неверного ключа), чтобы PuzzleBot не ретраил и не ломал воронку."""
+    if not INGEST_TOKEN or not hmac.compare_digest(request.values.get("key", ""), INGEST_TOKEN):
+        abort(403)
+    try:
+        uid = int(re.sub(r"\D", "", request.values.get("uid") or request.values.get("user_id") or "") or 0)
+    except ValueError:
+        uid = 0
+    try:
+        res = record_action(uid, request.values.get("act") or request.values.get("a") or "")
+    except Exception as e:                      # никаких 500 для PuzzleBot
+        log.error("action failed: %s", e)
+        res = {"ok": False, "reason": "error"}
+    if res.get("ok"):
+        notify_action(res["label"], res["act"], res["points"])
+    log.info("action uid=%s act=%s ok=%s %s", uid, res.get("act"), res.get("ok"), res.get("reason", ""))
+    return jsonify(**res)
+
 @app.route("/api/stats")
 def api_stats():
     role = _need()
@@ -816,9 +893,24 @@ def feed_since(c, sc, ss):
     items.sort(key=lambda x: x["ts"])
     return items, sc, ss
 
+def actions_since(c, sa):
+    """Действия в боте (id > sa) — тоже идут в ленту: kind = код действия, points = очки."""
+    items = []
+    for r in c.execute("SELECT a.id, a.ts, a.act, a.label, a.points, k.city, k.cc, k.lat, k.lon FROM actions a "
+                       "LEFT JOIN starts s ON s.id = a.start_id LEFT JOIN clicks k ON k.id = s.click_id "
+                       "WHERE a.id>? ORDER BY a.id LIMIT 300", (sa,)):
+        items.append({"kind": r["act"], "id": r["id"], "ts": r["ts"], "source": r["label"], "team": team_of(r["label"]),
+                      "points": r["points"], "text": ACTIONS.get(r["act"], (0, ""))[1],
+                      "city": r["city"] or "", "cc": r["cc"] or "", "lat": r["lat"], "lon": r["lon"]})
+        sa = max(sa, r["id"])
+    return items, sa
+
 def _cursors(c):
     return (c.execute("SELECT COALESCE(MAX(id),0) FROM clicks").fetchone()[0],
             c.execute("SELECT COALESCE(MAX(id),0) FROM starts").fetchone()[0])
+
+def _cursor_a(c):
+    return c.execute("SELECT COALESCE(MAX(id),0) FROM actions").fetchone()[0]
 
 @app.route("/api/feed")
 def api_feed():
@@ -826,36 +918,47 @@ def api_feed():
     _need()
     sc = request.args.get("since_c", request.args.get("since"))
     ss = request.args.get("since_s")
+    sa = request.args.get("since_a")
     with _conn() as c:
         last_c, last_s = _cursors(c)
+        last_a = _cursor_a(c)
         items = []
         if sc is not None or ss is not None:
             items, _a, _b = feed_since(c, _int_or(sc, last_c) if sc is not None else None,
                                        _int_or(ss, last_s) if ss is not None else None)
-    return jsonify(last_c=last_c, last_s=last_s, last_id=last_c, items=items)
+        if sa is not None:
+            items += actions_since(c, _int_or(sa, last_a))[0]
+            items.sort(key=lambda x: x["ts"])
+    return jsonify(last_c=last_c, last_s=last_s, last_a=last_a, last_id=last_c, items=items)
 
 @app.route("/api/stream")
 def api_stream():
     """Живая лента (Server-Sent Events): удар долетает до арены за ~1 секунду.
     Соединение живёт 5 минут, браузер сам переподключается с Last-Event-ID (без повторов)."""
     _need()
-    sc, ss = request.args.get("since_c"), request.args.get("since_s")
+    sc, ss, sa = request.args.get("since_c"), request.args.get("since_s"), request.args.get("since_a")
     last_id = (request.headers.get("Last-Event-ID", "") or "")
-    if re.fullmatch(r"\d+:\d+", last_id):
-        sc, ss = last_id.split(":")
+    if re.fullmatch(r"\d+:\d+(:\d+)?", last_id):
+        parts = last_id.split(":")
+        sc, ss = parts[0], parts[1]
+        sa = parts[2] if len(parts) > 2 else sa
 
-    def gen(sc=sc, ss=ss):
+    def gen(sc=sc, ss=ss, sa=sa):
         with _conn() as c:
             lc, ls = _cursors(c)
-        sc, ss = _int_or(sc, lc), _int_or(ss, ls)
-        yield f"retry: 2000\nid: {sc}:{ss}\ndata: {json.dumps({'hello': 1, 'last_c': sc, 'last_s': ss})}\n\n"
+            la = _cursor_a(c)
+        sc, ss, sa = _int_or(sc, lc), _int_or(ss, ls), _int_or(sa, la)
+        yield f"retry: 2000\nid: {sc}:{ss}:{sa}\ndata: {json.dumps({'hello': 1, 'last_c': sc, 'last_s': ss, 'last_a': sa})}\n\n"
         t0 = beat = time.time()
         while time.time() - t0 < 300:
             with _conn() as c:
                 items, sc, ss = feed_since(c, sc, ss)
+                acts, sa = actions_since(c, sa)
+            if acts:
+                items = sorted(items + acts, key=lambda x: x["ts"])
             if items:
                 beat = time.time()
-                yield f"id: {sc}:{ss}\ndata: {json.dumps({'items': items, 'last_c': sc, 'last_s': ss})}\n\n"
+                yield f"id: {sc}:{ss}:{sa}\ndata: {json.dumps({'items': items, 'last_c': sc, 'last_s': ss, 'last_a': sa})}\n\n"
             elif time.time() - beat > 15:
                 beat = time.time()
                 yield ": ping\n\n"
@@ -924,7 +1027,11 @@ def api_partner(label):
     start, _e = round_bounds()
     cur = round_idx(start)
     days = [{"idx": i, "date": round_end_of(i).strftime("%d.%m"), "power": _pw(hist.get(i, [0, 0])),
-             "hits": hist.get(i, [0, 0])[0], "starts": hist.get(i, [0, 0])[1]} for i in range(cur - 13, cur + 1)]
+             "hits": hist.get(i, [0, 0])[0], "starts": hist.get(i, [0, 0])[1],
+             "actions": (hist.get(i) or [0, 0, 0])[2]} for i in range(cur - 13, cur + 1)]
+    with _conn() as c:
+        acts = [{"act": r[0], "text": ACTIONS.get(r[0], (0, ""))[1], "count": r[1], "points": r[2] or 0}
+                for r in c.execute("SELECT act, COUNT(*), SUM(points) FROM actions WHERE label=? GROUP BY act ORDER BY 3 DESC", (label,))]
     channels = [{"ch": k, "name": CHANNEL_NAMES.get(k, k), "hits": v[0], "starts": v[1],
                  "power": v[0] + START_POWER * v[1], "conv": _conv(v[1], v[0])} for k, v in chans.items()]
     channels.sort(key=lambda x: -x["power"])
@@ -934,7 +1041,7 @@ def api_partner(label):
                    team_place=team_order.index(me) + 1, team_of=len(team_order),
                    ahead=({"source": ahead["source"], "today": ahead["today"],
                            "gap": ahead["today"] - me["today"] + 1} if ahead else None),
-                   days=days, channels=channels, best_channel=best,
+                   days=days, channels=channels, best_channel=best, actions=acts,
                    links={"threads": f"{_base_url()}/t/{label}", "video": f"{_base_url()}/v/{label}"},
                    ranks=st["ranks"], badge_defs=st["badge_defs"], start_power=START_POWER,
                    round_end=st["round_end"], round_no=st["round_no"], server_now=st["server_now"])
@@ -1017,6 +1124,18 @@ def export():
     _need(admin=True)
     return Response(csv_bytes(), mimetype="text/csv",
                     headers={"Content-Disposition": "attachment; filename=clicks.csv"})
+
+@app.route("/export/actions")
+def export_actions():
+    _need(admin=True)
+    buf = io.StringIO(); w = csv.writer(buf)
+    w.writerow(["ts", "label", "team", "action", "points", "telegram_id"])
+    with _conn() as c:
+        for r in c.execute("SELECT ts,label,act,points,tg_uid FROM actions ORDER BY id"):
+            tk = team_of(r["label"])
+            w.writerow([r["ts"], r["label"], TEAMS[tk][0] if tk else "", r["act"], r["points"], r["tg_uid"]])
+    return Response(buf.getvalue().encode("utf-8-sig"), mimetype="text/csv",
+                    headers={"Content-Disposition": "attachment; filename=actions.csv"})
 
 @app.route("/export/starts")
 def export_starts():
