@@ -771,7 +771,7 @@ function solve(f,t){
   const arm=(sa,ea,w,bl)=>{const u=dirv(sa+lean,fc),fa=dirv(sa+lean+ea,fc),bd=dirv(sa+lean+ea+w,fc);
     const el=[sh[0]+u[0]*LEN.ua,sh[1]+u[1]*LEN.ua],ha=[el[0]+fa[0]*LEN.fa,el[1]+fa[1]*LEN.fa];
     return{el,ha,bd,b0:[ha[0]+bd[0]*14,ha[1]+bd[1]*14],tip:[ha[0]+bd[0]*(14+bl),ha[1]+bd[1]*(14+bl)]}};
-  const A1=arm(p.sa1,p.ea1,p.w1,f.team==='A'?118:70), A2=arm(p.sa2,p.ea2,p.w2,f.team==='B'?64:0);
+  const A1=arm(p.sa1,p.ea1,p.w1,f.team==='A'?124:92), A2=arm(p.sa2,p.ea2,p.w2,f.team==='B'?58:0);   // одати у A; дайсё у B: катана + вакидзаси
   return{hip:[hx,hy],sh,hd,lean,tv,K1:[hx+L1.knee[0],hy+L1.knee[1]],F1:[hx+L1.foot[0],hy+L1.foot[1]],K2:[hx+L2.knee[0],hy+L2.knee[1]],F2:[hx+L2.foot[0],hy+L2.foot[1]],A1,A2};
 }
 /* рисование */
@@ -779,32 +779,66 @@ function limb(a,b,w1,w2,fill){const dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy
   g.fillStyle=fill;g.beginPath();g.moveTo(a[0]+nx*w1,a[1]+ny*w1);g.lineTo(b[0]+nx*w2,b[1]+ny*w2);g.arc(b[0],b[1],w2,Math.atan2(ny,nx),Math.atan2(ny,nx)+Math.PI);g.lineTo(a[0]-nx*w1,a[1]-ny*w1);g.arc(a[0],a[1],w1,Math.atan2(-ny,-nx),Math.atan2(-ny,-nx)+Math.PI);g.fill()}
 function glowLine(a,b,c,w,al=1){g.save();g.globalCompositeOperation='lighter';g.lineCap='round';
   for(const [k,aa] of (Q?[[3.2,.12],[1.8,.3],[1,.9]]:[[1.6,.35],[1,.9]])){g.strokeStyle=hexA(c,aa*al);g.lineWidth=w*k;g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke()}g.restore()}
-function blade(A,c,hum,flash){
-  // рукоять
-  g.strokeStyle='#22263d';g.lineWidth=6;g.lineCap='round';g.beginPath();g.moveTo(A.ha[0],A.ha[1]);g.lineTo(A.b0[0],A.b0[1]);g.stroke();
-  g.strokeStyle='#8a90b0';g.lineWidth=2;g.beginPath();g.moveTo(A.b0[0]-A.bd[1]*7,A.b0[1]+A.bd[0]*7);g.lineTo(A.b0[0]+A.bd[1]*7,A.b0[1]-A.bd[0]*7);g.stroke();
-  const w=5+hum*1.2+flash*3;
-  g.save();g.globalCompositeOperation='lighter';g.lineCap='round';
-  const layers=Q?[[w*4.2,.08],[w*2.4,.22],[w*1.3,.6]]:[[w*2,.3],[w*1.2,.7]];
-  for(const [lw,a] of layers){g.strokeStyle=hexA(c,a);g.lineWidth=lw;g.beginPath();g.moveTo(A.b0[0],A.b0[1]);g.lineTo(A.tip[0],A.tip[1]);g.stroke()}
-  g.strokeStyle='rgba(255,255,255,.95)';g.lineWidth=Math.max(1.6,w*.38);g.beginPath();g.moveTo(A.b0[0],A.b0[1]);g.lineTo(A.tip[0],A.tip[1]);g.stroke();g.restore();
-}
 function crs(arr,key,sub){const n=arr.length,o=[];if(n<2)return arr.map(p=>p[key]);
   for(let i=0;i<n-1;i++){const p0=arr[Math.max(i-1,0)][key],p1=arr[i][key],p2=arr[i+1][key],p3=arr[Math.min(i+2,n-1)][key];
     for(let s=0;s<sub;s++){const t=s/sub,t2=t*t,t3=t2*t;o.push([0,1].map(j=>.5*(2*p1[j]+(-p0[j]+p2[j])*t+(2*p0[j]-5*p1[j]+4*p2[j]-p3[j])*t2+(-p0[j]+3*p1[j]-3*p2[j]+p3[j])*t3)))}}
   o.push(arr[n-1][key]);return o}
+/* ===== кибер-катана: изогнутое многослойное лезвие, цуба, оплётка рукояти ===== */
+const KAT={A:{c1:{curv:.075,w:4.6},c2:null},B:{c1:{curv:.085,w:4.2},c2:{curv:.09,w:3.6}}};
+function bez(a,cp,b,s){const u=1-s;return[u*u*a[0]+2*u*s*cp[0]+s*s*b[0],u*u*a[1]+2*u*s*cp[1]+s*s*b[1]]}
+function blade(A,c,hum,flash,spec,fc){
+  const sp=spec||{curv:.08,w:4.4},bd=A.bd,L=Math.hypot(A.tip[0]-A.b0[0],A.tip[1]-A.b0[1])||1;
+  const n=[-bd[1]*fc,bd[0]*fc];                                  // сторона обуха (изгиб)
+  const mid=[(A.b0[0]+A.tip[0])/2+n[0]*sp.curv*L,(A.b0[1]+A.tip[1])/2+n[1]*sp.curv*L];
+  // рукоять (цука) с ромбовидной оплёткой и навершием
+  const pm=[A.ha[0]-bd[0]*16,A.ha[1]-bd[1]*16];
+  g.lineCap='butt';g.strokeStyle='#14172a';g.lineWidth=7;g.beginPath();g.moveTo(pm[0],pm[1]);g.lineTo(A.b0[0],A.b0[1]);g.stroke();
+  if(Q>0){g.strokeStyle='#3b4262';g.lineWidth=1;for(let k=0;k<4;k++){const s0=k/4,s1=(k+1)/4,p0=[lerp(pm[0],A.b0[0],s0),lerp(pm[1],A.b0[1],s0)],p1=[lerp(pm[0],A.b0[0],s1),lerp(pm[1],A.b0[1],s1)];
+    g.beginPath();g.moveTo(p0[0]+n[0]*3.2,p0[1]+n[1]*3.2);g.lineTo(p1[0]-n[0]*3.2,p1[1]-n[1]*3.2);g.moveTo(p0[0]-n[0]*3.2,p0[1]-n[1]*3.2);g.lineTo(p1[0]+n[0]*3.2,p1[1]+n[1]*3.2);g.stroke()}}
+  g.fillStyle='#8a92b4';g.beginPath();g.arc(pm[0],pm[1],3.6,0,7);g.fill();
+  // цуба — светящаяся гарда поперёк клинка
+  const tb=[A.b0[0]-bd[0]*2,A.b0[1]-bd[1]*2];g.save();g.translate(tb[0],tb[1]);g.rotate(Math.atan2(bd[1],bd[0]));
+  g.fillStyle='#1a1d30';g.beginPath();g.ellipse(0,0,2.8,9.5,0,0,7);g.fill();
+  g.globalCompositeOperation='lighter';g.strokeStyle=hexA(c,.85);g.lineWidth=1.4;g.beginPath();g.ellipse(0,0,2.8,9.5,0,0,7);g.stroke();
+  if(Q>0){g.strokeStyle=hexA(c,.25);g.lineWidth=4;g.stroke()}g.restore();
+  // точки вдоль изогнутого полотна; профиль ширины с косым остриём (киссаки)
+  const N=Q===2?14:Q===1?10:7,spine=[],edge=[],core=[];
+  for(let i=0;i<=N;i++){const s=i/N,P=bez(A.b0,mid,A.tip,s),w=sp.w*(1-.25*s)*(s>.86?Math.max(0,(1-s)/.14):1)+(i===N?0:.4);
+    spine.push([P[0]+n[0]*w,P[1]+n[1]*w]);edge.push([P[0]-n[0]*w*(s>.86?.4+.6*(1-s)/.14:1),P[1]-n[1]*w*(s>.86?.4+.6*(1-s)/.14:1)]);core.push([P[0]-n[0]*w*.35,P[1]-n[1]*w*.35])}
+  // мягкое свечение вокруг
+  g.save();g.lineJoin='round';g.lineCap='round';g.globalCompositeOperation='lighter';const gw=1+hum*.12+flash*.6;
+  if(Q>0){g.strokeStyle=hexA(c,.09*gw);g.lineWidth=sp.w*5.2;g.beginPath();core.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.stroke()}
+  g.restore();
+  // тёмный карбоновый обух/полотно
+  g.fillStyle='#161a2a';g.beginPath();spine.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));for(let i=edge.length-1;i>=0;i--)g.lineTo(edge[i][0],edge[i][1]);g.closePath();g.fill();
+  g.strokeStyle='rgba(150,165,220,.35)';g.lineWidth=.8;g.beginPath();spine.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.stroke();
+  // раскалённая режущая кромка + белое ядро
+  g.save();g.globalCompositeOperation='lighter';g.lineJoin='round';g.lineCap='round';
+  for(const [lw,a] of (Q?[[sp.w*2.2,.22],[sp.w*1.1,.65]]:[[sp.w*1.2,.7]])){g.strokeStyle=hexA(c,a*gw);g.lineWidth=lw;g.beginPath();edge.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.stroke()}
+  g.strokeStyle=`rgba(255,255,255,${Math.min(1,.85+flash*.15)})`;g.lineWidth=Math.max(1.1,sp.w*.32+flash*.6);g.beginPath();core.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.stroke();
+  // энергетические насечки-«иероглифы» вдоль полотна
+  if(Q>0){g.strokeStyle=hexA(c,.75);g.lineWidth=1;for(const s of [.22,.42,.62]){const i=Math.round(s*N),P=bez(A.b0,mid,A.tip,s),q=[n[0]*sp.w*.55,n[1]*sp.w*.55],t2=[bd[0]*2.2,bd[1]*2.2];
+      g.beginPath();g.moveTo(P[0]+q[0]-t2[0],P[1]+q[1]-t2[1]);g.lineTo(P[0]+q[0]+t2[0],P[1]+q[1]+t2[1]);if(Q===2){g.moveTo(P[0]+q[0]*.2,P[1]+q[1]*.2);g.lineTo(P[0]+q[0]*1.2+t2[0],P[1]+q[1]*1.2+t2[1])}g.stroke()}}
+  // хабаки — яркое кольцо у основания
+  g.fillStyle=hexA(c,.9);g.beginPath();g.arc(A.b0[0]+bd[0]*2,A.b0[1]+bd[1]*2,2.2,0,7);g.fill();
+  g.restore();
+  // микро-искры с кончика: при заряде чаще, в стойке изредка
+  if(Q>0&&!REDUCED&&Math.random()<(flash>.3?.35:.012))parts.push({x:A.tip[0],y:A.tip[1],vx:rand(-60,60),vy:rand(-90,-10),l:0,L:rand(.2,.5),em:true,gr:200,c:Math.random()<.5?c:'#ffffff',w:rand(.8,1.6)});
+}
 function trailDraw(tr,c,sup){
   if(tr.length<2)return;const sub=Q===2?4:Q===1?3:2;const T=crs(tr,'t',sub),B0=crs(tr,'b',sub),n=T.length;
   const B=B0.map((b,i)=>[lerp(b[0],T[i][0],sup?.04:.32),lerp(b[1],T[i][1],sup?.04:.32)]);
   g.save();g.globalCompositeOperation='lighter';g.lineJoin='round';g.lineCap='round';
-  // лента из трёх вложенных полос: хвост прозрачнее, голова плотнее, без швов между кусками
   const bands=sup?[[0,.1],[.3,.13],[.6,.18]]:[[0,.07],[.35,.1],[.65,.14]];
   for(const [f0,a] of bands){const s0=Math.floor(f0*(n-1));if(n-s0<2)continue;g.fillStyle=hexA(c,a*(sup?1.2:1));g.beginPath();
     for(let i=s0;i<n;i++)i===s0?g.moveTo(T[i][0],T[i][1]):g.lineTo(T[i][0],T[i][1]);for(let i=n-1;i>=s0;i--)g.lineTo(B[i][0],B[i][1]);g.closePath();g.fill()}
-  // мягкое сияние и яркая кромка по траектории острия
   if(Q>0){g.strokeStyle=hexA(c,sup?.24:.16);g.lineWidth=sup?13:8;g.beginPath();T.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.stroke()}
   const segs=Math.min(6,n-1);for(let k=0;k<segs;k++){const s0=Math.floor(k/segs*(n-1)),s1=Math.floor((k+1)/segs*(n-1));const q=(k+1)/segs;
     g.strokeStyle=`rgba(255,255,255,${.85*q*q})`;g.lineWidth=(sup?3.6:2.2)*q+.3;g.beginPath();for(let i=s0;i<=s1;i++)i===s0?g.moveTo(T[i][0],T[i][1]):g.lineTo(T[i][0],T[i][1]);g.stroke()}
+  // дуга рассечения воздуха: тонкий внешний серп снаружи траектории острия
+  if(Q>0&&n>3){const off=sup?11:7;g.beginPath();for(let i=0;i<n;i++){const dx=T[i][0]-B0[i][0],dy=T[i][1]-B0[i][1],L=Math.hypot(dx,dy)||1,k=i/(n-1);
+      const x=T[i][0]+dx/L*off*k,y=T[i][1]+dy/L*off*k;i?g.lineTo(x,y):g.moveTo(x,y)}
+    g.strokeStyle=hexA(c,sup?.5:.35);g.lineWidth=sup?2.2:1.4;g.stroke();g.strokeStyle='rgba(255,255,255,.3)';g.lineWidth=.8;g.stroke()}
   if(sup&&Q===2&&!REDUCED)for(let i=0;i<tr.length-1;i+=3){const p=tr[i],k=i/tr.length;g.strokeStyle=hexA(c,.26*k);g.lineWidth=5;g.beginPath();g.moveTo(p.b[0],p.b[1]);g.lineTo(p.t[0],p.t[1]);g.stroke()}
   g.restore();
 }
@@ -814,80 +848,147 @@ function rim(a,b,w,c,k=1){const dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy)||1
   g.strokeStyle=hexA(c,.62*k);g.lineWidth=1.6;g.beginPath();g.moveTo(a[0]-nx*w*.82,a[1]-ny*w*.82);g.lineTo(b[0]-nx*w*.82,b[1]-ny*w*.82);g.stroke()}
 function joint(p,r,c,k=1){g.fillStyle='#1b1f33';g.beginPath();g.arc(p[0],p[1],r,0,7);g.fill();g.fillStyle='#8f98b6';g.beginPath();g.arc(p[0],p[1],r*.55,0,7);g.fill();
   if(Q>0){g.save();g.globalCompositeOperation='lighter';g.strokeStyle=hexA(c,.7*k);g.lineWidth=1.2;g.beginPath();g.arc(p[0],p[1],r+.5,0,7);g.stroke();g.restore()}}
+/* пластина доспеха вдоль отрезка a→b (ширина w1→w2) с неоновой гранью */
+function plate(a,b,w1,w2,fill,c,edge=1,ea=.7){const dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy)||1,nx=-dy/L,ny=dx/L;
+  g.fillStyle=fill;g.beginPath();g.moveTo(a[0]+nx*w1,a[1]+ny*w1);g.lineTo(b[0]+nx*w2,b[1]+ny*w2);g.lineTo(b[0]-nx*w2,b[1]-ny*w2);g.lineTo(a[0]-nx*w1,a[1]-ny*w1);g.closePath();g.fill();
+  if(c&&Q>0){g.save();g.globalCompositeOperation='lighter';g.strokeStyle=hexA(c,ea);g.lineWidth=1;g.beginPath();g.moveTo(a[0]+nx*w1*edge,a[1]+ny*w1*edge);g.lineTo(b[0]+nx*w2*edge,b[1]+ny*w2*edge);g.stroke();g.restore()}}
+const unit=(a,b)=>{const dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy)||1;return[dx/L,dy/L]};
+/* кабуто: сикоро, чаша, козырёк, маска-визор, кувагата (A — полумесяц и гребень, B — изогнутые рога) */
+function kabuto(f,hd,ang,c,hit,t){
+  const ARM='#c9d1e6',ARM2='#9aa3bf',fc=f.face;
+  g.save();g.translate(hd[0],hd[1]);g.rotate(ang);g.scale(fc*1.18,1.18);
+  // сикоро — многослойный назатыльник
+  for(let i=2;i>=0;i--){g.fillStyle=i%2?ARM2:'#7c86a6';g.beginPath();g.moveTo(-2,-9+i*5);g.quadraticCurveTo(-18,-6+i*6,-25-i*3,5+i*6);g.lineTo(-19-i*2,10+i*6);g.quadraticCurveTo(-9,3+i*5,3,-3+i*5);g.closePath();g.fill();
+    if(Q>0){g.save();g.globalCompositeOperation='lighter';g.strokeStyle=hexA(c,.6);g.lineWidth=1;g.beginPath();g.moveTo(-25-i*3,5+i*6);g.lineTo(-19-i*2,10+i*6);g.stroke();g.restore()}}
+  // чаша шлема с рёбрами
+  g.fillStyle=hit>0?'#ffffff':ARM;g.beginPath();g.arc(0,-3,15,Math.PI,Math.PI*2);g.lineTo(15,2);g.lineTo(-15,2);g.closePath();g.fill();
+  g.strokeStyle='rgba(60,68,100,.55)';g.lineWidth=1;for(const x of [-8,-3,2,7]){g.beginPath();g.moveTo(x*.6,-17);g.quadraticCurveTo(x,-10,x*1.15,1);g.stroke()}
+  g.fillStyle='#2a2f4a';g.fillRect(-15,0,30,3);
+  // козырёк и боковые отвороты (фукигаэси)
+  g.fillStyle=ARM2;g.beginPath();g.moveTo(5,-4);g.lineTo(20,-1);g.lineTo(17,2);g.lineTo(4,0);g.closePath();g.fill();
+  g.fillStyle='#7c86a6';g.beginPath();g.moveTo(-6,-2);g.lineTo(-1,-8);g.lineTo(3,-1);g.closePath();g.fill();
+  // маска (мэмпо) и светящийся визор
+  g.fillStyle='#141827';g.beginPath();g.moveTo(3,0);g.lineTo(16,2);g.lineTo(14,11);g.lineTo(5,13);g.lineTo(-2,7);g.closePath();g.fill();
+  g.save();g.globalCompositeOperation='lighter';g.lineCap='round';
+  for(const [lw,a] of (Q?[[6,.2],[3,.6],[1.2,1]]:[[3,.7],[1.2,1]])){g.strokeStyle=lw<2?'#ffffff':hexA(c,a);g.lineWidth=lw;g.beginPath();g.moveTo(5,2.5);g.lineTo(15,3.5);g.stroke()}
+  if(f.team==='B'&&Q>0){g.strokeStyle=hexA(c,.7);g.lineWidth=1;g.beginPath();g.moveTo(6,6);g.lineTo(13,8);g.moveTo(7,9.5);g.lineTo(12,11);g.stroke()}
+  g.restore();
+  // кувагата
+  g.save();g.lineCap='round';
+  if(f.team==='A'){
+    g.fillStyle=ARM2;g.beginPath();g.moveTo(-1,-18);g.lineTo(3,-24);g.lineTo(7,-17);g.closePath();g.fill();               // гребень-маэдатэ
+    g.strokeStyle='#d9c48a';g.lineWidth=3;g.beginPath();g.arc(4,-25,10,Math.PI*.12,Math.PI*.88,true);g.stroke();          // строгий полумесяц
+    if(Q>0){g.globalCompositeOperation='lighter';g.strokeStyle=hexA(c,.55);g.lineWidth=1.2;g.beginPath();g.arc(4,-25,11.5,Math.PI*.12,Math.PI*.88,true);g.stroke()}
+  }else{
+    g.fillStyle='#7c86a6';g.beginPath();g.moveTo(-2,-17);g.lineTo(4,-17);g.lineTo(2,-21);g.closePath();g.fill();
+    for(const [x0,cx,cy,x1,y1] of [[3,18,-26,30,-46],[-1,-6,-34,-12,-50]]){                                             // агрессивные рога
+      g.fillStyle=ARM2;g.beginPath();g.moveTo(x0-2,-17);g.quadraticCurveTo(cx,cy,x1,y1);g.quadraticCurveTo(cx+4,cy+6,x0+3,-17);g.closePath();g.fill();
+      if(Q>0){g.save();g.globalCompositeOperation='lighter';g.strokeStyle=hexA(c,.85);g.lineWidth=1.3;g.beginPath();g.moveTo(x0,-18);g.quadraticCurveTo(cx+1,cy+2,x1,y1);g.stroke();g.restore()}}
+  }
+  g.restore();
+  // верхний холодный блик неба на шлеме
+  if(Q>0){g.save();g.globalCompositeOperation='lighter';g.strokeStyle='rgba(215,225,255,.6)';g.lineWidth=1.5;g.beginPath();g.arc(0,-3,15.6,Math.PI*1.12,Math.PI*1.75);g.stroke();g.restore()}
+  g.restore();
+}
 function drawFighter(f,t,dt){
   const S=solve(f,t),c=f.col,fc=f.face;f.S=S;
-  const ARM='#c9d1e6',ARM2='#9aa3bf',SUIT='#161a2c',DARK='#0d1020';
-  const hit=f.flash;
+  const ARM='#c9d1e6',ARM2='#9aa3bf',ARM3='#7c86a6',SUIT='#161a2c';
+  const hit=f.flash,isB=f.team==='B';
   // тень/свет на полу
   g.save();g.globalCompositeOperation='lighter';const sg=g.createRadialGradient(S.hip[0],FLOOR+4,0,S.hip[0],FLOOR+4,90);sg.addColorStop(0,hexA(c,.28+f.charge*.3));sg.addColorStop(1,hexA(c,0));g.fillStyle=sg;g.fillRect(S.hip[0]-90,FLOOR-30,180,60);g.restore();
   g.fillStyle='rgba(0,0,0,.45)';g.beginPath();g.ellipse(S.hip[0],FLOOR+3,46,7,0,0,7);g.fill();
-  // шарф (A) / плащ (B): цепочка точек
-  const neck=[S.sh[0]-S.tv[0]*2,S.sh[1]+4];
-  const sc=f.scarf;sc[0].x=neck[0];sc[0].y=neck[1];
-  for(let i=1;i<sc.length;i++){const p=sc[i],vx=(p.x-p.px)*.9,vy=(p.y-p.py)*.9;p.px=p.x;p.py=p.y;p.x+=vx-fc*(26+Math.sin(t*3+i)*10)*dt*7;p.y+=vy+(f.team==='A'?60:140)*dt*dt*60;
-    const q=sc[i-1],dx=p.x-q.x,dy=p.y-q.y,d=Math.hypot(dx,dy)||1,L=f.team==='A'?9:10;p.x=q.x+dx/d*L;p.y=q.y+dy/d*L}
-  if(f.team==='A'){g.save();g.lineCap='round';for(let i=1;i<sc.length;i++){const k=1-i/sc.length;g.strokeStyle='#14303a';g.lineWidth=7*k+2;g.beginPath();g.moveTo(sc[i-1].x,sc[i-1].y);g.lineTo(sc[i].x,sc[i].y);g.stroke()}
-    g.globalCompositeOperation='lighter';for(let i=1;i<sc.length;i++){const k=1-i/sc.length;g.strokeStyle=hexA(c,.55*k+.1);g.lineWidth=1.5;g.beginPath();g.moveTo(sc[i-1].x,sc[i-1].y);g.lineTo(sc[i].x,sc[i].y);g.stroke();if(i%3===0){g.fillStyle=hexA(c,.8*k);g.beginPath();g.arc(sc[i].x,sc[i].y,1.6,0,7);g.fill()}}g.restore()}
+  const tv=S.tv,nx=-tv[1]*fc,ny=tv[0]*fc,W1=isB?24:19,W2=isB?14:11;
+  // ===== ткань: кибер-шарф A / асимметричный плащ и ленты пояса B =====
+  const neck=[S.sh[0]-S.tv[0]*2,S.sh[1]+4],sc=f.scarf;sc[0].x=neck[0];sc[0].y=neck[1];
+  for(let i=1;i<sc.length;i++){const p=sc[i],vx=(p.x-p.px)*.9,vy=(p.y-p.py)*.9;p.px=p.x;p.py=p.y;p.x+=vx-fc*(30+Math.sin(t*3+i)*12)*dt*7;p.y+=vy+(isB?140:55)*dt*dt*60;
+    const q=sc[i-1],dx=p.x-q.x,dy=p.y-q.y,d=Math.hypot(dx,dy)||1,L=isB?10:11;p.x=q.x+dx/d*L;p.y=q.y+dy/d*L}
+  if(!isB){g.save();g.lineCap='round';g.lineJoin='round';
+    for(let i=1;i<sc.length;i++){const k=1-i/sc.length;g.strokeStyle='#123038';g.lineWidth=9*k+3;g.beginPath();g.moveTo(sc[i-1].x,sc[i-1].y);g.lineTo(sc[i].x,sc[i].y);g.stroke()}
+    for(let i=1;i<sc.length;i++){const k=1-i/sc.length;g.strokeStyle='#1d4a55';g.lineWidth=4*k+1;g.beginPath();g.moveTo(sc[i-1].x,sc[i-1].y-1.5);g.lineTo(sc[i].x,sc[i].y-1.5);g.stroke()}
+    g.globalCompositeOperation='lighter';
+    for(let i=1;i<sc.length;i++){const k=1-i/sc.length;g.strokeStyle=hexA(c,.6*k+.12);g.lineWidth=1.5;g.beginPath();g.moveTo(sc[i-1].x,sc[i-1].y+2.5*k);g.lineTo(sc[i].x,sc[i].y+2.5*k);g.stroke();
+      if(i%2===0&&Q>0){g.fillStyle=hexA(c,.9*k);g.beginPath();g.arc(sc[i].x,sc[i].y+2.5*k,1.5,0,7);g.fill()}}
+    g.restore()}
   else{const bk=-fc,sw=Math.sin(t*2.3)*7+Math.sin(t*5.1)*3+(f.from?bk*8:0);
-    const top=[S.sh[0]+bk*4,S.sh[1]+2],b1=[S.hip[0]+bk*(34+sw),S.hip[1]+52],b2=[S.hip[0]+bk*(8+sw*.4),S.hip[1]+46];
-    g.fillStyle='#1d1326';g.beginPath();g.moveTo(top[0]+fc*8,top[1]);g.quadraticCurveTo(top[0]+bk*30,S.hip[1]-10,b1[0],b1[1]);g.lineTo(b2[0],b2[1]);g.quadraticCurveTo(S.hip[0],S.hip[1],top[0]+fc*10,top[1]+6);g.fill();
-    g.save();g.globalCompositeOperation='lighter';g.strokeStyle=hexA(c,.55);g.lineWidth=1.5;g.beginPath();g.moveTo(top[0],top[1]);g.quadraticCurveTo(top[0]+bk*30,S.hip[1]-10,b1[0],b1[1]);g.lineTo(b2[0],b2[1]);g.stroke();g.restore()}
-  // задние конечности (темнее)
-  limb(S.hip,S.K2,9,7,'#262b45');limb(S.K2,S.F2,7,5,'#4a5272');limb(S.F2,[S.F2[0]+fc*13,S.F2[1]],4,4,'#1b1f33');
-  const A2=S.A2;limb(S.sh,A2.el,7,6,'#262b45');limb(A2.el,A2.ha,6,5,ARM2);g.fillStyle='#1b1f33';g.beginPath();g.arc(A2.ha[0],A2.ha[1],5,0,7);g.fill();
-  if(f.team==='B'){blade(A2,c,Math.sin(t*9),f.charge)}
-  // торс
-  const tv=S.tv,nx=-tv[1]*fc,ny=tv[0]*fc;const W1=f.team==='B'?24:19,W2=f.team==='B'?14:11;
+    const top=[S.sh[0]+bk*4,S.sh[1]+2],b1=[S.hip[0]+bk*(40+sw),S.hip[1]+62],b2=[S.hip[0]+bk*(4+sw*.4),S.hip[1]+40];
+    g.fillStyle='#1d1326';g.beginPath();g.moveTo(top[0]+fc*8,top[1]);g.quadraticCurveTo(top[0]+bk*34,S.hip[1]-10,b1[0],b1[1]);g.lineTo(b1[0]-bk*10,b1[1]-8);g.lineTo(b2[0],b2[1]);g.quadraticCurveTo(S.hip[0],S.hip[1],top[0]+fc*10,top[1]+6);g.fill();
+    g.save();g.globalCompositeOperation='lighter';g.strokeStyle=hexA(c,.6);g.lineWidth=1.5;g.beginPath();g.moveTo(top[0],top[1]);g.quadraticCurveTo(top[0]+bk*34,S.hip[1]-10,b1[0],b1[1]);g.lineTo(b1[0]-bk*10,b1[1]-8);g.stroke();g.restore();
+    // ленты пояса
+    for(let k=0;k<2;k++){const ph=t*3+k*1.7,x0=S.hip[0]+bk*6,y0=S.hip[1]+2;g.strokeStyle=k?'#3a1a33':'#5a2046';g.lineWidth=3;g.lineCap='round';g.beginPath();g.moveTo(x0,y0);
+      g.quadraticCurveTo(x0+bk*(14+Math.sin(ph)*4),y0+16,x0+bk*(22+Math.sin(ph+1)*8+k*6),y0+34+k*6);g.stroke();
+      if(Q>0){g.save();g.globalCompositeOperation='lighter';g.strokeStyle=hexA(c,.45);g.lineWidth=1;g.stroke();g.restore()}}}
+  // ===== задняя нога: бедро, наколенник, понож =====
+  limb(S.hip,S.K2,9,7,'#262b45');plate([lerp(S.hip[0],S.K2[0],.3),lerp(S.hip[1],S.K2[1],.3)],[lerp(S.hip[0],S.K2[0],.9),lerp(S.hip[1],S.K2[1],.9)],7,6,'#555e80');
+  limb(S.K2,S.F2,7,5,'#3a4262');plate([lerp(S.K2[0],S.F2[0],.12),lerp(S.K2[1],S.F2[1],.12)],[lerp(S.K2[0],S.F2[0],.85),lerp(S.K2[1],S.F2[1],.85)],7,5.5,'#5c6588',c,1,.35);
+  g.fillStyle='#1b1f33';g.beginPath();g.moveTo(S.F2[0]-fc*5,S.F2[1]-4);g.lineTo(S.F2[0]+fc*14,S.F2[1]-2);g.lineTo(S.F2[0]+fc*15,S.F2[1]+3);g.lineTo(S.F2[0]-fc*6,S.F2[1]+3);g.fill();
+  joint(S.K2,5.5,c,.4);
+  // ===== задняя рука (+ вакидзаси у B) =====
+  const A2=S.A2;limb(S.sh,A2.el,7,6,'#262b45');limb(A2.el,A2.ha,6,5,ARM3);plate([lerp(A2.el[0],A2.ha[0],.2),lerp(A2.el[1],A2.ha[1],.2)],[lerp(A2.el[0],A2.ha[0],.8),lerp(A2.el[1],A2.ha[1],.8)],6.5,5,'#6a7394');
+  g.fillStyle='#1b1f33';g.beginPath();g.arc(A2.ha[0],A2.ha[1],5,0,7);g.fill();
+  if(isB)blade(A2,c,Math.sin(t*9),f.charge,KAT.B.c2,fc);
+  // ===== ножны (сая) на поясе с неоновой полосой заряда =====
+  {const sa=[S.hip[0]-nx*4,S.hip[1]-ny*4+3],sd=dirv(-68+(S.lean||0)*.3,fc),se=[sa[0]+sd[0]*54,sa[1]+sd[1]*54];
+    g.strokeStyle='#0f1220';g.lineWidth=8;g.lineCap='round';g.beginPath();g.moveTo(sa[0],sa[1]);g.quadraticCurveTo((sa[0]+se[0])/2-nx*5,(sa[1]+se[1])/2-ny*5,se[0],se[1]);g.stroke();
+    g.strokeStyle='#272c44';g.lineWidth=2;g.stroke();
+    const lvl=clamp(.35+f.charge*.65+f.glow*.3+Math.sin(t*2.5)*.05,0,1);
+    if(Q>0){g.save();g.globalCompositeOperation='lighter';g.strokeStyle=hexA(c,.85);g.lineWidth=2;g.beginPath();g.moveTo(sa[0],sa[1]);g.lineTo(lerp(sa[0],se[0],lvl),lerp(sa[1],se[1],lvl));g.stroke();
+      g.strokeStyle=hexA(c,.2);g.lineWidth=6;g.stroke();g.restore()}
+    g.fillStyle='#8a92b4';g.beginPath();g.arc(se[0],se[1],3,0,7);g.fill()}
+  // ===== кусадзури — сегментированные набедренные щитки, отклоняются вслед за бёдрами =====
+  {const d1=unit(S.hip,S.K1),d2=unit(S.hip,S.K2),belt=[S.hip[0]+tv[0]*4,S.hip[1]+tv[1]*4];
+    for(let i=0;i<5;i++){const k=i/4,d=[lerp(d2[0],d1[0],k),lerp(d2[1],d1[1],k)],dl=Math.hypot(d[0],d[1])||1,dd=[d[0]/dl,d[1]/dl];
+      const a=[belt[0]+nx*(-W2+k*W2*2),belt[1]+ny*(-W2+k*W2*2)],b=[a[0]+dd[0]*30,a[1]+dd[1]*30];
+      plate(a,b,4.5,6.5,i%2?ARM2:ARM3);if(Q>0){g.save();g.globalCompositeOperation='lighter';g.strokeStyle=hexA(c,.55);g.lineWidth=1;const nn=[-dd[1],dd[0]];g.beginPath();g.moveTo(b[0]+nn[0]*6.5,b[1]+nn[1]*6.5);g.lineTo(b[0]-nn[0]*6.5,b[1]-nn[1]*6.5);g.stroke();g.restore()}
+      g.strokeStyle='rgba(30,34,56,.6)';g.lineWidth=.8;g.beginPath();g.moveTo(lerp(a[0],b[0],.5)-dd[1]*5,lerp(a[1],b[1],.5)+dd[0]*5);g.lineTo(lerp(a[0],b[0],.5)+dd[1]*5,lerp(a[1],b[1],.5)-dd[0]*5);g.stroke()}}
+  // ===== корпус: поддоспешник, кираса до с рядами пластин, энерго-ядро =====
   g.fillStyle=SUIT;g.beginPath();g.moveTo(S.hip[0]+nx*W2,S.hip[1]+ny*W2);g.lineTo(S.sh[0]+nx*W1,S.sh[1]+ny*W1);g.lineTo(S.sh[0]-nx*W1,S.sh[1]-ny*W1);g.lineTo(S.hip[0]-nx*W2,S.hip[1]-ny*W2);g.fill();
   const ch=[S.hip[0]+tv[0]*48,S.hip[1]+tv[1]*48];
-  g.fillStyle=hit>0?'#ffffff':ARM;g.beginPath();g.moveTo(ch[0]+nx*(W1-3)+tv[0]*28,ch[1]+ny*(W1-3)+tv[1]*28);g.lineTo(ch[0]+nx*(W2+2),ch[1]+ny*(W2+2));g.lineTo(ch[0]+tv[0]*-14,ch[1]+tv[1]*-14);g.lineTo(ch[0]-nx*(W2+2),ch[1]-ny*(W2+2));g.lineTo(ch[0]-nx*(W1-3)+tv[0]*28,ch[1]-ny*(W1-3)+tv[1]*28);g.fill();
-  g.fillStyle='#2a2f4a';g.fillRect(S.hip[0]-14,S.hip[1]-5,28,10);g.fillStyle=hexA(c,.9);g.fillRect(S.hip[0]-3,S.hip[1]-3,6,6);
-  // ядро на груди
-  g.save();g.globalCompositeOperation='lighter';const core=[ch[0]+tv[0]*12,ch[1]+tv[1]*12];const cr=4+Math.sin(t*4)*.6+f.charge*3;
-  const cg=g.createRadialGradient(core[0],core[1],0,core[0],core[1],cr*5);cg.addColorStop(0,'rgba(255,255,255,.95)');cg.addColorStop(.25,hexA(c,.8));cg.addColorStop(1,hexA(c,0));g.fillStyle=cg;g.beginPath();g.arc(core[0],core[1],cr*5,0,7);g.fill();g.restore();
-  glowLine([S.hip[0]+nx*(W2-2),S.hip[1]+ny*(W2-2)],[S.sh[0]+nx*(W1-4),S.sh[1]+ny*(W1-4)],c,1.2,.7);
-  // наплечники
-  const sp=f.team==='B'?15:10;g.fillStyle=ARM;g.beginPath();g.ellipse(S.sh[0]+nx*(W1-6),S.sh[1]+ny*(W1-6),sp,sp*.75,Math.atan2(tv[1],tv[0]),0,7);g.fill();
-  glowLine([S.sh[0]+nx*(W1-6)-tv[0]*6,S.sh[1]+ny*(W1-6)-tv[1]*6],[S.sh[0]+nx*(W1-6)+tv[0]*6,S.sh[1]+ny*(W1-6)+tv[1]*6],c,1,.6);
-  // голова/шлем
-  const hd=S.hd,hr=17;g.fillStyle=SUIT;g.beginPath();g.arc(hd[0],hd[1],hr,0,7);g.fill();
-  g.fillStyle=hit>0?'#fff':ARM;g.beginPath();g.ellipse(hd[0]-fc*2,hd[1]-2,hr,hr*.95,0,Math.PI*(fc>0?.95:-.05),Math.PI*(fc>0?2.05:1.05));g.fill();
-  if(f.team==='B'){glowLine([hd[0]-fc*4,hd[1]-hr+2],[hd[0]-fc*20,hd[1]-hr-22],c,1.4,.9);glowLine([hd[0]+fc*4,hd[1]-hr+3],[hd[0]-fc*8,hd[1]-hr-26],c,1.4,.9)}
-  else{g.fillStyle=ARM2;g.beginPath();g.moveTo(hd[0]-fc*hr,hd[1]-4);g.lineTo(hd[0]-fc*(hr+12),hd[1]-10);g.lineTo(hd[0]-fc*hr,hd[1]+2);g.fill()}
-  glowLine([hd[0]+fc*2,hd[1]-1],[hd[0]+fc*(hr+1),hd[1]+1],c,2.6,1);
-  // передние ноги
-  limb(S.hip,S.K1,11,9,'#2f3554');limb([lerp(S.hip[0],S.K1[0],.25),lerp(S.hip[1],S.K1[1],.25)],[lerp(S.hip[0],S.K1[0],.85),lerp(S.hip[1],S.K1[1],.85)],7,6,ARM2);
-  limb(S.K1,S.F1,8,6,ARM);limb(S.F1,[S.F1[0]+fc*15,S.F1[1]],4.5,4.5,'#22263d');
-  g.fillStyle=ARM;g.beginPath();g.arc(S.K1[0],S.K1[1],8,0,7);g.fill();g.fillStyle=ARM2;g.beginPath();g.arc(S.K1[0],S.K1[1],4,0,7);g.fill();glowLine([S.K1[0],S.K1[1]],[lerp(S.K1[0],S.F1[0],.6),lerp(S.K1[1],S.F1[1],.6)],c,1,.5);
-  // передняя рука + клинок
-  const A1=S.A1;limb(S.sh,A1.el,8,7,ARM);limb(A1.el,A1.ha,7,6,ARM);
-  // наруч: накладка с неоновой гранью
-  limb([lerp(A1.el[0],A1.ha[0],.2),lerp(A1.el[1],A1.ha[1],.2)],[lerp(A1.el[0],A1.ha[0],.78),lerp(A1.el[1],A1.ha[1],.78)],8,6.5,'#aeb7d2');
-  g.fillStyle='#22263d';g.beginPath();g.arc(A1.ha[0],A1.ha[1],6,0,7);g.fill();
-  glowLine(A1.el,[lerp(A1.el[0],A1.ha[0],.7),lerp(A1.el[1],A1.ha[1],.7)],c,1,.6);
-  joint(A1.el,6.5,c);joint([S.sh[0]+nx*(W1-6),S.sh[1]+ny*(W1-6)],5,c,.8);
-  // швы нагрудника
-  g.strokeStyle='rgba(40,46,74,.55)';g.lineWidth=1;g.beginPath();g.moveTo(ch[0]+tv[0]*24-nx*6,ch[1]+tv[1]*24-ny*6);g.lineTo(ch[0]-tv[0]*6,ch[1]-tv[1]*6);g.moveTo(ch[0]+tv[0]*24+nx*6,ch[1]+tv[1]*24+ny*6);g.lineTo(ch[0]-tv[0]*6,ch[1]-tv[1]*6);g.stroke();
-  // контровой свет по силуэту (небо сверху, арена снизу)
+  const P=(u,v)=>[S.hip[0]+tv[0]*u+nx*v,S.hip[1]+tv[1]*u+ny*v];   // u — вверх по корпусу, v — вперёд
+  {const t0=P(78,0),t1=P(8,0),cg0=g.createLinearGradient(t0[0],t0[1],t1[0],t1[1]);cg0.addColorStop(0,'#dfe6f4');cg0.addColorStop(.55,'#bcc5dc');cg0.addColorStop(1,'#8e98b6');g.fillStyle=hit>0?'#ffffff':cg0}
+  g.beginPath();[[8,-W2-1],[8,W2+3],[50,W1-1],[74,W1-3],[78,-W1+4],[44,-W1+2]].forEach(([u,v],i)=>{const q=P(u,v);i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1])});g.closePath();g.fill();
+  g.strokeStyle='rgba(60,68,100,.55)';g.lineWidth=1;for(const u of [20,32]){const a=P(u,-W2-1+u*.06),b=P(u,W2+3+u*.12);g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke()}
+  g.fillStyle='#2a2f4a';{const a=P(4,-W2-2),b=P(4,W2+4),cc=P(10,W2+4),d=P(10,-W2-2);g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.lineTo(cc[0],cc[1]);g.lineTo(d[0],d[1]);g.fill()}
+  // ядро
+  g.save();g.globalCompositeOperation='lighter';const core=P(56,4),cr=4+Math.sin(t*4)*.8+f.charge*3;
+  const cg=g.createRadialGradient(core[0],core[1],0,core[0],core[1],cr*5);cg.addColorStop(0,'rgba(255,255,255,.95)');cg.addColorStop(.25,hexA(c,.85));cg.addColorStop(1,hexA(c,0));g.fillStyle=cg;g.beginPath();g.arc(core[0],core[1],cr*5,0,7);g.fill();
+  if(Q>0){g.strokeStyle=hexA(c,.7);g.lineWidth=1;g.beginPath();g.arc(core[0],core[1],7.5,0,7);g.stroke()}g.restore();
+  glowLine(P(10,W2+3),P(72,W1-3),c,1.1,.7);
+  // ===== передняя нога: хайдатэ, наколенник, сунэатэ, стопа =====
+  limb(S.hip,S.K1,11,9,'#2f3554');
+  {const d=unit(S.hip,S.K1);for(let k=0;k<3;k++){const a=[lerp(S.hip[0],S.K1[0],.2+k*.22),lerp(S.hip[1],S.K1[1],.2+k*.22)],b=[a[0]+d[0]*13,a[1]+d[1]*13];plate(a,b,9,8.5,k%2?ARM2:'#aab3cf',c,1,.35)}}
+  limb(S.K1,S.F1,8,6,'#3a4262');plate([lerp(S.K1[0],S.F1[0],.12),lerp(S.K1[1],S.F1[1],.12)],[lerp(S.K1[0],S.F1[0],.86),lerp(S.K1[1],S.F1[1],.86)],8.5,6.5,ARM,c,1,.55);
+  {const d=unit(S.K1,S.F1),kn=[S.K1[0]-d[0]*4,S.K1[1]-d[1]*4];g.fillStyle=ARM;g.beginPath();g.moveTo(kn[0]-d[1]*fc*9,kn[1]+d[0]*fc*9);g.lineTo(kn[0]+d[0]*14,kn[1]+d[1]*14);g.lineTo(kn[0]+d[1]*fc*9,kn[1]-d[0]*fc*9);g.lineTo(kn[0]-d[0]*8,kn[1]-d[1]*8);g.closePath();g.fill();joint(S.K1,4,c,.7)}
+  g.fillStyle='#22263d';g.beginPath();g.moveTo(S.F1[0]-fc*6,S.F1[1]-5);g.lineTo(S.F1[0]+fc*15,S.F1[1]-3);g.lineTo(S.F1[0]+fc*17,S.F1[1]+3);g.lineTo(S.F1[0]-fc*7,S.F1[1]+3);g.fill();
+  g.fillStyle=ARM2;g.beginPath();g.moveTo(S.F1[0]+fc*6,S.F1[1]-4);g.lineTo(S.F1[0]+fc*15,S.F1[1]-2.5);g.lineTo(S.F1[0]+fc*15,S.F1[1]);g.lineTo(S.F1[0]+fc*6,S.F1[1]);g.fill();
+  // ===== шлем-кабуто =====
+  kabuto(f,S.hd,((S.lean||0)+(f.pose.head||0)*.5)*Math.PI/180*fc,c,hit,t);
+  // ===== передняя рука: плечо, содэ из 3 пластин, наручи-котэ, кисть =====
+  const A1=S.A1;limb(S.sh,A1.el,8,7,'#2f3554');
+  {const u=unit(S.sh,A1.el),pp=[-u[1],u[0]],sw=isB?17:14;
+    for(let k=0;k<3;k++){const cc=[S.sh[0]+u[0]*(4+k*8)+pp[0]*0,S.sh[1]+u[1]*(4+k*8)],a=[cc[0]-pp[0]*sw,cc[1]-pp[1]*sw],b=[cc[0]+pp[0]*sw,cc[1]+pp[1]*sw];
+      plate(a,b,4.6,4.6,k===0?ARM:k===1?'#b3bcd6':ARM2,c,-1,.75)}
+    if(Q>0){const bl=[S.sh[0]+u[0]*2,S.sh[1]+u[1]*2];g.save();g.globalCompositeOperation='lighter';g.strokeStyle='rgba(215,225,255,.5)';g.lineWidth=1.3;g.beginPath();g.moveTo(bl[0]-pp[0]*sw,bl[1]-pp[1]*sw);g.lineTo(bl[0]+pp[0]*sw,bl[1]+pp[1]*sw);g.stroke();g.restore()}}
+  limb(A1.el,A1.ha,7,6,'#2f3554');
+  {const d=unit(A1.el,A1.ha);for(let k=0;k<3;k++){const a=[lerp(A1.el[0],A1.ha[0],.15+k*.24),lerp(A1.el[1],A1.ha[1],.15+k*.24)],b=[a[0]+d[0]*9,a[1]+d[1]*9];plate(a,b,7.5-k*.5,7-k*.5,k%2?ARM2:'#b8c1db',c,1,.5)}}
+  joint(A1.el,6.5,c);
+  g.fillStyle='#22263d';g.beginPath();g.arc(A1.ha[0],A1.ha[1],6,0,7);g.fill();g.fillStyle=ARM3;g.beginPath();g.arc(A1.ha[0],A1.ha[1],3.5,0,7);g.fill();
+  // ===== объём и свет: блик неба сверху, отсвет ринга снизу =====
   if(Q>0){g.save();g.globalCompositeOperation='lighter';g.lineCap='round';
     rim(S.hip,S.K1,11,c);rim(S.K1,S.F1,8,c);rim(S.hip,S.K2,9,c,.5);rim(S.K2,S.F2,7,c,.5);rim(S.sh,A1.el,8,c);rim(A1.el,A1.ha,7,c);
-    rim([S.hip[0]+nx*W2,S.hip[1]+ny*W2],[S.sh[0]+nx*W1,S.sh[1]+ny*W1],2,c,.9);rim([S.hip[0]-nx*W2,S.hip[1]-ny*W2],[S.sh[0]-nx*W1,S.sh[1]-ny*W1],2,c,.9);
-    g.strokeStyle='rgba(215,225,255,.55)';g.lineWidth=1.6;g.beginPath();g.arc(hd[0],hd[1],hr+.6,Math.PI*1.12,Math.PI*1.88);g.stroke();
-    g.strokeStyle=hexA(c,.5);g.lineWidth=1.4;g.beginPath();g.arc(hd[0],hd[1],hr+.6,Math.PI*.2,Math.PI*.8);g.stroke();
-    // отсвет арены снизу на ноги
-    const ug=g.createLinearGradient(0,FLOOR-70,0,FLOOR);ug.addColorStop(0,hexA(c,0));ug.addColorStop(1,hexA(c,.16));g.fillStyle=ug;g.fillRect(S.hip[0]-46,FLOOR-70,92,70);
+    rim(P(8,W2+3),P(74,W1-3),2,c,.9);rim(P(8,-W2-1),P(78,-W1+4),2,c,.9);
+    const ug=g.createLinearGradient(0,FLOOR-80,0,FLOOR);ug.addColorStop(0,hexA(c,0));ug.addColorStop(1,hexA(c,.18));g.fillStyle=ug;g.fillRect(S.hip[0]-50,FLOOR-80,100,80);
     g.restore()}
-  blade(A1,c,Math.sin(t*11),f.charge+f.glow);
+  blade(A1,c,Math.sin(t*11),f.charge+f.glow,isB?KAT.B.c1:KAT.A.c1,fc);
   // следы клинков
   const moving=f.attacking&&!!f.from&&f.trailOn;const maxT=f.superMove?(Q?16:8):(Q?10:6);
   const push=(tr,A)=>{tr.push({b:A.b0.slice(),t:A.tip.slice()});while(tr.length>maxT)tr.shift()};
-  if(moving){push(f.trail,A1);if(f.team==='B')push(f.trail2,A2)}else{for(let i=0;i<2;i++){f.trail.length&&f.trail.shift();f.trail2.length&&f.trail2.shift()}}
+  if(moving){push(f.trail,A1);if(isB)push(f.trail2,A2)}else{for(let i=0;i<2;i++){f.trail.length&&f.trail.shift();f.trail2.length&&f.trail2.shift()}}
   trailDraw(f.trail,c,f.superMove);trailDraw(f.trail2,c,f.superMove);
   // свечение контура брони при попадании
   if(f.hitT>0&&Q>0){const hc=f.hitCol||'#ffffff',a=f.hitT*f.hitT;
     for(const [p0,p1] of [[S.hip,S.K1],[S.K1,S.F1],[S.hip,S.K2],[S.sh,A1.el],[A1.el,A1.ha],[S.sh,A2.el]])glowLine(p0,p1,hc,2.2,a*.8);
-    glowLine([S.hip[0]+nx*W2,S.hip[1]+ny*W2],[S.sh[0]+nx*W1,S.sh[1]+ny*W1],hc,2.6,a);glowLine([S.hip[0]-nx*W2,S.hip[1]-ny*W2],[S.sh[0]-nx*W1,S.sh[1]-ny*W1],hc,2.6,a);
-    g.save();g.globalCompositeOperation='lighter';for(const [lw,aa] of [[9,.18],[3.5,.5],[1.4,1]]){g.strokeStyle=hexA(hc,aa*a);g.lineWidth=lw;g.beginPath();g.arc(hd[0],hd[1],hr+1,0,7);g.stroke()}g.restore()}
+    glowLine(P(8,W2+3),P(74,W1-3),hc,2.6,a);glowLine(P(8,-W2-1),P(78,-W1+4),hc,2.6,a);
+    g.save();g.globalCompositeOperation='lighter';for(const [lw,aa] of [[9,.18],[3.5,.5],[1.4,1]]){g.strokeStyle=hexA(hc,aa*a);g.lineWidth=lw;g.beginPath();g.arc(S.hd[0],S.hd[1]-3,17,0,7);g.stroke()}g.restore()}
   // заряд суперудара
   if(f.charge>0){g.save();g.globalCompositeOperation='lighter';const r=40+Math.sin(t*30)*6;const cg2=g.createRadialGradient(S.hip[0],S.hip[1]-40,0,S.hip[0],S.hip[1]-40,r*2.4);cg2.addColorStop(0,hexA(c,.35));cg2.addColorStop(1,hexA(c,0));g.fillStyle=cg2;g.beginPath();g.arc(S.hip[0],S.hip[1]-40,r*2.4,0,7);g.fill();
     for(let i=0;i<3;i++){const a=t*8+i*2.1;g.strokeStyle=hexA(c,.7);g.lineWidth=1.5;g.beginPath();g.arc(S.hip[0],S.hip[1]-40,60+i*14,a,a+1.2);g.stroke()}g.restore()}
