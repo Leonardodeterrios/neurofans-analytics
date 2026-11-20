@@ -18,7 +18,7 @@ PuzzleBot на /start шлёт GET /bot/start?p=<start-параметр>&uid=<te
 Сила = засчитанные удары + START_POWER × новые люди, дошедшие до бота («апперкот»).
 polling не запускаем: токен бота нужен только для уведомлений (sendMessage), с PuzzleBot не конфликтует.
 """
-import os, io, csv, re, hmac, ipaddress, hashlib, sqlite3, threading, time, logging, datetime as dt
+import os, io, csv, re, json, gzip, hmac, ipaddress, hashlib, sqlite3, threading, time, logging, datetime as dt
 from urllib.parse import quote
 from zoneinfo import ZoneInfo
 import httpx
@@ -64,6 +64,11 @@ START_POWER        = _int("START_POWER", 3)
 TRUST_CF           = _flag("TRUST_CF", "0")   # 1 = сайт за Cloudflare, берём IP из CF-Connecting-IP
 MAX_PARTNERS_PER_VISITOR = _int("MAX_PARTNERS_PER_VISITOR", 3)
 MAX_HITS_PER_IP    = _int("MAX_HITS_PER_IP", 100)
+BASE_URL           = _str("BASE_URL").rstrip("/")
+PER_TEAM           = _int("PER_TEAM", 50)
+PARTNER_SECRET     = _str("PARTNER_SECRET")     # подпись личных ссылок партнёров (/p/<метка>?k=...)
+GEO_ENABLE         = _flag("GEO", "1")          # города кликов по базе DB-IP Lite (скачивается сама)
+GEO_DB             = _str("GEO_DB") or os.path.join(os.path.dirname(DB_PATH) or ".", "geo-city.mmdb")
 
 TEAM_A_NAME   = _str("TEAM_A_NAME", "Команда Лёни")
 TEAM_A_PREFIX = _str("TEAM_A_PREFIX", "leo").lower()
@@ -86,11 +91,26 @@ BOT_UA = re.compile(
     r"statuscake|monitor", re.I)
 SAFE_START = re.compile(r"[^A-Za-z0-9_-]")
 SAFE_LABEL = re.compile(r"[^A-Za-z0-9_-]")
-ARENA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "arena.html")
+HERE = os.path.dirname(os.path.abspath(__file__))
+ARENA_PATH = os.path.join(HERE, "arena.html")
+PARTNER_PATH = os.path.join(HERE, "partner.html")
+
+# Ранги по силе за всё время и ачивки (значки рядом с меткой партнёра)
+RANKS = [(0, "Новичок"), (10, "Боец"), (30, "Воин"), (75, "Мастер"), (150, "Чемпион"), (300, "Легенда")]
+BADGES = {
+    "first_blood": ("🩸", "Первая кровь", "первый удар этого раунда"),
+    "champ":       ("👑", "Чемпион раунда", "лучший боец прошлого раунда"),
+    "belt":        ("🥋", "Пояс недели", "больше всех силы за 7 раундов"),
+    "ko":          ("⚡", "Нокаутёр", "10+ апперкотов"),
+    "sniper":      ("🎯", "Снайпер", "доходимость 50%+ при 10+ ударах"),
+    "hundred":     ("💯", "Сотня", "100+ ударов"),
+}
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("neurofans")
 app = Flask(__name__)
+if hasattr(app, "config"):
+    app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 7 * 86400   # шрифты и статика кэшируются неделю
 
 
 def team_of(source):
@@ -173,7 +193,8 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT, source TEXT, ip TEXT, ua TEXT)""")
         cols = {r[1] for r in c.execute("PRAGMA table_info(clicks)")}
         for col, ddl in (("vid", "TEXT"), ("scored", "INTEGER DEFAULT 1"),
-                         ("rnd", "TEXT"), ("ch", "TEXT DEFAULT ''")):
+                         ("rnd", "TEXT"), ("ch", "TEXT DEFAULT ''"),
+                         ("city", "TEXT"), ("cc", "TEXT"), ("lat", "REAL"), ("lon", "REAL")):
             if col not in cols:
                 c.execute(f"ALTER TABLE clicks ADD COLUMN {col} {ddl}")
         c.execute("""CREATE TABLE IF NOT EXISTS starts(
@@ -188,8 +209,10 @@ def init_db():
         c.execute("CREATE INDEX IF NOT EXISTS ix_starts_uid ON starts(tg_uid)")
         c.execute("CREATE INDEX IF NOT EXISTS ix_starts_ts ON starts(ts)")
 
-def record_click(source, ch, ip, ua, vid):
+def record_click(source, ch, ip, ua, vid, geo=None):
     """Пишет клик. Возвращает (id клика, засчитан ли удар, новый ли человек)."""
+    _stats_cache.clear()
+    g = geo or {}
     _start, end = round_bounds()
     rnd = _utc_z(end)
     with _conn() as c:
@@ -202,12 +225,15 @@ def record_click(source, ch, ip, ua, vid):
         scored = 0 if (dup or spread >= MAX_PARTNERS_PER_VISITOR or ip_hits >= MAX_HITS_PER_IP
                        or source == "direct") else 1
         new_vis = c.execute("SELECT 1 FROM clicks WHERE vid=? LIMIT 1", (vid,)).fetchone() is None
-        cur = c.execute("INSERT INTO clicks(ts,source,ip,ua,vid,scored,rnd,ch) VALUES(?,?,?,?,?,?,?,?)",
-                        (_now_iso(), source, ip, ua, vid, scored, rnd, ch))
+        cur = c.execute("INSERT INTO clicks(ts,source,ip,ua,vid,scored,rnd,ch,city,cc,lat,lon) "
+                        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+                        (_now_iso(), source, ip, ua, vid, scored, rnd, ch,
+                         g.get("city"), g.get("cc"), g.get("lat"), g.get("lon")))
         return cur.lastrowid, bool(scored), new_vis
 
 def record_start(raw_payload, uid):
     """Старт бота из PuzzleBot. Засчитывается («апперкот»), если человек впервые пришёл в бота."""
+    _stats_cache.clear()
     label, cid, whole = parse_payload(raw_payload)
     ch, click_ok = "", False
     with _conn() as c:
@@ -233,7 +259,72 @@ def record_start(raw_payload, uid):
 def _conv(starts, hits):
     return round(starts / hits * 100, 1) if hits else None
 
+_stats_cache = {}
+
+def _anchor():
+    """Эпоха (сек) гонга 1 января 2020 — от неё нумеруются раунды: индекс = (t - anchor) // сутки."""
+    hh, mm = _round_hm()
+    return int(dt.datetime(2020, 1, 1, hh, mm, tzinfo=ZoneInfo(SUMMARY_TZ)).timestamp())
+
+def round_idx(d):
+    return (int(d.timestamp()) - _anchor()) // 86400
+
+def round_end_of(idx):
+    return dt.datetime.fromtimestamp(_anchor() + (idx + 1) * 86400, ZoneInfo(SUMMARY_TZ))
+
+def round_history(c):
+    """{метка: {индекс раунда: [удары, апперкоты]}} по всем раундам."""
+    A, h = _anchor(), {}
+    for lab, r, n in c.execute("SELECT source, (CAST(strftime('%s', ts) AS INTEGER) - ?) / 86400, SUM(scored) "
+                               "FROM clicks WHERE scored=1 GROUP BY 1, 2", (A,)):
+        h.setdefault(lab, {}).setdefault(r, [0, 0])[0] += n or 0
+    for lab, r, n in c.execute("SELECT label, (CAST(strftime('%s', ts) AS INTEGER) - ?) / 86400, SUM(scored) "
+                               "FROM starts WHERE scored=1 GROUP BY 1, 2", (A,)):
+        h.setdefault(lab, {}).setdefault(r, [0, 0])[1] += n or 0
+    h.pop("direct", None)
+    return h
+
+def _pw(v):
+    return v[0] + START_POWER * v[1]
+
+def round_summary(hist, idx):
+    """Итоги одного раунда: сила команд, удары/апперкоты, топ-3 партнёров."""
+    teams = {k: {"key": k, "name": n, "color": col, "power": 0, "hits": 0, "starts": 0}
+             for k, (n, _p, col) in TEAMS.items()}
+    rows = []
+    for lab, rr in hist.items():
+        v = rr.get(idx)
+        tk = team_of(lab)
+        if not v or not tk:
+            continue
+        t = teams[tk]; t["power"] += _pw(v); t["hits"] += v[0]; t["starts"] += v[1]
+        rows.append({"source": lab, "team": tk, "power": _pw(v), "hits": v[0], "starts": v[1]})
+    rows.sort(key=lambda x: (-x["power"], x["source"]))
+    a, b = teams["A"], teams["B"]
+    win = None if a["power"] == b["power"] else ("A" if a["power"] > b["power"] else "B")
+    return {"idx": idx, "end": _utc_z(round_end_of(idx)), "date": round_end_of(idx).strftime("%d.%m.%Y"),
+            "teams": [a, b], "winner": win, "top": rows[:3], "all": rows}
+
+def rank_of(power):
+    i = 0
+    for j, (thr, _n) in enumerate(RANKS):
+        if power >= thr:
+            i = j
+    nxt = RANKS[i + 1][0] if i + 1 < len(RANKS) else None
+    return i, RANKS[i][1], nxt
+
 def get_stats(at=None):
+    """Кэш на 2 секунды: арену одновременно смотрят много партнёров. Сбрасывается при каждом клике/старте."""
+    if at is not None:
+        return _get_stats(at)
+    hit = _stats_cache.get("v")
+    if hit and time.time() - hit[0] < 2:
+        return hit[1]
+    v = _get_stats()
+    _stats_cache["v"] = (time.time(), v)
+    return v
+
+def _get_stats(at=None):
     """«today» во всех полях = текущий раунд. Сила = удары + START_POWER × старты."""
     start, end = round_bounds(at)
     s0, e0 = _utc_naive(start), _utc_naive(end)
@@ -257,6 +348,14 @@ def get_stats(at=None):
             "SELECT COALESCE(ch,''), COUNT(*), SUM(scored) FROM clicks GROUP BY 1")}
         ch_starts = {r[0]: r[1] or 0 for r in c.execute(
             "SELECT COALESCE(ch,''), SUM(scored) FROM starts GROUP BY 1")}
+        fb = c.execute("SELECT source FROM clicks WHERE scored=1 AND source!='direct' AND ts>=? AND ts<? "
+                       "ORDER BY id LIMIT 1", (s0, e0)).fetchone()
+        hist = round_history(c)
+    cur = round_idx(start)
+    first = min((r for rr in hist.values() for r in rr), default=cur)
+    prev = round_summary(hist, cur - 1)
+    week = {lab: sum(_pw(v) for r, v in rr.items() if cur - 6 <= r <= cur) for lab, rr in hist.items()}
+    belt = max(week.items(), key=lambda kv: (kv[1], kv[0]), default=(None, 0))
     partners = []
     for label in (set(src) | set(st_all)) - {"direct"}:
         r = src.get(label)
@@ -267,6 +366,17 @@ def get_stats(at=None):
                          "hits_today": hr, "starts_today": sr,
                          "today": hr + START_POWER * sr, "power": hits + START_POWER * st,
                          "conv": _conv(st, hits)})
+    for p in partners:
+        ri, rn, nxt = rank_of(p["power"])
+        p["rank"], p["rank_name"], p["rank_next"] = ri, rn, nxt
+        b = []
+        if fb and fb[0] == p["source"]: b.append("first_blood")
+        if prev["top"] and prev["top"][0]["source"] == p["source"]: b.append("champ")
+        if belt[0] == p["source"] and belt[1] > 0: b.append("belt")
+        if p["starts"] >= 10: b.append("ko")
+        if p["hits"] >= 10 and (p["conv"] or 0) >= 50: b.append("sniper")
+        if p["hits"] >= 100: b.append("hundred")
+        p["badges"] = b
     partners.sort(key=lambda p: (-p["power"], -p["clicks"], p["source"] or ""))
     teams = []
     for key, (name, _prefix, color) in TEAMS.items():
@@ -292,6 +402,9 @@ def get_stats(at=None):
             "teams": teams, "partners": partners, "leader_today": leader_today,
             "by_day": by_day, "channels": channels,
             "round_start": _utc_z(start), "round_end": _utc_z(end),
+            "round_no": cur - first + 1, "prev_round": {k: v for k, v in prev.items() if k != "all"},
+            "ranks": [{"min": t, "name": n} for t, n in RANKS],
+            "badge_defs": {k: {"icon": i, "name": n, "desc": d} for k, (i, n, d) in BADGES.items()},
             "server_now": _utc_z(dt.datetime.now(dt.timezone.utc))}
 
 def _pct(v):
@@ -362,6 +475,66 @@ def starts_csv_bytes() -> bytes:
     return buf.getvalue().encode("utf-8-sig")
 
 
+# ---------- гео: город клика (DB-IP Lite, CC BY 4.0) ----------
+_geo = {"r": None, "tried": 0.0}
+
+def _geo_reader():
+    if not GEO_ENABLE or not os.path.exists(GEO_DB):
+        return None
+    if _geo["r"] is None and time.time() - _geo["tried"] > 60:
+        _geo["tried"] = time.time()
+        try:
+            import maxminddb
+            _geo["r"] = maxminddb.open_database(GEO_DB)
+        except Exception as e:
+            log.warning("geo db open failed: %s", e)
+    return _geo["r"]
+
+def geo_lookup(ip):
+    """Только город и округлённые координаты (точность ~10 км) — для «пульсов» на арене."""
+    r = _geo_reader()
+    if not r or not ip:
+        return None
+    try:
+        d = r.get(ip) or {}
+    except Exception:
+        return None
+    loc = d.get("location") or {}
+    if loc.get("latitude") is None:
+        return None
+    names = (d.get("city") or {}).get("names") or {}
+    return {"city": (names.get("ru") or names.get("en") or "")[:60],
+            "cc": ((d.get("country") or {}).get("iso_code") or "")[:2],
+            "lat": round(float(loc["latitude"]), 1), "lon": round(float(loc["longitude"]), 1)}
+
+def geo_updater():
+    """Раз в сутки проверяет базу городов; если её нет или ей больше 35 дней — скачивает свежую."""
+    while GEO_ENABLE:
+        try:
+            fresh = os.path.exists(GEO_DB) and time.time() - os.path.getmtime(GEO_DB) < 35 * 86400
+            if not fresh:
+                today = dt.date.today()
+                months = [today, (today.replace(day=1) - dt.timedelta(days=1))]
+                for m in months:
+                    url = f"https://download.db-ip.com/free/dbip-city-lite-{m:%Y-%m}.mmdb.gz"
+                    tmp = GEO_DB + ".tmp"
+                    with httpx.stream("GET", url, timeout=120, follow_redirects=True) as resp:
+                        if resp.status_code != 200:
+                            continue
+                        d = gzip.decompressobj(16 + 15)
+                        with open(tmp, "wb") as f:
+                            for chunk in resp.iter_bytes():
+                                f.write(d.decompress(chunk))
+                            f.write(d.flush())
+                    os.replace(tmp, GEO_DB)
+                    _geo["r"] = None; _geo["tried"] = 0.0
+                    log.info("geo db updated from %s", url)
+                    break
+        except Exception as e:
+            log.warning("geo db update failed: %s", e)
+        time.sleep(86400)
+
+
 # ---------- Telegram (только отправка) ----------
 def tg_send(text, chat_id):
     if not (BOT_TOKEN and chat_id):
@@ -372,6 +545,38 @@ def tg_send(text, chat_id):
                    timeout=10)
     except Exception as e:
         log.error("tg send to %s failed: %s", chat_id, e)
+
+def tg_photo(png, caption, chat_id):
+    if not (BOT_TOKEN and chat_id and png):
+        return
+    try:
+        httpx.post(f"{TG_API}/sendPhoto", data={"chat_id": str(chat_id), "caption": caption[:1000]},
+                   files={"photo": ("round.png", png, "image/png")}, timeout=30)
+    except Exception as e:
+        log.error("tg photo to %s failed: %s", chat_id, e)
+
+def round_card_png(which="last", label=None):
+    """Карточка итогов раунда 9:16 (Pillow). which: last — закончившийся раунд, current — идущий."""
+    try:
+        import cards
+    except Exception as e:
+        log.warning("cards unavailable: %s", e)
+        return None
+    with _conn() as c:
+        hist = round_history(c)
+    start, _end = round_bounds()
+    idx = round_idx(start) - (1 if which == "last" else 0)
+    first = min((r for rr in hist.values() for r in rr), default=idx)
+    summ = round_summary(hist, idx)
+    me = None
+    if label:
+        rows = summ["all"]
+        pos = next((i for i, r in enumerate(rows) if r["source"] == label), None)
+        me = {"source": label, "team": team_of(label),
+              "place": (pos + 1) if pos is not None else None, "of": len(rows),
+              "power": rows[pos]["power"] if pos is not None else 0}
+    return cards.story(summ, round_no=idx - first + 1, live=(which != "last"), me=me,
+                       start_power=START_POWER, fonts=os.path.join(HERE, "static", "fonts"))
 
 def notify_all(text):
     for cid in ADMIN_IDS:
@@ -460,6 +665,9 @@ def scheduler_loop():
                 if nowtz.hour == hh and nowtz.minute == mm and last_summary_date != nowtz.date():
                     last_summary_date = nowtz.date()
                     notify_all(daily_results_text())
+                    png = round_card_png("last")
+                    for cid in ADMIN_IDS:
+                        tg_photo(png, "Карточка итогов раунда — можно выложить в сторис", cid)
             except Exception as e:
                 log.error("daily summary failed: %s", e)
         time.sleep(30)
@@ -506,6 +714,9 @@ def _role():
         return "admin"
     if PUBLIC_TOKEN and hmac.compare_digest(tok, PUBLIC_TOKEN):
         return "public"
+    lab, k = request.args.get("p", ""), request.args.get("k", "")
+    if lab and k and hmac.compare_digest(k, partner_key(clean_label(lab))):
+        return "public"                 # личная ссылка партнёра открывает и арену
     return None
 
 def _need(admin=False):
@@ -525,7 +736,7 @@ def _track_and_redirect(raw, ch):
         return resp
     ip = _client_ip()
     vid, set_cookie = _visitor(ip, ua)
-    cid, scored, new_vis = record_click(source, ch, ip, ua, vid)
+    cid, scored, new_vis = record_click(source, ch, ip, ua, vid, geo_lookup(ip))
     if scored:
         notify_hit(source, ch, new_vis)
         push_sheet({"type": "hit", "source": source, "channel": ch, "visitor": vid})
@@ -578,6 +789,37 @@ def api_stats():
     st["role"] = role
     return jsonify(st)
 
+def _int_or(v, d):
+    try:
+        return int(v)
+    except (TypeError, ValueError):
+        return d
+
+def feed_since(c, sc, ss):
+    """Новые засчитанные удары (id > sc) и апперкоты (id > ss). Возвращает (items, новый sc, новый ss)."""
+    items = []
+    if sc is not None:
+        for r in c.execute("SELECT id, ts, source, city, cc, lat, lon FROM clicks "
+                           "WHERE id>? AND scored=1 ORDER BY id LIMIT 300", (sc,)):
+            items.append({"kind": "hit", "id": r["id"], "ts": r["ts"], "source": r["source"],
+                          "team": team_of(r["source"]), "city": r["city"] or "", "cc": r["cc"] or "",
+                          "lat": r["lat"], "lon": r["lon"]})
+            sc = max(sc, r["id"])
+    if ss is not None:
+        for r in c.execute("SELECT s.id, s.ts, s.label, k.city, k.cc, k.lat, k.lon FROM starts s "
+                           "LEFT JOIN clicks k ON k.id = s.click_id "
+                           "WHERE s.id>? AND s.scored=1 ORDER BY s.id LIMIT 300", (ss,)):
+            items.append({"kind": "start", "id": r["id"], "ts": r["ts"], "source": r["label"],
+                          "team": team_of(r["label"]), "city": r["city"] or "", "cc": r["cc"] or "",
+                          "lat": r["lat"], "lon": r["lon"]})
+            ss = max(ss, r["id"])
+    items.sort(key=lambda x: x["ts"])
+    return items, sc, ss
+
+def _cursors(c):
+    return (c.execute("SELECT COALESCE(MAX(id),0) FROM clicks").fetchone()[0],
+            c.execute("SELECT COALESCE(MAX(id),0) FROM starts").fetchone()[0])
+
 @app.route("/api/feed")
 def api_feed():
     """Лента для арены: засчитанные удары и апперкоты. Без since — только курсоры (историю не проигрываем)."""
@@ -585,36 +827,190 @@ def api_feed():
     sc = request.args.get("since_c", request.args.get("since"))
     ss = request.args.get("since_s")
     with _conn() as c:
-        last_c = c.execute("SELECT COALESCE(MAX(id),0) FROM clicks").fetchone()[0]
-        last_s = c.execute("SELECT COALESCE(MAX(id),0) FROM starts").fetchone()[0]
+        last_c, last_s = _cursors(c)
         items = []
-        def _i(v, d):
-            try:
-                return int(v)
-            except (TypeError, ValueError):
-                return d
-        if sc is not None:
-            for r in c.execute("SELECT id, ts, source FROM clicks WHERE id>? AND scored=1 ORDER BY id LIMIT 300",
-                               (_i(sc, last_c),)):
-                items.append({"kind": "hit", "id": r["id"], "ts": r["ts"], "source": r["source"],
-                              "team": team_of(r["source"])})
-        if ss is not None:
-            for r in c.execute("SELECT id, ts, label FROM starts WHERE id>? AND scored=1 ORDER BY id LIMIT 300",
-                               (_i(ss, last_s),)):
-                items.append({"kind": "start", "id": r["id"], "ts": r["ts"], "source": r["label"],
-                              "team": team_of(r["label"])})
-    items.sort(key=lambda x: x["ts"])
+        if sc is not None or ss is not None:
+            items, _a, _b = feed_since(c, _int_or(sc, last_c) if sc is not None else None,
+                                       _int_or(ss, last_s) if ss is not None else None)
     return jsonify(last_c=last_c, last_s=last_s, last_id=last_c, items=items)
+
+@app.route("/api/stream")
+def api_stream():
+    """Живая лента (Server-Sent Events): удар долетает до арены за ~1 секунду.
+    Соединение живёт 5 минут, браузер сам переподключается с Last-Event-ID (без повторов)."""
+    _need()
+    sc, ss = request.args.get("since_c"), request.args.get("since_s")
+    last_id = (request.headers.get("Last-Event-ID", "") or "")
+    if re.fullmatch(r"\d+:\d+", last_id):
+        sc, ss = last_id.split(":")
+
+    def gen(sc=sc, ss=ss):
+        with _conn() as c:
+            lc, ls = _cursors(c)
+        sc, ss = _int_or(sc, lc), _int_or(ss, ls)
+        yield f"retry: 2000\nid: {sc}:{ss}\ndata: {json.dumps({'hello': 1, 'last_c': sc, 'last_s': ss})}\n\n"
+        t0 = beat = time.time()
+        while time.time() - t0 < 300:
+            with _conn() as c:
+                items, sc, ss = feed_since(c, sc, ss)
+            if items:
+                beat = time.time()
+                yield f"id: {sc}:{ss}\ndata: {json.dumps({'items': items, 'last_c': sc, 'last_s': ss})}\n\n"
+            elif time.time() - beat > 15:
+                beat = time.time()
+                yield ": ping\n\n"
+            time.sleep(1)
+
+    return Response(gen(), mimetype="text/event-stream",
+                    headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+# ---------- личные страницы партнёров ----------
+def _partner_secret():
+    return (PARTNER_SECRET or DASHBOARD_TOKEN or "neurofans").encode()
+
+def partner_key(label):
+    return hmac.new(_partner_secret(), b"p:" + label.encode(), hashlib.sha256).hexdigest()[:12]
+
+def _base_url():
+    if BASE_URL:
+        return BASE_URL
+    try:
+        return request.host_url.rstrip("/")
+    except Exception:
+        return ""
+
+def partner_link(label):
+    return f"{_base_url()}/p/{label}?k={partner_key(label)}"
+
+def _partner_auth(label):
+    """Админ/публичный токен или личный ключ ?k= этого партнёра."""
+    r = _role()
+    if r:
+        return r
+    if hmac.compare_digest(request.args.get("k", ""), partner_key(label)):
+        return "partner"
+    abort(401)
+
+def all_labels():
+    return [f"{pref}{i:02d}" for _k, (_n, pref, _c) in TEAMS.items() for i in range(1, PER_TEAM + 1)]
+
+@app.route("/api/partner/<label>")
+def api_partner(label):
+    label = clean_label(label)
+    role = _partner_auth(label)
+    tk = team_of(label)
+    if not tk:
+        abort(404)
+    st = get_stats()
+    plist = [p for p in st["partners"] if p["team"]]
+    me = next((p for p in plist if p["source"] == label), None)
+    if me is None:
+        ri, rn, nxt = rank_of(0)
+        me = {"source": label, "team": tk, "clicks": 0, "hits": 0, "uniq": 0, "starts": 0, "last": None,
+              "hits_today": 0, "starts_today": 0, "today": 0, "power": 0, "conv": None,
+              "rank": ri, "rank_name": rn, "rank_next": nxt, "badges": []}
+        plist = plist + [me]
+    order = sorted(plist, key=lambda p: (-p["today"], -p["power"], p["source"]))
+    place = order.index(me) + 1
+    ahead = order[place - 2] if place > 1 else None
+    team_order = [p for p in order if p["team"] == tk]
+    with _conn() as c:
+        hist = round_history(c).get(label, {})
+        chans = {r[0] or "": [r[1] or 0, 0] for r in c.execute(
+            "SELECT ch, SUM(scored) FROM clicks WHERE source=? GROUP BY ch", (label,))}
+        for ch, n in c.execute("SELECT ch, SUM(scored) FROM starts WHERE label=? GROUP BY ch", (label,)):
+            chans.setdefault(ch or "", [0, 0])[1] = n or 0
+    start, _e = round_bounds()
+    cur = round_idx(start)
+    days = [{"idx": i, "date": round_end_of(i).strftime("%d.%m"), "power": _pw(hist.get(i, [0, 0])),
+             "hits": hist.get(i, [0, 0])[0], "starts": hist.get(i, [0, 0])[1]} for i in range(cur - 13, cur + 1)]
+    channels = [{"ch": k, "name": CHANNEL_NAMES.get(k, k), "hits": v[0], "starts": v[1],
+                 "power": v[0] + START_POWER * v[1], "conv": _conv(v[1], v[0])} for k, v in chans.items()]
+    channels.sort(key=lambda x: -x["power"])
+    best = channels[0]["name"] if channels and channels[0]["power"] > 0 else None
+    team = next(t for t in st["teams"] if t["key"] == tk)
+    return jsonify(role=role, me=me, team=team, teams=st["teams"], place=place, of=len(order),
+                   team_place=team_order.index(me) + 1, team_of=len(team_order),
+                   ahead=({"source": ahead["source"], "today": ahead["today"],
+                           "gap": ahead["today"] - me["today"] + 1} if ahead else None),
+                   days=days, channels=channels, best_channel=best,
+                   links={"threads": f"{_base_url()}/t/{label}", "video": f"{_base_url()}/v/{label}"},
+                   ranks=st["ranks"], badge_defs=st["badge_defs"], start_power=START_POWER,
+                   round_end=st["round_end"], round_no=st["round_no"], server_now=st["server_now"])
+
+def _page(path, og_title, og_desc, og_img):
+    try:
+        with open(path, encoding="utf-8") as f:
+            html = f.read()
+    except OSError:
+        return Response("<h1>страница не найдена</h1>", mimetype="text/html", status=404)
+    e = lambda v: (v or "").replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;")
+    meta = (f'<meta property="og:type" content="website"><meta property="og:site_name" content="NeuroFans Arena">'
+            f'<meta property="og:title" content="{e(og_title)}"><meta property="og:description" content="{e(og_desc)}">'
+            f'<meta property="og:image" content="{e(og_img)}"><meta property="og:image:width" content="1200">'
+            f'<meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image">')
+    return Response(html.replace("<!--OG-->", meta), mimetype="text/html")
+
+def _score_line():
+    a, b = get_stats()["teams"]
+    return f"{a['name']} {a['today']} : {b['today']} {b['name']}"
+
+@app.route("/p/<label>")
+def partner_page(label):
+    label = clean_label(label)
+    _partner_auth(label)
+    if not team_of(label):
+        abort(404)
+    q = f"k={partner_key(label)}"
+    return _page(PARTNER_PATH, f"{label} — личный кабинет бойца", _score_line(),
+                 f"{_base_url()}/og.png?label={label}&{q}")
+
+@app.route("/og.png")
+def og_png():
+    """Превью ссылки (Telegram и др.): текущий счёт боя картинкой 1200×630."""
+    label = clean_label(request.args.get("label", "")) if request.args.get("label") else None
+    if label:
+        _partner_auth(label)
+    else:
+        _need()
+    try:
+        import cards
+        png = cards.og(get_stats(), fonts=os.path.join(HERE, "static", "fonts"), label=label)
+    except Exception as e:
+        log.warning("og render failed: %s", e)
+        abort(503)
+    return Response(png, mimetype="image/png", headers={"Cache-Control": "public, max-age=60"})
+
+@app.route("/story.png")
+def story_png():
+    label = clean_label(request.args.get("label", "")) if request.args.get("label") else None
+    if label:
+        _partner_auth(label)
+    else:
+        _need()
+    png = round_card_png("current" if request.args.get("round") == "current" else "last", label)
+    if not png:
+        abort(503)
+    dl = {"Content-Disposition": "inline; filename=neurofans-round.png", "Cache-Control": "no-store"}
+    return Response(png, mimetype="image/png", headers=dl)
+
+@app.route("/export/partner_links")
+def export_partner_links():
+    _need(admin=True)
+    buf = io.StringIO(); w = csv.writer(buf)
+    w.writerow(["team", "label", "personal_page", "threads_link", "video_link"])
+    for lab in all_labels():
+        w.writerow([TEAMS[team_of(lab)][0], lab, partner_link(lab), f"{_base_url()}/t/{lab}", f"{_base_url()}/v/{lab}"])
+    return Response(buf.getvalue().encode("utf-8-sig"), mimetype="text/csv",
+                    headers={"Content-Disposition": "attachment; filename=partner_pages.csv"})
 
 @app.route("/arena")
 def arena():
     _need()
-    try:
-        with open(ARENA_PATH, encoding="utf-8") as f:
-            html = f.read()
-    except OSError:
-        html = "<h1>arena.html не найден</h1>"
-    return Response(html, mimetype="text/html")
+    qs = "&".join(f"{k}={quote(request.args.get(k, ''))}" for k in ("token", "p", "k") if request.args.get(k))
+    return _page(ARENA_PATH, "NeuroFans Arena — бой команд в прямом эфире", _score_line(),
+                 f"{_base_url()}/og.png?{qs}")
 
 @app.route("/export")
 def export():
@@ -692,7 +1088,7 @@ th{color:var(--mut);font-weight:600}
   <div class="tw"><table><thead><tr><th>Канал</th><th>Клики</th><th>Удары</th><th>В бот</th><th>Доходимость</th></tr></thead><tbody id="chRows"></tbody></table></div>
 </div>
 <div class="card">
-  <b>Лидерборд партнёров</b> &nbsp; <a id="csv" href="#">CSV кликов</a> · <a id="csvS" href="#">CSV стартов</a>
+  <b>Лидерборд партнёров</b> &nbsp; <a id="csv" href="#">CSV кликов</a> · <a id="csvS" href="#">CSV стартов</a> · <a id="csvP" href="#">Личные страницы партнёров (CSV)</a> · <a id="story" href="#" target="_blank">Карточка раунда</a> · <a id="arenaL" href="#" target="_blank">Арена</a>
   <div class="tw"><table><thead><tr><th class="rk">#</th><th>Партнёр</th><th>Команда</th><th>Сила</th><th>Удары</th><th>В бот</th>
     <th>Доходимость</th><th>Раунд</th><th>Клики</th><th>Последний</th></tr></thead>
   <tbody id="rows"></tbody></table></div>
@@ -702,7 +1098,7 @@ th{color:var(--mut);font-weight:600}
 <script>
 const token=new URLSearchParams(location.search).get('token');
 const q=token?('?token='+encodeURIComponent(token)):'';
-document.getElementById('csv').href='/export'+q;document.getElementById('csvS').href='/export/starts'+q;
+document.getElementById('csv').href='/export'+q;document.getElementById('csvS').href='/export/starts'+q;document.getElementById('csvP').href='/export/partner_links'+q;document.getElementById('story').href='/story.png'+q;document.getElementById('arenaL').href='/arena'+q;
 document.getElementById('arenaLink').href='/arena'+q;
 let dayChart,topChart;const medals=['🥇','🥈','🥉'];
 function fmt(ts){return ts?ts.replace('T',' '):'—';}
@@ -727,7 +1123,7 @@ async function load(){
     :'😴 В этом раунде ударов ещё не было — кто будет первым?';
   document.getElementById('chRows').innerHTML=(d.channels||[]).map(c=>`<tr><td>${esc(c.name)}</td><td>${c.clicks}</td><td>${c.hits}</td><td>${c.starts}</td><td>${cv(c.conv)}</td></tr>`).join('')
     ||'<tr><td colspan=5 class="mut">Пока нет данных</td></tr>';
-  document.getElementById('rows').innerHTML=d.partners.map((p,i)=>`<tr><td class="rk">${medals[i]||(i+1)}</td><td>${esc(p.source)}</td><td>${tb(p.team,A,B)}</td>
+  document.getElementById('rows').innerHTML=d.partners.map((p,i)=>`<tr><td class="rk">${medals[i]||(i+1)}</td><td>${p.team?`<a href="/p/${encodeURIComponent(p.source)}${q}" target="_blank">${esc(p.source)}</a>`:esc(p.source)}</td><td>${tb(p.team,A,B)}</td>
     <td><b>${p.power}</b></td><td>${p.hits}</td><td>${p.starts}</td><td>${cv(p.conv)}</td><td>${p.today}</td><td class="mut">${p.clicks}</td><td class="mut">${fmt(p.last)}</td></tr>`).join('')
     ||'<tr><td colspan=10 class="mut">Пока нет данных</td></tr>';
   if(window.Chart){
@@ -749,10 +1145,11 @@ load();setInterval(load,30000);
 def main():
     init_db()
     threading.Thread(target=scheduler_loop, daemon=True).start()
+    threading.Thread(target=geo_updater, daemon=True).start()
     log.info("NeuroFans on :%s (bot=@%s, admins=%d, daily=%s, teams=%s/%s, starts=%s)",
              PORT, BOT_USERNAME, len(ADMIN_IDS), DAILY_SUMMARY_TIME or "off",
              TEAM_A_PREFIX, TEAM_B_PREFIX, "on" if INGEST_TOKEN else "off")
-    app.run(host="0.0.0.0", port=PORT, use_reloader=False)
+    app.run(host="0.0.0.0", port=PORT, use_reloader=False, threaded=True)
 
 if __name__ == "__main__":
     main()

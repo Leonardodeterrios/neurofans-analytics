@@ -120,6 +120,47 @@ def code(fn,args):
     try: fn(); return 200
     except flask._Abort as a: return a.code
 assert code(app.export_starts,{"token":"pub"})==401 and code(app.export_starts,{"token":"adm"})==200
+# 7) раунды, ранги, ачивки
+st=app.get_stats(); P={p["source"]:p for p in st["partners"]}
+assert st["round_no"]>=1 and "prev_round" in st and st["badge_defs"]["first_blood"]["name"]
+assert P["leo07"]["rank_name"]=="Новичок" and "first_blood" in P["leo07"]["badges"], P["leo07"]
+print("раунд",st["round_no"],"| ачивки leo07:",P["leo07"]["badges"],"| ранг:",P["leo07"]["rank_name"])
+# кэш статистики сбрасывается кликом
+n0=app.get_stats()["hits"]; click(app.go_threads,"kate20","44.4.4.4"); assert app.get_stats()["hits"]==n0+1
+# 8) гео: город пишется в клик и уходит в ленту
+class FakeGeo:
+    def get(self, ip): return {"city":{"names":{"ru":"Москва"}},"country":{"iso_code":"RU"},"location":{"latitude":55.7558,"longitude":37.6173}}
+app._geo["r"]=FakeGeo(); app.GEO_DB=__file__
+g=app.geo_lookup("5.5.5.5"); assert g=={"city":"Москва","cc":"RU","lat":55.8,"lon":37.6},g
+flask.request.args={"token":"pub"}; base=json.loads(app.api_feed().content)
+click(app.go_video,"leo21","77.7.7.7")
+flask.request.args={"token":"pub","since_c":str(base["last_c"]),"since_s":str(base["last_s"])}
+it=json.loads(app.api_feed().content)["items"]; assert it and it[-1]["city"]=="Москва" and it[-1]["lat"]==55.8, it
+app._geo["r"]=None; app.GEO_DB="/nonexistent"
+print("гео: город в ленте ✅", it[-1]["city"])
+# 9) живая лента SSE
+flask.request.args={"token":"pub","since_c":str(base["last_c"]),"since_s":str(base["last_s"])}
+gen=app.api_stream().content; first=next(gen); assert "hello" in first and "id: " in first
+ev=next(gen); assert '"items"' in ev and "leo21" in ev, ev
+print("SSE: событие пришло ✅")
+# 10) личная страница партнёра
+k=app.partner_key("leo07")
+flask.request.args={"k":k}; pp=json.loads(app.api_partner("leo07").content)
+assert pp["me"]["source"]=="leo07" and pp["place"]>=1 and len(pp["days"])==14 and pp["role"]=="partner"
+flask.request.args={"k":"bad"}
+try: app.api_partner("leo07"); raise SystemExit("должно быть 401")
+except flask._Abort as a: assert a.code==401
+flask.request.args={"k":app.partner_key("leo40")}; p40=json.loads(app.api_partner("leo40").content)
+assert p40["me"]["power"]==0 and p40["place"]==p40["of"]
+print("личная страница: место",pp["place"],"из",pp["of"],"| чужой ключ = 401 ✅")
+# 11) карточки
+try:
+    import PIL
+    png=app.round_card_png("current","leo07"); assert png[:4]==b"\x89PNG"; open("/tmp/story_test.png","wb").write(png)
+    import cards; ogp=cards.og(app.get_stats(), os.path.join(os.path.dirname(HERE),"static","fonts"), "leo07"); open("/tmp/og_test.png","wb").write(ogp)
+    print("карточки: story", len(png)//1024, "КБ, og", len(ogp)//1024, "КБ ✅")
+except ImportError:
+    print("Pillow нет — карточки пропущены")
 print("\n"+app.daily_results_text())
 print("\n"+app.stats_text())
 print("\nВСЕ ПРОВЕРКИ ПРОШЛИ ✅")

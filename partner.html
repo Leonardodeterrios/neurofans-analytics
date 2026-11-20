@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#06070f">
+<title>NeuroFans · личный кабинет бойца</title>
+<!--OG-->
+<style>
+@font-face{font-family:Unb;src:url(/static/fonts/Unbounded-ExtraBold.woff) format("woff");font-weight:800;font-display:swap}
+@font-face{font-family:Unb;src:url(/static/fonts/Unbounded-Medium.woff) format("woff");font-weight:500;font-display:swap}
+@font-face{font-family:Man;src:url(/static/fonts/Manrope-Medium.woff) format("woff");font-weight:500;font-display:swap}
+@font-face{font-family:Man;src:url(/static/fonts/Manrope-ExtraBold.woff) format("woff");font-weight:800;font-display:swap}
+@font-face{font-family:Oxa;src:url(/static/fonts/Oxanium-SemiBold.woff) format("woff");font-weight:600;font-display:swap}
+:root{--a:#19d3c5;--b:#ff4f8b;--c:var(--a);--amber:#ffb547;--violet:#7b5cff;--ink:#eef2ff;--mut:#8d97bd;--line:#232a4d;--card:rgba(13,16,36,.78)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#05060f;color:var(--ink);font:500 15px/1.5 Man,system-ui,sans-serif;min-height:100%}
+body{background:radial-gradient(120% 60% at 0% 0%,color-mix(in srgb,var(--c) 18%,transparent),transparent 60%),radial-gradient(90% 50% at 100% 100%,rgba(123,92,255,.16),transparent 60%),#05060f;overflow-x:hidden}
+#rain{position:fixed;inset:0;pointer-events:none;opacity:.5;z-index:0}
+.wrap{position:relative;z-index:1;max-width:760px;margin:0 auto;padding:22px 16px calc(40px + env(safe-area-inset-bottom))}
+.top{display:flex;justify-content:space-between;align-items:center;font:500 11px Unb;letter-spacing:.18em;color:var(--mut);text-transform:uppercase}
+.live{display:inline-flex;gap:6px;align-items:center}.live i{width:7px;height:7px;border-radius:50%;background:#3dff9a;box-shadow:0 0 10px #3dff9a;animation:p 1.4s infinite}
+@keyframes p{50%{opacity:.25}}
+h1{font:800 clamp(40px,12vw,72px)/1 Unb;margin:22px 0 6px;letter-spacing:-.01em;text-shadow:0 0 28px color-mix(in srgb,var(--c) 70%,transparent)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.chip{border:1px solid var(--line);border-radius:999px;padding:5px 12px;font:800 12px Man;color:var(--ink);background:rgba(255,255,255,.03)}
+.chip.t{border-color:var(--c);color:var(--c);box-shadow:inset 0 0 12px color-mix(in srgb,var(--c) 25%,transparent)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px;backdrop-filter:blur(6px);position:relative;overflow:hidden}
+.card:before{content:"";position:absolute;inset:0;border-radius:18px;padding:1px;background:linear-gradient(135deg,color-mix(in srgb,var(--c) 60%,transparent),transparent 40%,transparent 60%,rgba(123,92,255,.5));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.h{font:500 11px Unb;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);margin-bottom:10px}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:620px){.kpis{grid-template-columns:repeat(4,1fr)}}
+.kpi{background:rgba(255,255,255,.025);border:1px solid var(--line);border-radius:14px;padding:12px}
+.kpi b{display:block;font:800 30px/1.1 Unb;color:var(--ink)}.kpi b.c{color:var(--c);text-shadow:0 0 18px color-mix(in srgb,var(--c) 60%,transparent)}
+.kpi span{font-size:12px;color:var(--mut)}
+.gap{font:800 18px/1.35 Unb;margin:2px 0 4px}.gap em{font-style:normal;color:var(--amber)}
+.rank{display:flex;align-items:center;gap:14px}
+.rank .ico{width:58px;height:58px;border-radius:14px;display:grid;place-items:center;font:800 22px Unb;color:#05060f;background:var(--c);box-shadow:0 0 24px color-mix(in srgb,var(--c) 60%,transparent);flex:none}
+.rank .nm{font:800 22px Unb}.prog{height:10px;border-radius:6px;background:#161b38;margin-top:8px;overflow:hidden}
+.prog i{display:block;height:100%;background:linear-gradient(90deg,var(--c),var(--violet));box-shadow:0 0 12px var(--c);border-radius:6px;transition:width 1s}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.bd{border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center;opacity:.35;filter:grayscale(1)}
+.bd.on{opacity:1;filter:none;border-color:var(--amber);box-shadow:0 0 16px rgba(255,181,71,.18)}
+.bd .e{font-size:24px}.bd b{display:block;font:800 13px Man}.bd small{color:var(--mut);font-size:11px;line-height:1.3;display:block}
+canvas#ch{width:100%;height:170px;display:block}
+.chan{display:grid;gap:10px}.chan .r{display:grid;grid-template-columns:120px 1fr 56px;gap:10px;align-items:center;font-size:13px}
+.chan .bar{height:12px;background:#161b38;border-radius:6px;overflow:hidden}.chan .bar i{display:block;height:100%;background:var(--c);border-radius:6px}
+.best{color:var(--amber);font-weight:800}
+.lnk{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.lnk code{flex:1;font:600 13px Oxa,monospace;background:#0a0d20;border:1px solid var(--line);border-radius:10px;padding:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#cfe}
+button,.btn{font:800 13px Man;border:1px solid var(--c);color:var(--c);background:transparent;border-radius:10px;padding:10px 14px;cursor:pointer;text-decoration:none;display:inline-block;white-space:nowrap}
+button.f,.btn.f{background:var(--c);color:#05060f;box-shadow:0 0 18px color-mix(in srgb,var(--c) 50%,transparent)}
+.story{display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:center}
+.story img{width:120px;border-radius:12px;border:1px solid var(--line);aspect-ratio:9/16;object-fit:cover;background:#0a0d20}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:6px}
+.seg button{border:0;border-radius:0;color:var(--mut);padding:7px 9px;font-size:12px}.seg button.on{background:rgba(255,255,255,.07);color:var(--ink)}
+.foot{color:var(--mut);font-size:12px;text-align:center;margin-top:20px}
+.err{padding:60px 10px;text-align:center;color:var(--mut)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#11152e;border:1px solid var(--c);padding:10px 16px;border-radius:12px;font-weight:800;opacity:0;transition:.3s;z-index:9}
+.toast.on{opacity:1}
+</style></head><body>
+<canvas id="rain"></canvas>
+<div class="wrap" id="app"><div class="err">Загружаю данные бойца…</div></div>
+<div class="toast" id="toast"></div>
+<script>
+const label=decodeURIComponent(location.pathname.split('/').pop()||'');
+const qs=new URLSearchParams(location.search);const Q=qs.toString()?'?'+qs.toString():'';
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const plural=(n,a,b,c)=>{n=Math.abs(n)%100;if(n>10&&n<15)return c;n%=10;return n==1?a:(n>1&&n<5?b:c)};
+let D=null,storyRound='last',srvSkew=0;
+function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('on');setTimeout(()=>e.classList.remove('on'),1600)}
+async function copy(t){try{await navigator.clipboard.writeText(t);toast('Скопировано')}catch(e){prompt('Скопируй ссылку:',t)}}
+function arenaQ(){const p=new URLSearchParams(location.search);if(!p.get('token')){p.set('p',label)}return '?'+p.toString()}
+function storyUrl(){const p=new URLSearchParams(location.search);p.set('label',label);if(storyRound==='current')p.set('round','current');else p.delete('round');return '/story.png?'+p.toString()}
+async function shareStory(){
+  try{const r=await fetch(storyUrl());const b=await r.blob();const f=new File([b],'neurofans-'+label+'.png',{type:'image/png'});
+    if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'NeuroFans Arena'});return}
+    const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=f.name;a.click();toast('Картинка сохранена')}catch(e){toast('Не получилось — открой картинку и сохрани')}
+}
+function render(){
+  const d=D,me=d.me,col=me.team==='A'?d.teams[0].color:d.teams[1].color;
+  document.documentElement.style.setProperty('--c',col);
+  const R=d.ranks,ri=me.rank,next=R[ri+1];
+  const pr=next?Math.min(100,Math.round((me.power-R[ri].min)/(next.min-R[ri].min)*100)):100;
+  const team=d.team;
+  const gap=d.ahead?`До <em>${d.place-1} места</em> не хватает <em>${d.ahead.gap}</em> силы — обгони ${esc(d.ahead.source)}`
+     :(me.today>0?'Ты <em>лидер раунда</em>. Держи темп!':'Первый удар в раунде принесёт ачивку <em>«Первая кровь»</em>');
+  const bd=Object.entries(d.badge_defs).map(([k,v])=>`<div class="bd ${me.badges.includes(k)?'on':''}"><span class="e">${v.icon}</span><div><b>${esc(v.name)}</b><small>${esc(v.desc)}</small></div></div>`).join('');
+  const maxCh=Math.max(1,...d.channels.map(c=>c.power));
+  const ch=d.channels.length?d.channels.map(c=>`<div class="r"><span>${esc(c.name.replace(' (Shorts/Reels/TikTok)',''))}</span><div class="bar"><i style="width:${c.power/maxCh*100}%"></i></div><b>${c.power}</b></div>`).join('')
+     :'<div style="color:var(--mut)">Пока нет переходов по твоим ссылкам</div>';
+  document.getElementById('app').innerHTML=`
+  <div class="top"><span>NeuroFans · Cyber Arena</span><span class="live"><i></i>раунд ${d.round_no}</span></div>
+  <h1>${esc(me.source)}</h1>
+  <div class="chips"><span class="chip t">${esc(team.name)}</span><span class="chip">${esc(me.rank_name)}</span><span class="chip" id="gong">до гонга …</span></div>
+  <div class="card"><div class="h">Раунд сейчас</div>
+    <div class="kpis">
+      <div class="kpi"><b class="c">${d.place}<small style="font-size:14px">/${d.of}</small></b><span>место среди всех</span></div>
+      <div class="kpi"><b>${me.today}</b><span>сила в раунде</span></div>
+      <div class="kpi"><b>${me.hits_today}</b><span>${plural(me.hits_today,'удар','удара','ударов')}</span></div>
+      <div class="kpi"><b>${me.starts_today}</b><span>${plural(me.starts_today,'апперкот','апперкота','апперкотов')}</span></div>
+    </div>
+    <p class="gap" style="margin-top:14px">${gap}</p>
+    <div style="color:var(--mut);font-size:13px">В своей команде: ${d.team_place} место из ${d.team_of} · удар +1, апперкот +${d.start_power}</div>
+  </div>
+  <div class="card"><div class="h">Ранг</div>
+    <div class="rank"><div class="ico">${ri+1}</div><div style="flex:1"><div class="nm">${esc(me.rank_name)}</div>
+      <div style="color:var(--mut);font-size:13px">${next?`До ранга «${esc(next.name)}»: ${next.min-me.power} силы`:'Максимальный ранг'} · всего силы ${me.power}</div>
+      <div class="prog"><i style="width:${pr}%"></i></div></div></div>
+  </div>
+  <div class="card"><div class="h">Ачивки</div><div class="badges">${bd}</div></div>
+  <div class="card"><div class="h">Сила по раундам · 14 дней</div><canvas id="ch"></canvas></div>
+  <div class="card"><div class="h">Каналы</div><div class="chan">${ch}</div>
+    ${d.best_channel?`<div style="margin-top:10px;font-size:13px">Лучше всего работает: <span class="best">${esc(d.best_channel)}</span></div>`:''}
+    <div style="margin-top:10px;font-size:13px;color:var(--mut)">Доходимость до бота: <b style="color:var(--ink)">${me.conv==null?'—':me.conv+'%'}</b> · всего ударов ${me.hits}, апперкотов ${me.starts}</div>
+  </div>
+  <div class="card"><div class="h">Мои ссылки</div>
+    <div class="lnk"><code>${esc(d.links.threads)}</code><button onclick="copy('${esc(d.links.threads)}')">Threads</button></div>
+    <div class="lnk"><code>${esc(d.links.video)}</code><button onclick="copy('${esc(d.links.video)}')">Видео</button></div>
+  </div>
+  <div class="card"><div class="h">Карточка для сторис</div>
+    <div class="story"><img id="sImg" alt="Карточка раунда" src="${storyUrl()}">
+      <div><div class="seg"><button id="sL" class="${storyRound==='last'?'on':''}">Прошлый</button><button id="sC" class="${storyRound==='current'?'on':''}">Текущий</button></div>
+        <div style="color:var(--mut);font-size:13px">Картинка 9:16 с итогами и твоим местом — выложи в сторис</div>
+        <div class="row"><button class="f" onclick="shareStory()">Поделиться</button><a class="btn" href="${storyUrl()}" target="_blank" download>Открыть</a></div></div></div>
+  </div>
+  <div class="row" style="justify-content:center"><a class="btn f" href="/arena${arenaQ()}">Смотреть арену</a></div>
+  <div class="foot">Данные обновляются автоматически · только настоящие клики</div>`;
+  document.getElementById('sL').onclick=()=>{storyRound='last';render()};
+  document.getElementById('sC').onclick=()=>{storyRound='current';render()};
+  chart();tick();
+}
+function chart(){
+  const c=document.getElementById('ch');if(!c)return;const dpr=Math.min(2,devicePixelRatio||1);
+  const w=c.clientWidth,h=c.clientHeight;c.width=w*dpr;c.height=h*dpr;const g=c.getContext('2d');g.scale(dpr,dpr);
+  const days=D.days,mx=Math.max(1,...days.map(x=>x.power)),bw=w/days.length,col=getComputedStyle(document.documentElement).getPropertyValue('--c').trim();
+  g.font='600 10px Oxa,monospace';g.textAlign='center';
+  days.forEach((x,i)=>{const bh=(h-34)*x.power/mx,X=i*bw+bw*.18,W=bw*.64,Y=h-18-bh;
+    g.fillStyle='rgba(255,255,255,.05)';g.fillRect(X,10,W,h-28);
+    if(x.power){g.shadowColor=col;g.shadowBlur=12;g.fillStyle=col;g.fillRect(X,Y,W,bh);g.shadowBlur=0;
+      g.fillStyle='#eef2ff';g.fillText(x.power,X+W/2,Y-4)}
+    if(i%2==1||days.length<10){g.fillStyle='#8d97bd';g.fillText(x.date,X+W/2,h-4)}});
+}
+function tick(){
+  const e=document.getElementById('gong');if(!e||!D)return;
+  let s=Math.max(0,Math.floor((Date.parse(D.round_end)-(Date.now()+srvSkew))/1000));
+  const p=n=>String(n).padStart(2,'0');e.textContent='до гонга '+p(Math.floor(s/3600))+':'+p(Math.floor(s%3600/60))+':'+p(s%60);
+}
+async function load(){
+  try{const r=await fetch('/api/partner/'+encodeURIComponent(label)+Q,{cache:'no-store'});
+    if(!r.ok){document.getElementById('app').innerHTML='<div class="err">Ссылка недействительна. Попроси у организаторов свою личную ссылку.</div>';return}
+    D=await r.json();srvSkew=Date.parse(D.server_now)-Date.now();render()}catch(e){}
+}
+setInterval(tick,1000);setInterval(load,15000);load();addEventListener('resize',()=>D&&chart());
+(function rain(){const c=document.getElementById('rain'),g=c.getContext('2d');let W,H,drops=[];
+  function rs(){W=c.width=innerWidth;H=c.height=innerHeight;drops=Array.from({length:Math.round(W*H/9000)},()=>({x:Math.random()*W,y:Math.random()*H,l:8+Math.random()*16,v:6+Math.random()*8}))}
+  rs();addEventListener('resize',rs);
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  (function f(){g.clearRect(0,0,W,H);g.strokeStyle='rgba(160,190,255,.22)';g.lineWidth=1;g.beginPath();
+    for(const d of drops){g.moveTo(d.x,d.y);g.lineTo(d.x-d.l*.25,d.y+d.l);d.y+=d.v;d.x-=d.v*.25;if(d.y>H){d.y=-20;d.x=Math.random()*W*1.2}}
+    g.stroke();requestAnimationFrame(f)})()})();
+</script></body></html>
