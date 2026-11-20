@@ -61,8 +61,9 @@ SILENCE_HOURS      = _int("SILENCE_HOURS", 24)
 SILENCE_CHECK_MIN  = _int("SILENCE_CHECK_MIN", 60)
 SILENCE_MIN_CLICKS = _int("SILENCE_MIN_CLICKS", 3)
 START_POWER        = _int("START_POWER", 3)
+TRUST_CF           = _flag("TRUST_CF", "0")   # 1 = сайт за Cloudflare, берём IP из CF-Connecting-IP
 MAX_PARTNERS_PER_VISITOR = _int("MAX_PARTNERS_PER_VISITOR", 3)
-MAX_HITS_PER_IP    = _int("MAX_HITS_PER_IP", 30)
+MAX_HITS_PER_IP    = _int("MAX_HITS_PER_IP", 100)
 
 TEAM_A_NAME   = _str("TEAM_A_NAME", "Команда Лёни")
 TEAM_A_PREFIX = _str("TEAM_A_PREFIX", "leo").lower()
@@ -78,7 +79,7 @@ CHANNEL_NAMES = {"threads": "Threads", "video": "Видео (Shorts/Reels/TikTok
 TG_API = f"https://api.telegram.org/bot{BOT_TOKEN}"
 # не люди: превью-краулеры соцсетей и мессенджеров, сканеры, скрипты, «безголовые» браузеры
 BOT_UA = re.compile(
-    r"bot\b|bot/|crawler|spider|preview|facebookexternalhit|facebookcatalog|meta-externalagent|"
+    r"(?<!cu)bot\b|(?<!cu)bot/|crawler|spider|preview|facebookexternalhit|facebookcatalog|meta-externalagent|"
     r"telegrambot|whatsapp|vkshare|slackbot|skypeuripreview|discordbot|twitterbot|embedly|quora link|"
     r"headless|python-requests|python-urllib|aiohttp|httpx|curl/|wget|go-http-client|okhttp|axios|"
     r"node-fetch|scrapy|libwww|java/|phantomjs|puppeteer|playwright|lighthouse|pingdom|uptimerobot|"
@@ -112,18 +113,21 @@ def b36(n):
             return s
 
 def parse_payload(raw):
-    """'leo07__1a2b' -> ('leo07', 1a2b->int); 'leo07' -> ('leo07', None)."""
+    """'leo07-2s' -> ('leo07', 100, 'leo07-2s'); старый вид 'leo07__2s' тоже понимаем.
+    Третье значение — вся строка как метка: на случай, если «-» был частью самой метки."""
     raw = (raw or "").strip()
     if raw.lower().startswith("/start"):
         raw = raw[6:].strip()
-    label_part, _, cid_part = raw.partition("__")
+    if "__" in raw:
+        label_part, _, cid_part = raw.partition("__")
+    else:
+        label_part, _, cid_part = raw.rpartition("-")
+        if not label_part:
+            label_part, cid_part = raw, ""
     cid = None
-    if cid_part:
-        try:
-            cid = int(SAFE_START.sub("", cid_part)[:12], 36)
-        except ValueError:
-            cid = None
-    return clean_label(label_part), cid
+    if cid_part and re.fullmatch(r"[0-9a-zA-Z]{1,12}", cid_part):
+        cid = int(cid_part, 36)
+    return clean_label(label_part), cid, clean_label(raw)
 
 
 # ---------- раунды ----------
@@ -204,13 +208,13 @@ def record_click(source, ch, ip, ua, vid):
 
 def record_start(raw_payload, uid):
     """Старт бота из PuzzleBot. Засчитывается («апперкот»), если человек впервые пришёл в бота."""
-    label, cid = parse_payload(raw_payload)
+    label, cid, whole = parse_payload(raw_payload)
     ch, click_ok = "", False
     with _conn() as c:
         if cid is not None:
             row = c.execute("SELECT source, ch, scored FROM clicks WHERE id=?", (cid,)).fetchone()
             if row is None or row["source"] != label:
-                cid = None
+                cid, label = None, whole       # не наш id клика — считаем всю строку меткой
             else:
                 ch, click_ok = row["ch"] or "", bool(row["scored"])
         # апперкот только за человека, который пришёл через засчитанный клик партнёра:
@@ -463,12 +467,13 @@ def scheduler_loop():
 
 # ---------- веб ----------
 def _client_ip():
-    for h in ("CF-Connecting-IP", "X-Real-IP"):
-        v = request.headers.get(h, "")
+    """Настоящий IP посетителя. Заголовки прокси подделываются кем угодно, поэтому верим им
+    только когда сайт стоит за Cloudflare (TRUST_CF=1); иначе — адрес TCP-соединения."""
+    if TRUST_CF:
+        v = request.headers.get("CF-Connecting-IP", "")
         if v:
             return v.strip()
-    xff = request.headers.get("X-Forwarded-For", "")
-    return xff.split(",")[0].strip() if xff else (request.remote_addr or "")
+    return request.remote_addr or ""
 
 def _is_https():
     return (request.headers.get("X-Forwarded-Proto", "") == "https"
@@ -513,7 +518,7 @@ def _track_and_redirect(raw, ch):
         notify_hit(source, ch, new_vis)
         push_sheet({"type": "hit", "source": source, "channel": ch, "visitor": vid})
     log.info("click source=%s ch=%s scored=%s", source, ch or "-", scored)
-    target = f"https://t.me/{BOT_USERNAME}" + (f"?start={quote(payload + '__' + b36(cid))}" if payload else "")
+    target = f"https://t.me/{BOT_USERNAME}" + (f"?start={quote(payload + '-' + b36(cid))}" if payload else "")
     resp = redirect(target, code=302)
     resp.headers["Cache-Control"] = "no-store"
     if set_cookie:

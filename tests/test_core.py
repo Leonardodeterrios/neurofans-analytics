@@ -10,7 +10,7 @@ c=sqlite3.connect(DB); c.execute("CREATE TABLE clicks(id INTEGER PRIMARY KEY AUT
 c.execute("INSERT INTO clicks(ts,source,ip,ua) VALUES('2026-11-20T05:00:00','test','9.9.9.9','Mozilla')"); c.commit(); c.close()
 os.environ.update({"DB_PATH":DB,"BOT_TOKEN":"","ADMIN_CHAT_ID":"","DASHBOARD_TOKEN":"adm","PUBLIC_TOKEN":"pub",
   "INGEST_TOKEN":"k123","DAILY_SUMMARY_TIME":"21:00","SUMMARY_TZ":"Asia/Bangkok","START_POWER":"3",
-  "MAX_PARTNERS_PER_VISITOR":"3","SILENCE_HOURS":"24          # комментарий в .env","TEAM_A_COLOR":"#19d3c5"})
+  "MAX_PARTNERS_PER_VISITOR":"3","TRUST_CF":"1","SILENCE_HOURS":"24          # комментарий в .env","TEAM_A_COLOR":"#19d3c5"})
 sys.path.insert(0,os.path.dirname(HERE))
 import app, flask
 H=flask.__dict__['_Headers']
@@ -27,7 +27,7 @@ def click(fn, label, ip, ua="Mozilla/5.0 (iPhone) Instagram 300", cookie=None):
 
 # 1) один человек = один удар на партнёра за раунд
 r1=click(app.go_threads,"leo07","10.0.0.1"); loc=r1.headers["Location"]; print("redirect:",loc)
-assert loc.startswith("https://t.me/AccessGrantedGuide_bot?start=leo07__") and "nf_vid" in r1.cookies
+assert loc.startswith("https://t.me/AccessGrantedGuide_bot?start=leo07-") and "nf_vid" in r1.cookies
 vid=r1.cookies["nf_vid"][0]; print("cookie nf_vid ставится, secure =",r1.cookies["nf_vid"][1]["secure"])
 click(app.go_threads,"leo07","10.0.0.1",cookie=vid)            # повтор тем же человеком
 click(app.go_threads,"leo07","10.0.0.77",cookie=vid)           # тот же человек сменил IP (cookie та же)
@@ -47,23 +47,49 @@ assert before==after; print("боты/превью/скрипты: не запи
 
 # второй живой человек по kate03 (другой браузер)
 rk=click(app.go_threads,"kate03","10.1.1.1",ua="Mozilla/5.0 (Android) Barcelona 300")
-kate_cid=rk.headers["Location"].split("__")[1]
+kate_cid=rk.headers["Location"].rsplit("-",1)[1]
 
 # 3) старты бота из PuzzleBot
 def start(p, uid, key="k123"):
     flask.request.values={"p":p,"uid":str(uid) if uid is not None else "","key":key}; flask.request.args={}
     try: return json.loads(app.bot_start().content)
     except flask._Abort as a: return {"http":a.code}
-assert start("leo07__"+loc.split("__")[1],111,key="wrong")=={"http":403}; print("старт без ключа: 403 ✅")
-s1=start("leo07__"+loc.split("__")[1],111); print("старт по клику leo07:",s1); assert s1["scored"] and s1["ch"]=="threads"
-s2=start("leo07__"+loc.split("__")[1],111); assert not s2["scored"]; print("тот же человек жмёт /start ещё раз: не засчитан ✅")
-s3=start("kate03__"+kate_cid,222); assert s3["scored"]
+assert start("leo07-"+loc.rsplit("-",1)[1],111,key="wrong")=={"http":403}; print("старт без ключа: 403 ✅")
+s1=start("leo07-"+loc.rsplit("-",1)[1],111); print("старт по клику leo07:",s1); assert s1["scored"] and s1["ch"]=="threads"
+s2=start("leo07-"+loc.rsplit("-",1)[1],111); assert not s2["scored"]; print("тот же человек жмёт /start ещё раз: не засчитан ✅")
+s3=start("kate03-"+kate_cid,222); assert s3["scored"]
 s4=start("leo08",333); assert not s4["scored"]; print("«голый» старт по метке без клика: не засчитан ✅")
 s5=start("",444); assert not s5["scored"]; print("старт без метки (direct): не засчитан ✅")
 s6=start("kate03__zzzzzz",555); assert not s6["scored"]; print("чужой/битый id клика: не засчитан ✅")
-s7=start("kate03__"+kate_cid,666); assert not s7["scored"]; print("второй аккаунт по тому же клику: не засчитан ✅")
-r10=click(app.go_video,"leo10","10.0.0.1",cookie=vid); c10=r10.headers["Location"].split("__")[1]
-s8=start("leo10__"+c10,777); assert not s8["scored"]; print("старт по НЕзасчитанному клику (лимит): не засчитан ✅")
+s7=start("kate03-"+kate_cid,666); assert not s7["scored"]; print("второй аккаунт по тому же клику: не засчитан ✅")
+r10=click(app.go_video,"leo10","10.0.0.1",cookie=vid); c10=r10.headers["Location"].rsplit("-",1)[1]
+s8=start("leo10-"+c10,777); assert not s8["scored"]; print("старт по НЕзасчитанному клику (лимит): не засчитан ✅")
+
+# старый формат «__» тоже понимаем
+rl=click(app.go_threads,"kate11","10.2.2.2",ua="Mozilla/5.0 (iPhone) Instagram 301")
+sl=start("kate11__"+rl.headers["Location"].rsplit("-",1)[1],888); assert sl["scored"] and sl["label"]=="kate11"
+print("старый формат ссылок leo07__id: понимается ✅")
+# метка с дефисом без id клика не ломается
+lab,cid,whole=app.parse_payload("team-a"); assert whole=="team-a"
+# подделка IP заголовками: без Cloudflare заголовки игнорируются
+app.TRUST_CF=False
+flask.request.headers=H({"CF-Connecting-IP":"6.6.6.6","X-Forwarded-For":"7.7.7.7"}); flask.request.remote_addr="1.2.3.4"
+assert app._client_ip()=="1.2.3.4"; app.TRUST_CF=True
+assert app._client_ip()=="6.6.6.6"; print("подделка IP через заголовки: не проходит без Cloudflare ✅")
+# встроенные браузеры приложений — люди, превью и скрипты — нет
+HUMANS=["Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 309.0.0.40.113 (iPhone14,5; iOS 17_0; ru_RU)",
+ "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Barcelona 307.0.0.30.109 (iPhone15,2; iOS 17_1)",
+ "Mozilla/5.0 (Linux; Android 13; SM-A536B; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/119.0 Mobile Safari/537.36 Instagram 307.0.0.34.111 Android",
+ "Mozilla/5.0 (Linux; Android 12; 2201117TY; wv) AppleWebKit/537.36 Chrome/112.0 Mobile Safari/537.36 trill_2023109030 AppName/trill BytedanceWebview/d8a21c6",
+ "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 [FBAN/FBIOS;FBDV/iPhone13,2;FBSV/16.6]",
+ "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 YouTube/19.20.2",
+ "Mozilla/5.0 (Linux; Android 10; CUBOT X30) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"]
+BOTS=["facebookexternalhit/1.1","meta-externalagent/1.1","Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+ "TelegramBot (like TwitterBot)","Twitterbot/1.0","Slackbot-LinkExpanding 1.0","WhatsApp/2.23.20","Mozilla/5.0 (compatible; YandexBot/3.0)",
+ "Discordbot/2.0","python-requests/2.31","curl/8.4.0","Mozilla/5.0 HeadlessChrome/120.0"]
+assert not [u for u in HUMANS if app.BOT_UA.search(u)], [u for u in HUMANS if app.BOT_UA.search(u)]
+assert all(app.BOT_UA.search(u) for u in BOTS), [u for u in BOTS if not app.BOT_UA.search(u)]
+print("фильтр ботов: 7 встроенных браузеров = люди, 12 ботов/превью = отсечены ✅")
 
 # 4) статистика
 st=app.get_stats(); P={p["source"]:p for p in st["partners"]}
