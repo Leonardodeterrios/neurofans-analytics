@@ -39,10 +39,10 @@ SILENCE_MIN_CLICKS = int(os.getenv("SILENCE_MIN_CLICKS", "3"))
 # ---- команды (две «копилки») ----
 TEAM_A_NAME   = os.getenv("TEAM_A_NAME", "Команда Лёни").strip()
 TEAM_A_PREFIX = os.getenv("TEAM_A_PREFIX", "leo").strip().lower()
-TEAM_A_COLOR  = os.getenv("TEAM_A_COLOR", "#4f8cff").strip()
+TEAM_A_COLOR  = os.getenv("TEAM_A_COLOR", "#19d3c5").strip()
 TEAM_B_NAME   = os.getenv("TEAM_B_NAME", "Команда Кати").strip()
 TEAM_B_PREFIX = os.getenv("TEAM_B_PREFIX", "kate").strip().lower()
-TEAM_B_COLOR  = os.getenv("TEAM_B_COLOR", "#ff5c8a").strip()
+TEAM_B_COLOR  = os.getenv("TEAM_B_COLOR", "#ff4f8b").strip()
 TEAMS = {"A": (TEAM_A_NAME, TEAM_A_PREFIX, TEAM_A_COLOR),
          "B": (TEAM_B_NAME, TEAM_B_PREFIX, TEAM_B_COLOR)}
 
@@ -156,8 +156,8 @@ def stats_text() -> str:
         return "📊 Пока нет переходов."
     a, b = st["teams"]
     lines = [f"📊 Всего переходов: {st['total']}  |  уник.: {st['unique']}", "",
-             f"🔵 {a['name']}: {a['clicks']} (в раунде {a['today']})",
-             f"🩷 {b['name']}: {b['clicks']} (в раунде {b['today']})", "", "Топ партнёров:"]
+             f"🌊 {a['name']}: {a['clicks']} (в раунде {a['today']})",
+             f"🌺 {b['name']}: {b['clicks']} (в раунде {b['today']})", "", "Топ партнёров:"]
     for i, p in enumerate(st["partners"][:10], 1):
         lines.append(f"{i}. {p['source']}: {p['clicks']} (в раунде {p['today']})")
     return "\n".join(lines)
@@ -175,8 +175,8 @@ def daily_results_text() -> str:
     _start, end = round_bounds(at)
     a, b = st["teams"]
     lines = [f"🥊 Гонг! Итоги раунда {end.strftime('%d.%m.%Y')}", "",
-             f"🔵 {a['name']}: {a['today']} {_plural(a['today'],'удар','удара','ударов')} за раунд (всего {a['clicks']})",
-             f"🩷 {b['name']}: {b['today']} {_plural(b['today'],'удар','удара','ударов')} за раунд (всего {b['clicks']})", ""]
+             f"🌊 {a['name']}: {a['today']} {_plural(a['today'],'удар','удара','ударов')} за раунд (всего {a['clicks']})",
+             f"🌺 {b['name']}: {b['today']} {_plural(b['today'],'удар','удара','ударов')} за раунд (всего {b['clicks']})", ""]
     if a["today"] != b["today"]:
         win = a if a["today"] > b["today"] else b
         lines.append(f"👑 Раунд выиграла {win['name']}! 🎉")
@@ -222,7 +222,8 @@ def notify_admin(source, is_new):
     flag = "🆕 новый" if is_new else "↩️ повторный"
     tk = team_of(source)
     tname = TEAMS[tk][0] if tk else "без команды"
-    notify_all(f"🔔 Переход ({flag})\nПартнёр: {source}\nКоманда: {tname}")
+    temo = {"A": "🌊", "B": "🌺"}.get(tk, "")
+    notify_all(f"🥊 Удар! ({flag})\nПартнёр: {source}\nКоманда: {temo} {tname}")
 
 def push_sheet(source, ip, ua):
     if not SHEET_WEBHOOK_URL:
@@ -385,16 +386,16 @@ PAGE = r"""<!doctype html><html lang="ru"><head><meta charset="utf-8">
 <title>NeuroFans — соревнование команд</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <style>
-:root{--bg:#0d1117;--card:#161c26;--line:#232c3a;--txt:#e9eef5;--mut:#8aa0b8;
---a:#4f8cff;--b:#ff5c8a;--gold:#ffcf4a}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);
+:root{--bg:#071a21;--card:rgba(10,38,44,.6);--line:rgba(255,255,255,.09);--txt:#fff7ec;--mut:#a9c2bf;
+--a:#19d3c5;--b:#ff4f8b;--gold:#ffd166}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(900px 500px at 10% -10%,rgba(255,122,89,.25),transparent 60%),radial-gradient(900px 600px at 100% 0%,rgba(255,79,139,.2),transparent 60%),linear-gradient(180deg,#0b2430,#04120f) fixed;color:var(--txt);
 font:15px/1.5 -apple-system,Segoe UI,Roboto,sans-serif;padding:22px;max-width:1100px;margin:0 auto}
 h1{font-size:22px;margin:0 0 2px}.sub{color:var(--mut);margin:0 0 18px;font-size:13px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
 .teams{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:stretch;margin-bottom:14px}
 .team{border-radius:16px;padding:18px;position:relative;overflow:hidden}
-.team.a{background:linear-gradient(135deg,rgba(79,140,255,.18),rgba(79,140,255,.05));border:1px solid rgba(79,140,255,.4)}
-.team.b{background:linear-gradient(135deg,rgba(255,92,138,.18),rgba(255,92,138,.05));border:1px solid rgba(255,92,138,.4)}
+.team.a{background:linear-gradient(135deg,rgba(25,211,197,.18),rgba(25,211,197,.05));border:1px solid rgba(25,211,197,.4)}
+.team.b{background:linear-gradient(135deg,rgba(255,79,139,.18),rgba(255,79,139,.05));border:1px solid rgba(255,79,139,.4)}
 .team .nm{font-size:15px;color:var(--mut);display:flex;align-items:center;gap:6px}
 .team .big{font-size:46px;font-weight:800;line-height:1.05;margin:6px 0 0}
 .team .tod{font-size:13px;margin-top:4px}
@@ -413,8 +414,8 @@ table{width:100%;border-collapse:collapse;margin-top:8px}
 th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);font-size:14px}
 th{color:var(--mut);font-weight:600}
 .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px}
-.badge.a{background:rgba(79,140,255,.2);color:#9cc0ff}
-.badge.b{background:rgba(255,92,138,.2);color:#ffb0c7}
+.badge.a{background:rgba(25,211,197,.2);color:#8ff7ec}
+.badge.b{background:rgba(255,79,139,.2);color:#ffc2d6}
 .rk{width:34px;font-weight:700}.mut{color:var(--mut)}
 .foot{color:var(--mut);font-size:12px;margin-top:14px}a{color:var(--a)}
 </style></head><body>
@@ -442,7 +443,7 @@ th{color:var(--mut);font-weight:600}
     <th>Всего</th><th>Раунд</th><th>Уник.</th><th>Последний</th></tr></thead>
   <tbody id="rows"></tbody></table>
 </div>
-<p class="foot">Обновляется каждые 30 сек. Метка = ссылка партнёра в био. 🔵 — команда A, 🩷 — команда B.</p>
+<p class="foot">Обновляется каждые 30 сек. Метка = ссылка партнёра в био. 🌊 — команда A, 🌺 — команда B.</p>
 
 <script>
 const token=new URLSearchParams(location.search).get('token');
@@ -463,11 +464,11 @@ async function load(){
   const lead = A.clicks===B.clicks?null:(A.clicks>B.clicks?'A':'B');
   document.getElementById('teams').innerHTML=`
     <div class="team a">${lead==='A'?'<div class="crown">👑</div>':''}
-      <div class="nm">🔵 ${esc(A.name)}</div><div class="big">${A.clicks}</div>
+      <div class="nm">🌊 ${esc(A.name)}</div><div class="big">${A.clicks}</div>
       <div class="tod">за раунд: <b>${A.today}</b></div><div class="pc">${A.partners} партнёров</div></div>
     <div class="vs">VS</div>
     <div class="team b">${lead==='B'?'<div class="crown">👑</div>':''}
-      <div class="nm">🩷 ${esc(B.name)}</div><div class="big">${B.clicks}</div>
+      <div class="nm">🌺 ${esc(B.name)}</div><div class="big">${B.clicks}</div>
       <div class="tod">за раунд: <b>${B.today}</b></div><div class="pc">${B.partners} партнёров</div></div>`;
   const sum=A.clicks+B.clicks; document.getElementById('barA').style.width=(sum?(A.clicks/sum*100):50)+'%';
   const lt=d.leader_today;
@@ -484,13 +485,13 @@ async function load(){
   // графики
   const dl=d.by_day.map(x=>x.day),dc=d.by_day.map(x=>x.clicks);
   if(dayChart)dayChart.destroy();
-  dayChart=new Chart(byDay,{type:'line',data:{labels:dl,datasets:[{data:dc,borderColor:'#4f8cff',
-    backgroundColor:'rgba(79,140,255,.15)',fill:true,tension:.3}]},
+  dayChart=new Chart(byDay,{type:'line',data:{labels:dl,datasets:[{data:dc,borderColor:'#19d3c5',
+    backgroundColor:'rgba(25,211,197,.15)',fill:true,tension:.3}]},
     options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#8aa0b8'}},y:{ticks:{color:'#8aa0b8'},beginAtZero:true}}}});
   const tp=d.partners.slice(0,10);
   if(topChart)topChart.destroy();
   topChart=new Chart(byTop,{type:'bar',data:{labels:tp.map(p=>p.source),datasets:[{data:tp.map(p=>p.clicks),
-    backgroundColor:tp.map(p=>p.team==='B'?'#ff5c8a':(p.team==='A'?'#4f8cff':'#8aa0b8'))}]},
+    backgroundColor:tp.map(p=>p.team==='B'?'#ff4f8b':(p.team==='A'?'#19d3c5':'#8aa0b8'))}]},
     options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#8aa0b8'},beginAtZero:true},y:{ticks:{color:'#8aa0b8'}}}}});
 }
 load();setInterval(load,30000);
