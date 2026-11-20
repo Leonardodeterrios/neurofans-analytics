@@ -23,7 +23,8 @@ from dotenv import load_dotenv
 load_dotenv()
 BOT_TOKEN          = os.getenv("BOT_TOKEN", "").strip()
 BOT_USERNAME       = os.getenv("BOT_USERNAME", "AccessGrantedGuide_bot").strip().lstrip("@")
-ADMIN_CHAT_ID      = os.getenv("ADMIN_CHAT_ID", "").strip()
+ADMIN_CHAT_ID      = os.getenv("ADMIN_CHAT_ID", "").strip()   # один ID или несколько через запятую
+ADMIN_IDS          = [x.strip() for x in ADMIN_CHAT_ID.replace(";", ",").split(",") if x.strip()]
 DB_PATH            = os.getenv("DB_PATH", "data/clicks.db")
 DASHBOARD_TOKEN    = os.getenv("DASHBOARD_TOKEN", "").strip()
 PORT               = int(os.getenv("DASHBOARD_PORT", "8080"))
@@ -164,24 +165,28 @@ def csv_bytes() -> bytes:
 
 
 # ---------- Telegram (только отправка) ----------
-def tg_send(text, chat_id=None):
-    cid = chat_id or ADMIN_CHAT_ID
-    if not (BOT_TOKEN and cid):
+def tg_send(text, chat_id):
+    if not (BOT_TOKEN and chat_id):
         return
     try:
         httpx.post(f"{TG_API}/sendMessage",
-                   json={"chat_id": int(cid), "text": text, "disable_web_page_preview": True},
+                   json={"chat_id": int(chat_id), "text": text, "disable_web_page_preview": True},
                    timeout=10)
     except Exception as e:
-        log.error("tg send failed: %s", e)
+        log.error("tg send to %s failed: %s", chat_id, e)
+
+def notify_all(text):
+    """Шлёт сообщение всем админам из ADMIN_IDS (тебе и Кате)."""
+    for cid in ADMIN_IDS:
+        tg_send(text, cid)
 
 def notify_admin(source, is_new):
-    if not (ADMIN_CHAT_ID and NOTIFY_CLICKS):
+    if not (ADMIN_IDS and NOTIFY_CLICKS):
         return
     flag = "🆕 новый" if is_new else "↩️ повторный"
     tk = team_of(source)
     tname = TEAMS[tk][0] if tk else "без команды"
-    tg_send(f"🔔 Переход ({flag})\nПартнёр: {source}\nКоманда: {tname}")
+    notify_all(f"🔔 Переход ({flag})\nПартнёр: {source}\nКоманда: {tname}")
 
 def push_sheet(source, ip, ua):
     if not SHEET_WEBHOOK_URL:
@@ -220,12 +225,12 @@ def silent_sources():
     return out
 
 def run_silence_check():
-    if not ADMIN_CHAT_ID:
+    if not ADMIN_IDS:
         return
     for source, last, total, hours in silent_sources():
-        tg_send(f"🔕 Тишина у партнёра: {source}\n"
-                f"Нет переходов уже ~{int(hours)} ч (последний: {last} UTC).\n"
-                f"Всего по нему было {total}. Проверь ссылку в био / статус аккаунта.")
+        notify_all(f"🔕 Тишина у партнёра: {source}\n"
+                   f"Нет переходов уже ~{int(hours)} ч (последний: {last} UTC).\n"
+                   f"Всего по нему было {total}. Проверь ссылку в био / статус аккаунта.")
         record_alert(source, "silence")
 
 
@@ -241,14 +246,14 @@ def scheduler_loop():
                 run_silence_check()
             except Exception as e:
                 log.error("silence check failed: %s", e)
-        if DAILY_SUMMARY_TIME and ADMIN_CHAT_ID:
+        if DAILY_SUMMARY_TIME and ADMIN_IDS:
             try:
                 tz = ZoneInfo(SUMMARY_TZ)
                 nowtz = dt.datetime.now(tz)
                 hh, mm = (int(x) for x in DAILY_SUMMARY_TIME.split(":"))
                 if nowtz.hour == hh and nowtz.minute == mm and last_summary_date != nowtz.date():
                     last_summary_date = nowtz.date()
-                    tg_send(daily_results_text())
+                    notify_all(daily_results_text())
             except Exception as e:
                 log.error("daily summary failed: %s", e)
         time.sleep(30)
@@ -414,8 +419,8 @@ load();setInterval(load,30000);
 def main():
     init_db()
     threading.Thread(target=scheduler_loop, daemon=True).start()
-    log.info("NeuroFans teams-tracker on :%s (bot=@%s, admin=%s, daily=%s, teams=%s/%s)",
-             PORT, BOT_USERNAME, bool(ADMIN_CHAT_ID), DAILY_SUMMARY_TIME or "off",
+    log.info("NeuroFans teams-tracker on :%s (bot=@%s, admins=%d, daily=%s, teams=%s/%s)",
+             PORT, BOT_USERNAME, len(ADMIN_IDS), DAILY_SUMMARY_TIME or "off",
              TEAM_A_PREFIX, TEAM_B_PREFIX)
     app.run(host="0.0.0.0", port=PORT, use_reloader=False)
 
