@@ -1,34 +1,35 @@
 #!/usr/bin/env python3
 """
-NeuroFans — приёмник аналитики (вебхук от PuzzleBot) + дашборд + уведомления.
+NeuroFans — аналитика переходов на уровне ССЫЛКИ + дашборд + уведомления.
 
-Схема:
-  Воронка живёт на PuzzleBot. На каждый /start PuzzleBot фоном дёргает наш
-  GET /track?source=<метка аккаунта>&uid=<id>&username=<ник>&name=<имя>.
-  Мы:
-    • пишем переход в локальную базу (data/starts.db),
-    • шлём уведомление админу в Telegram (sendMessage — без polling,
-      поэтому НЕ конфликтует с PuzzleBot за того же бота),
-    • (опционально) дублируем строку в Google-таблицу (SHEET_WEBHOOK_URL),
-    • показываем дашборд на /,
-    • шлём ежедневную авто-сводку и алерты «тишины по источнику».
+Схема (ссылку в био ставим НАШУ, считающую, а не прямую на бота):
+
+  ссылка в био:  http://СЕРВЕР/go?source=<метка_аккаунта>
+       клик  ─►  наш сервер фиксирует переход (метка + IP)  ─►  302 redirect
+                 ─►  https://t.me/<BOT_USERNAME>?start=<метка>  ─►  PuzzleBot (воронка)
+
+Ловим КАЖДЫЙ клик, даже если человек не нажал «Старт». Воронка на PuzzleBot
+не трогается вообще. Токен бота используем только чтобы слать тебе уведомления
+и сводки (sendMessage) — polling не запускаем, конфликта с PuzzleBot нет.
 
 Запуск:  python app.py   (слушает $DASHBOARD_PORT, по умолчанию 8080)
 """
-import os, io, csv, sqlite3, threading, time, logging, datetime as dt
+import os, io, csv, re, sqlite3, threading, time, logging, datetime as dt
+from urllib.parse import quote
 from zoneinfo import ZoneInfo
 import httpx
-from flask import Flask, jsonify, request, abort, Response
+from flask import Flask, jsonify, request, abort, redirect, Response
 from dotenv import load_dotenv
 
 load_dotenv()
 BOT_TOKEN          = os.getenv("BOT_TOKEN", "").strip()
+BOT_USERNAME       = os.getenv("BOT_USERNAME", "AccessGrantedGuide_bot").strip().lstrip("@")
 ADMIN_CHAT_ID      = os.getenv("ADMIN_CHAT_ID", "").strip()
-DB_PATH            = os.getenv("DB_PATH", "data/starts.db")
+DB_PATH            = os.getenv("DB_PATH", "data/clicks.db")
 DASHBOARD_TOKEN    = os.getenv("DASHBOARD_TOKEN", "").strip()   # пароль на дашборд (?token=...)
-INGEST_TOKEN       = os.getenv("INGEST_TOKEN", "").strip()      # пароль на /track (?key=...)
 PORT               = int(os.getenv("DASHBOARD_PORT", "8080"))
 SHEET_WEBHOOK_URL  = os.getenv("SHEET_WEBHOOK_URL", "").strip()
+NOTIFY_CLICKS      = os.getenv("NOTIFY_CLICKS", "1").strip() not in ("0", "false", "no", "")
 DAILY_SUMMARY_TIME = os.getenv("DAILY_SUMMARY_TIME", "").strip()  # "09:00", пусто = выкл
 SUMMARY_TZ         = os.getenv("SUMMARY_TZ", "UTC").strip()
 SILENCE_HOURS      = int(os.getenv("SILENCE_HOURS", "24"))
@@ -36,6 +37,10 @@ SILENCE_CHECK_MIN  = int(os.getenv("SILENCE_CHECK_MIN", "60"))
 SILENCE_MIN_CLICKS = int(os.getenv("SILENCE_MIN_CLICKS", "3"))
 
 TG_API = f"https://api.telegram.org/bot{BOT_TOKEN}"
+# не считаем предпросмотрщики ссылок (телега/соцсети дёргают ссылку при публикации)
+BOT_UA = re.compile(r"bot|crawler|spider|preview|facebookexternalhit|telegrambot|"
+                    r"whatsapp|vkshare|slackbot|skypeuripreview|discordbot|twitterbot", re.I)
+SAFE_START = re.compile(r"[^A-Za-z0-9_-]")   # допустимые символы для telegram ?start=
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("neurofans")
@@ -51,59 +56,59 @@ def _conn():
 def init_db():
     os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
     with _conn() as c:
-        c.execute("""CREATE TABLE IF NOT EXISTS starts(
+        c.execute("""CREATE TABLE IF NOT EXISTS clicks(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            ts TEXT, source TEXT, user_id INTEGER, username TEXT, first_name TEXT)""")
+            ts TEXT, source TEXT, ip TEXT, ua TEXT)""")
         c.execute("""CREATE TABLE IF NOT EXISTS alerts(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             ts TEXT, source TEXT, kind TEXT)""")
 
-def record_start(source, user_id, username, first_name) -> bool:
+def record_click(source, ip, ua) -> bool:
+    """Пишет клик. Возвращает True, если IP раньше не встречался (похоже на нового человека)."""
     with _conn() as c:
         is_new = True
-        if user_id:
-            seen = c.execute("SELECT 1 FROM starts WHERE user_id=? LIMIT 1", (user_id,)).fetchone()
+        if ip:
+            seen = c.execute("SELECT 1 FROM clicks WHERE ip=? LIMIT 1", (ip,)).fetchone()
             is_new = seen is None
-        c.execute("INSERT INTO starts(ts,source,user_id,username,first_name) VALUES(?,?,?,?,?)",
-                  (dt.datetime.utcnow().isoformat(timespec="seconds"),
-                   source, user_id, username, first_name))
+        c.execute("INSERT INTO clicks(ts,source,ip,ua) VALUES(?,?,?,?)",
+                  (dt.datetime.utcnow().isoformat(timespec="seconds"), source, ip, ua))
     return is_new
 
 def stats_text() -> str:
     with _conn() as c:
-        total = c.execute("SELECT COUNT(*) FROM starts").fetchone()[0]
-        uniq  = c.execute("SELECT COUNT(DISTINCT user_id) FROM starts").fetchone()[0]
-        rows  = c.execute("""SELECT source, COUNT(*) n, COUNT(DISTINCT user_id) u
-                             FROM starts GROUP BY source ORDER BY n DESC""").fetchall()
+        total = c.execute("SELECT COUNT(*) FROM clicks").fetchone()[0]
+        uniq  = c.execute("SELECT COUNT(DISTINCT ip) FROM clicks").fetchone()[0]
+        rows  = c.execute("""SELECT source, COUNT(*) n, COUNT(DISTINCT ip) u
+                             FROM clicks GROUP BY source ORDER BY n DESC""").fetchall()
     if not rows:
         return "📊 Пока нет переходов."
-    lines = [f"📊 Всего заходов: {total}  |  уникальных: {uniq}", ""]
-    lines += [f"• {r[0] or 'direct'}: {r[1]} заходов ({r[2]} уник.)" for r in rows]
+    lines = [f"📊 Всего переходов: {total}  |  уникальных (по IP): {uniq}", ""]
+    lines += [f"• {r[0] or 'direct'}: {r[1]} переходов ({r[2]} уник.)" for r in rows]
     return "\n".join(lines)
 
 def csv_bytes() -> bytes:
     buf = io.StringIO()
     w = csv.writer(buf)
-    w.writerow(["ts", "source", "user_id", "username", "first_name"])
+    w.writerow(["ts", "source", "ip", "ua"])
     with _conn() as c:
-        for row in c.execute("SELECT ts,source,user_id,username,first_name FROM starts ORDER BY id"):
+        for row in c.execute("SELECT ts,source,ip,ua FROM clicks ORDER BY id"):
             w.writerow(list(row))
     return buf.getvalue().encode("utf-8-sig")
 
 def get_stats():
     with _conn() as c:
-        total = c.execute("SELECT COUNT(*) FROM starts").fetchone()[0]
-        uniq  = c.execute("SELECT COUNT(DISTINCT user_id) FROM starts").fetchone()[0]
+        total = c.execute("SELECT COUNT(*) FROM clicks").fetchone()[0]
+        uniq  = c.execute("SELECT COUNT(DISTINCT ip) FROM clicks").fetchone()[0]
         sources = [dict(r) for r in c.execute("""
-            SELECT source, COUNT(*) clicks, COUNT(DISTINCT user_id) uniq, MAX(ts) last
-            FROM starts GROUP BY source ORDER BY clicks DESC""")]
+            SELECT source, COUNT(*) clicks, COUNT(DISTINCT ip) uniq, MAX(ts) last
+            FROM clicks GROUP BY source ORDER BY clicks DESC""")]
         by_day = [dict(r) for r in c.execute("""
             SELECT substr(ts,1,10) day, COUNT(*) clicks
-            FROM starts GROUP BY day ORDER BY day""")]
+            FROM clicks GROUP BY day ORDER BY day""")]
     return {"total": total, "unique": uniq, "sources": sources, "by_day": by_day}
 
 
-# ---------- Telegram (только отправка, без polling) ----------
+# ---------- Telegram (только отправка) ----------
 def tg_send(text, chat_id=None):
     cid = chat_id or ADMIN_CHAT_ID
     if not (BOT_TOKEN and cid):
@@ -115,22 +120,18 @@ def tg_send(text, chat_id=None):
     except Exception as e:
         log.error("tg send failed: %s", e)
 
-def notify_admin(source, user_id, username, first_name, is_new):
-    if not ADMIN_CHAT_ID:
+def notify_admin(source, is_new):
+    if not (ADMIN_CHAT_ID and NOTIFY_CLICKS):
         return
     flag = "🆕 новый" if is_new else "↩️ повторный"
-    who = f"@{username}" if username else (first_name or "—")
-    uid = f" (id {user_id})" if user_id else ""
-    tg_send(f"🔔 Переход в бота ({flag})\nИсточник: {source}\nКто: {who}{uid}")
+    tg_send(f"🔔 Переход по ссылке ({flag})\nАккаунт: {source}")
 
-def push_sheet(source, user_id, username, first_name):
+def push_sheet(source, ip, ua):
     if not SHEET_WEBHOOK_URL:
         return
     try:
         httpx.post(SHEET_WEBHOOK_URL,
-                   json={"source": source, "user_id": user_id,
-                         "username": username, "first_name": first_name},
-                   timeout=10)
+                   json={"source": source, "ip": ip, "ua": ua}, timeout=10)
     except Exception as e:
         log.error("sheet push failed: %s", e)
 
@@ -147,7 +148,7 @@ def silent_sources():
     out = []
     with _conn() as c:
         rows = c.execute("""SELECT source, MAX(ts) last, COUNT(*) total
-                            FROM starts GROUP BY source""").fetchall()
+                            FROM clicks GROUP BY source""").fetchall()
         for source, last, total in rows:
             if total < SILENCE_MIN_CLICKS or not last:
                 continue
@@ -201,41 +202,45 @@ def scheduler_loop():
 
 
 # ---------- веб ----------
-def _check(token_arg, expected):
-    if expected and request.args.get(token_arg, "") != expected:
+def _client_ip():
+    xff = request.headers.get("X-Forwarded-For", "")
+    if xff:
+        return xff.split(",")[0].strip()
+    return request.remote_addr or ""
+
+def _check_dashboard():
+    if DASHBOARD_TOKEN and request.args.get("token", "") != DASHBOARD_TOKEN:
         abort(401)
 
-@app.route("/track")
-def track():
-    _check("key", INGEST_TOKEN)
-    v = request.values
-    source   = (v.get("source") or v.get("src") or "direct").strip() or "direct"
-    username = (v.get("username") or "").lstrip("@").strip()
-    name     = (v.get("name") or v.get("first_name") or "").strip()
-    try:
-        user_id = int(v.get("uid") or v.get("user_id") or 0)
-    except ValueError:
-        user_id = 0
-    is_new = record_start(source, user_id, username, name)
-    notify_admin(source, user_id, username, name, is_new)
-    push_sheet(source, user_id, username, name)
-    log.info("track source=%s uid=%s new=%s", source, user_id, is_new)
-    return jsonify(ok=True, new=is_new)
+@app.route("/go")
+def go():
+    """Публичная ссылка-считалка для био. Фиксирует переход и перекидывает в бота."""
+    source = (request.values.get("source") or request.values.get("s") or "direct").strip() or "direct"
+    ua = (request.headers.get("User-Agent", "") or "")[:300]
+    # предпросмотрщики ссылок не считаем, но всё равно перекидываем
+    if not BOT_UA.search(ua):
+        is_new = record_click(source, _client_ip(), ua)
+        notify_admin(source, is_new)
+        push_sheet(source, _client_ip(), ua)
+        log.info("click source=%s new=%s", source, is_new)
+    payload = SAFE_START.sub("", source)[:64]
+    target = f"https://t.me/{BOT_USERNAME}" + (f"?start={quote(payload)}" if payload else "")
+    return redirect(target, code=302)
 
 @app.route("/api/stats")
 def api_stats():
-    _check("token", DASHBOARD_TOKEN)
+    _check_dashboard()
     return jsonify(get_stats())
 
 @app.route("/export")
 def export():
-    _check("token", DASHBOARD_TOKEN)
+    _check_dashboard()
     return Response(csv_bytes(), mimetype="text/csv",
-                    headers={"Content-Disposition": "attachment; filename=starts.csv"})
+                    headers={"Content-Disposition": "attachment; filename=clicks.csv"})
 
 @app.route("/")
 def index():
-    _check("token", DASHBOARD_TOKEN)
+    _check_dashboard()
     return Response(PAGE, mimetype="text/html")
 
 @app.route("/healthz")
@@ -267,19 +272,19 @@ a{color:var(--acc)}
 <p class="sub" id="updated">загрузка…</p>
 <div class="kpis">
   <div class="card kpi"><div class="n" id="k_total">—</div><div class="l">Всего переходов</div></div>
-  <div class="card kpi"><div class="n" id="k_uniq">—</div><div class="l">Уникальных людей</div></div>
-  <div class="card kpi"><div class="n" id="k_src">—</div><div class="l">Активных источников</div></div>
+  <div class="card kpi"><div class="n" id="k_uniq">—</div><div class="l">Уникальных (по IP)</div></div>
+  <div class="card kpi"><div class="n" id="k_src">—</div><div class="l">Активных аккаунтов</div></div>
 </div>
 <div class="grid">
-  <div class="card"><b>Переходы по источникам</b><canvas id="bySource" height="220"></canvas></div>
+  <div class="card"><b>Переходы по аккаунтам</b><canvas id="bySource" height="220"></canvas></div>
   <div class="card"><b>Переходы по дням</b><canvas id="byDay" height="220"></canvas></div>
 </div>
 <div class="card" style="margin-top:16px">
-  <b>Источники</b> &nbsp; <a id="csv" href="#">скачать CSV</a>
-  <table><thead><tr><th>Источник</th><th>Переходов</th><th>Уникальных</th><th>Последний</th></tr></thead>
+  <b>Аккаунты</b> &nbsp; <a id="csv" href="#">скачать CSV</a>
+  <table><thead><tr><th>Аккаунт</th><th>Переходов</th><th>Уникальных</th><th>Последний</th></tr></thead>
   <tbody id="rows"></tbody></table>
 </div>
-<p class="foot">Обновляется автоматически каждые 30 сек. Метка источника = имя аккаунта из ссылки.</p>
+<p class="foot">Обновляется автоматически каждые 30 сек. Метка = имя аккаунта из ссылки в био.</p>
 <script>
 const token = new URLSearchParams(location.search).get('token');
 const q = token?('?token='+encodeURIComponent(token)):'';
@@ -315,8 +320,8 @@ load(); setInterval(load,30000);
 def main():
     init_db()
     threading.Thread(target=scheduler_loop, daemon=True).start()
-    log.info("NeuroFans ingest+dashboard on :%s (admin=%s, sheet=%s, daily=%s)",
-             PORT, bool(ADMIN_CHAT_ID), bool(SHEET_WEBHOOK_URL), DAILY_SUMMARY_TIME or "off")
+    log.info("NeuroFans click-tracker on :%s (bot=@%s, admin=%s, daily=%s)",
+             PORT, BOT_USERNAME, bool(ADMIN_CHAT_ID), DAILY_SUMMARY_TIME or "off")
     app.run(host="0.0.0.0", port=PORT, use_reloader=False)
 
 if __name__ == "__main__":

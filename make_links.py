@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-"""Генератор ссылок с меткой-источником (метка = имя профиля). BOT_USERNAME из .env или впиши ниже."""
+"""Генератор ссылок-считалок для био (метка = имя аккаунта).
+Ставишь такую ссылку в био аккаунта. Клик по ней фиксируется и перекидывает в бота.
+BASE_URL = адрес твоего сервера (например http://188.130.251.125)."""
 import os, re
 from dotenv import load_dotenv
 load_dotenv()
 
-BOT_USERNAME = os.getenv("BOT_USERNAME", "AccessGrantedGuide_bot")
-PROFILES = ["Threads_DE_01", "Threads_DE_02", "Threads_DE_03"]  # <-- твои профили
+BASE_URL = os.getenv("BASE_URL", "http://188.130.251.125").rstrip("/")
+PROFILES = ["Threads_DE_01", "Threads_DE_02", "Threads_DE_03"]  # <-- твои аккаунты
 
 _T = {'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'e','ж':'zh','з':'z','и':'i','й':'y',
  'к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f','х':'h',
@@ -23,7 +25,7 @@ def build(profiles):
     return out
 if __name__ == "__main__":
     tags = build(PROFILES)
-    print(f"{'ПРОФИЛЬ':<24}{'МЕТКА':<20}ССЫЛКА В БИО")
+    print(f"{'АККАУНТ':<24}{'МЕТКА':<20}ССЫЛКА В БИО")
     print("-"*84)
     for p in PROFILES:
-        print(f"{p:<24}{tags[p]:<20}https://t.me/{BOT_USERNAME}?start={tags[p]}")
+        print(f"{p:<24}{tags[p]:<20}{BASE_URL}/go?source={tags[p]}")

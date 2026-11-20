@@ -2,8 +2,8 @@ services:
   app:
     build: .
     restart: unless-stopped
-    env_file: .env          # BOT_TOKEN, ADMIN_CHAT_ID, INGEST_TOKEN, ...
+    env_file: .env          # BOT_TOKEN, BOT_USERNAME, ADMIN_CHAT_ID, ...
     ports:
-      - "8080:8080"         # дашборд: http://СЕРВЕР:8080 ; приём: http://СЕРВЕР:8080/track
+      - "80:8080"           # ссылка-считалка: http://СЕРВЕР/go?source=... ; дашборд: http://СЕРВЕР/
     volumes:
       - ./data:/app/data    # база переходов хранится на диске сервера
