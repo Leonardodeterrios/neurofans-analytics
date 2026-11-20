@@ -177,6 +177,8 @@ r1=act(u7,"site"); r2=act(u7,"site"); r3=act(u7,"examples")
 assert r1["ok"] and r1["points"]==8 and r1["label"]=="leo07" and r2["reason"]=="duplicate" and r3["points"]==8, (r1,r2,r3)
 st=app.get_stats(); P7=next(p for p in st["partners"] if p["source"]=="leo07")
 assert P7["power"]==p0+16 and P7["act_points"]==16 and P7["act_points_today"]==16, P7
+assert "heavy" in P7["badges"] and P7["heavy"]==2 and P7["heavy_today"]==2, P7   # два действия по +8 → «Тяжёлая артиллерия»
+assert all(k in st["badge_defs"] for k in ("combo","heavy","globe","funnel","rush","marathon","night")) and "hot" in P7 and "cities_today" in P7
 flask.request.args={"token":"pub","since_c":str(base["last_c"]),"since_s":str(base["last_s"]),"since_a":str(base["last_a"])}
 fa=json.loads(app.api_feed().content); kinds=[(i["kind"],i.get("points")) for i in fa["items"]]
 assert ("site",8) in kinds and ("examples",8) in kinds, kinds

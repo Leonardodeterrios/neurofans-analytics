@@ -115,6 +115,13 @@ BADGES = {
     "ko":          ("⚡", "Нокаутёр", "10+ апперкотов"),
     "sniper":      ("🎯", "Снайпер", "доходимость 50%+ при 10+ ударах"),
     "hundred":     ("💯", "Сотня", "100+ ударов"),
+    "combo":       ("🔥", "Комбо ×5", "5 ударов за 10 минут в этом раунде"),
+    "heavy":       ("💥", "Тяжёлая артиллерия", "2+ действия в боте по +8 (сайт, примеры)"),
+    "globe":       ("🌍", "Кругосветка", "удары из 5+ разных городов за раунд"),
+    "funnel":      ("🧭", "Проводник", "люди прошли 4+ разных шага в боте"),
+    "rush":        ("🚀", "Рывок", "сила за раунд ≥10 и вдвое больше прошлого раунда"),
+    "marathon":    ("🏃", "Марафонец", "сила в 5 раундах подряд"),
+    "night":       ("🌙", "Ночной дозор", "удар между 00:00 и 05:00 в этом раунде"),
 }
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -392,6 +399,14 @@ def _get_stats(at=None):
         act_r = {r[0]: r[1] or 0 for r in c.execute(
             "SELECT label, SUM(points) FROM actions WHERE ts>=? AND ts<? GROUP BY label", (s0, e0))}
         act_n = c.execute("SELECT COUNT(*), COALESCE(SUM(points),0) FROM actions").fetchone()
+        heavy_all = {r[0]: r[1] for r in c.execute("SELECT label, COUNT(*) FROM actions WHERE points>=8 GROUP BY label")}
+        heavy_r = {r[0]: r[1] for r in c.execute(
+            "SELECT label, COUNT(*) FROM actions WHERE points>=8 AND ts>=? AND ts<? GROUP BY label", (s0, e0))}
+        acts_kinds = {r[0]: r[1] for r in c.execute("SELECT label, COUNT(DISTINCT act) FROM actions GROUP BY label")}
+        # удары раунда по времени и городам — для «Комбо», «Кругосветки», «Ночного дозора» и «горячей формы»
+        rr = {}
+        for r in c.execute("SELECT source, ts, COALESCE(city,'') FROM clicks WHERE scored=1 AND ts>=? AND ts<? ORDER BY id", (s0, e0)):
+            rr.setdefault(r[0], []).append((r[1], r[2]))
         fb = c.execute("SELECT source FROM clicks WHERE scored=1 AND source!='direct' AND ts>=? AND ts<? "
                        "ORDER BY id LIMIT 1", (s0, e0)).fetchone()
         hist = round_history(c)
@@ -412,7 +427,16 @@ def _get_stats(at=None):
                          "act_points": ap, "act_points_today": apr,
                          "today": hr + START_POWER * sr + apr, "power": hits + START_POWER * st + ap,
                          "conv": _conv(st, hits)})
+    tz = ZoneInfo(SUMMARY_TZ)
+    hot_from = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(minutes=15)).replace(tzinfo=None).isoformat(timespec="seconds")
+    def _combo(ts_list, n=5, win=600):
+        t = [dt.datetime.fromisoformat(x).timestamp() for x in ts_list]
+        return any(t[i + n - 1] - t[i] <= win for i in range(len(t) - n + 1))
     for p in partners:
+        rows = rr.get(p["source"], [])
+        p["heavy"], p["heavy_today"] = heavy_all.get(p["source"], 0), heavy_r.get(p["source"], 0)
+        p["cities_today"] = len({ci for _, ci in rows if ci})
+        p["hot"] = sum(1 for ts, _ in rows if ts >= hot_from)
         ri, rn, nxt = rank_of(p["power"])
         p["rank"], p["rank_name"], p["rank_next"] = ri, rn, nxt
         b = []
@@ -422,6 +446,16 @@ def _get_stats(at=None):
         if p["starts"] >= 10: b.append("ko")
         if p["hits"] >= 10 and (p["conv"] or 0) >= 50: b.append("sniper")
         if p["hits"] >= 100: b.append("hundred")
+        if len(rows) >= 5 and _combo([ts for ts, _ in rows]): b.append("combo")
+        if p["heavy"] >= 2: b.append("heavy")
+        if p["cities_today"] >= 5: b.append("globe")
+        if acts_kinds.get(p["source"], 0) >= 4: b.append("funnel")
+        h = hist.get(p["source"], {})
+        if p["today"] >= 10 and p["today"] >= 2 * _pw(h.get(cur - 1, [0, 0, 0])): b.append("rush")
+        k, r0 = 0, cur if _pw(h.get(cur, [0, 0, 0])) > 0 else cur - 1
+        while _pw(h.get(r0 - k, [0, 0, 0])) > 0: k += 1
+        if k >= 5: b.append("marathon")
+        if any(dt.datetime.fromisoformat(ts).replace(tzinfo=dt.timezone.utc).astimezone(tz).hour < 5 for ts, _ in rows): b.append("night")
         p["badges"] = b
     partners.sort(key=lambda p: (-p["power"], -p["clicks"], p["source"] or ""))
     teams = []
