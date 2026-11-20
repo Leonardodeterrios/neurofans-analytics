@@ -1057,7 +1057,8 @@ def _page(path, og_title, og_desc, og_img):
             f'<meta property="og:title" content="{e(og_title)}"><meta property="og:description" content="{e(og_desc)}">'
             f'<meta property="og:image" content="{e(og_img)}"><meta property="og:image:width" content="1200">'
             f'<meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image">')
-    return Response(html.replace("<!--OG-->", meta), mimetype="text/html")
+    # no-cache: после выкатки браузер всегда берёт свежую арену/страницу
+    return Response(html.replace("<!--OG-->", meta), mimetype="text/html", headers={"Cache-Control": "no-cache"})
 
 def _score_line():
     a, b = get_stats()["teams"]
