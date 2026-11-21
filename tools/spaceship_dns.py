@@ -14,9 +14,15 @@ API = "https://spaceship.dev/api/v1"
 IP = "188.130.251.125"
 
 
-def domains_from_caddyfile():
+def hosts_from_caddyfile():
+    """{домен: [имена записей]} из таблицы map в Caddyfile: '@' для самого домена, 'go' для go.домен и т.д."""
     text = (Path(__file__).resolve().parent.parent / "Caddyfile").read_text(encoding="utf-8")
-    return sorted(set(re.findall(r"^\t\t([a-z0-9-]+\.shop)\s", text, re.M)))
+    out = {}
+    for h in re.findall(r"^\t\t([a-z0-9.-]+\.shop)\s", text, re.M):
+        parts = h.split(".")
+        root, name = ".".join(parts[-2:]), (".".join(parts[:-2]) or "@")
+        out.setdefault(root, []).append(name)
+    return dict(sorted(out.items()))
 
 
 def call(method, path, key, secret, body=None):
@@ -38,11 +44,13 @@ def call(method, path, key, secret, body=None):
 
 
 def main():
-    doms = domains_from_caddyfile()
+    hosts = hosts_from_caddyfile()
+    doms = list(hosts)
+    names = sorted({n for v in hosts.values() for n in v}, key=lambda n: (n != "@", n))
     print(f"Доменов: {len(doms)}. Для каждого:")
     print("  1) NS → Spaceship (basic)")
     print("  2) удалить старые записи @ типа A / AAAA / CNAME (парковка)")
-    print(f"  3) A-запись @ → {IP}\n  " + ", ".join(doms))
+    print(f"  3) A-записи {', '.join(names)} → {IP}\n  " + ", ".join(doms))
     key = getpass.getpass("\nAPI key (ввод скрыт): ").strip()
     secret = getpass.getpass("API secret (ввод скрыт): ").strip()
     if input("Применить? Напиши да: ").strip().lower() not in ("да", "yes", "y"):
@@ -71,7 +79,7 @@ def main():
         st3, res3 = call("PUT", f"/dns/records/{d}", key, secret, {
             "force": True, "items": [{"type": "A", "name": "@", "address": IP, "ttl": 600}]})
         ok = ns_ok and st3 < 300
-        print(f"{'✅' if ok else '❌'} {d:<20} NS:{st}  удалено старых:{len(old)}  A:{st3}"
+        print(f"{'✅' if ok else '❌'} {d:<20} NS:{st}  удалено старых:{len(old)}  A({len(hosts[d])}):{st3}"
               + ("" if ok else f"  {res if not ns_ok else res3}"))
         if not ok:
             bad.append(d)
