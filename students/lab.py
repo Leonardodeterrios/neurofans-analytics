@@ -936,14 +936,15 @@ def api_league():
         prevmap = {r["mid"]: r["pts"] for r in prev}
         allp = game.people_all(c)
         rk = lambda mid: game.rank_of(allp.get(mid, 0))["icon"]
+        rl = lambda mid: game.rank_of(allp.get(mid, 0))["lvl"]
         rows = []
         for i, r in enumerate(cur):
             rows.append({"place": i + 1, "mid": r["mid"], "model": r["name"], "nick": r["nick"], "pts": r["pts"],
                          "prev": prevmap.get(r["mid"], 0), "mine": r["uid"] == u["id"], "rank": rk(r["mid"]),
-                         "div": divs.get(r["mid"], "start")})
+                         "lvl": rl(r["mid"]), "div": divs.get(r["mid"], "start")})
         # «Рывок недели»: рост к прошлой неделе (сглажено +5, чтобы новички с 1→3 не улетали в ×3)
         rush = [{"mid": r["mid"], "model": r["name"], "nick": r["nick"], "pts": r["pts"], "prev": r["prev"],
-                 "x": r["x"], "mine": r["uid"] == u["id"], "rank": rk(r["mid"])}
+                 "x": r["x"], "mine": r["uid"] == u["id"], "rank": rk(r["mid"]), "lvl": rl(r["mid"])}
                 for r in game.rush_rows(cur, prev)]
         winners = [{"place": i + 1, "model": r["name"], "nick": r["nick"], "pts": r["pts"]}
                    for i, r in enumerate(prev[:3])]

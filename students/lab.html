@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex">
-<meta name="theme-color" content="#06050b">
+<meta name="theme-color" content="#07080b">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="NF Lab">
@@ -14,867 +14,790 @@
 <title>NeuroFans Lab</title>
 <style>
 @font-face{font-family:Unb;src:url(/static/fonts/Unbounded-ExtraBold.woff) format("woff");font-weight:800;font-display:swap}
-@font-face{font-family:Unb;src:url(/static/fonts/Unbounded-Medium.woff) format("woff");font-weight:500;font-display:swap}
 @font-face{font-family:Man;src:url(/static/fonts/Manrope-Medium.woff) format("woff");font-weight:500;font-display:swap}
 @font-face{font-family:Man;src:url(/static/fonts/Manrope-ExtraBold.woff) format("woff");font-weight:800;font-display:swap}
-@font-face{font-family:Oxa,Man,sans-serif;src:url(/static/fonts/Oxanium-SemiBold.woff) format("woff");font-weight:600;font-display:swap}
+@font-face{font-family:Oxa;src:url(/static/fonts/Oxanium-SemiBold.woff) format("woff");font-weight:600;font-display:swap}
 :root{
- --void:#06050b;--void2:#0d0b18;--ink:#edeaff;--haze:#8f89b8;--dim:#5f5a82;
- --line:rgba(170,160,255,.10);--line2:rgba(170,160,255,.2);
- --sig:#19d3c5;--pulse:#ff4f8b;--uv:#8b6cff;--gold:#ffc94d;--ok:#3ee08f;--bad:#ff5a6e;
- --panel:linear-gradient(180deg,rgba(26,22,48,.74),rgba(13,11,25,.78));
- --ease:cubic-bezier(.2,.8,.2,1)}
+ --bg:#07080b;--s1:#0c0e13;--s2:#11141b;--s3:#161a23;
+ --ln:rgba(255,255,255,.07);--ln2:rgba(255,255,255,.12);--ln3:rgba(255,255,255,.2);
+ --tx:#e6e8ee;--mu:#8a90a2;--di:#596071;
+ --ac:#2ee6d6;--ac2:rgba(46,230,214,.12);--neg:#ff5c7a;--warn:#f5b84b;--gold:#e8c46a;--sil:#b9c0cf;--brz:#c98d5f;
+ --mono:Oxa,Man,ui-monospace,monospace;--r:8px;--ease:cubic-bezier(.2,.8,.2,1)}
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--void);color:var(--ink);font:500 15px/1.5 Man,system-ui,sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
-body{min-height:100vh;overflow-x:hidden}
-.aurora{position:fixed;inset:-20vmax;z-index:-2;pointer-events:none;filter:blur(70px);opacity:.9}
-.aurora i{position:absolute;border-radius:50%}
-.aurora i:nth-child(1){width:60vmax;height:44vmax;left:-6vmax;top:-10vmax;background:radial-gradient(closest-side,rgba(25,211,197,.30),transparent);animation:drift 60s var(--ease) infinite alternate}
-.aurora i:nth-child(2){width:56vmax;height:46vmax;right:-10vmax;top:4vmax;background:radial-gradient(closest-side,rgba(255,79,139,.24),transparent);animation:drift 74s var(--ease) infinite alternate-reverse}
-.aurora i:nth-child(3){width:64vmax;height:40vmax;left:20vmax;bottom:-18vmax;background:radial-gradient(closest-side,rgba(139,108,255,.26),transparent);animation:drift 90s var(--ease) infinite alternate}
-@keyframes drift{to{transform:translate(6vmax,4vmax) scale(1.12)}}
-.grain{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.07;
- background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
-@media (prefers-reduced-motion:reduce){.aurora i{animation:none}*{transition:none!important;animation-duration:.01ms!important}}
-a{color:var(--sig);text-decoration:none}a:hover{text-decoration:underline}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:500 14px/1.5 Man,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body{min-height:100vh;overflow-x:hidden;
+ background:radial-gradient(1200px 600px at 50% -200px,rgba(46,230,214,.07),transparent 70%),
+  radial-gradient(circle at 1px 1px,rgba(255,255,255,.07) 1px,transparent 0) 0 0/24px 24px,var(--bg)}
+a{color:var(--ac);text-decoration:none}a:hover{text-decoration:underline}
 button,input,select,textarea{font:inherit;color:inherit}
-:focus-visible{outline:2px solid var(--sig);outline-offset:2px;border-radius:8px}
-.num{font-family:Oxa,Man,monospace;font-variant-numeric:tabular-nums}
-h1,h2,h3{margin:0;font-family:Unb,Man,sans-serif}
-h1{font-weight:800;font-size:clamp(26px,3.2vw,38px);letter-spacing:-.01em;line-height:1.1}
-h2{font-weight:800;font-size:20px;line-height:1.2}
-h3{font-weight:500;font-size:15px;letter-spacing:.005em}
-.mut{color:var(--haze)}.dim{color:var(--dim)}.small{font-size:13px}
+:focus-visible{outline:1.5px solid var(--ac);outline-offset:2px}
+.mono,.num{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:.01em}
+h1,h2,h3{margin:0;font-family:Man,sans-serif;font-weight:800;letter-spacing:-.02em}
+h1{font-size:clamp(24px,2.6vw,32px);line-height:1.15}
+h2{font-size:19px;line-height:1.25}
+h3{font-size:14px;letter-spacing:-.005em}
+.mu{color:var(--mu)}.di{color:var(--di)}.sm{font-size:12px}.xs{font-size:11px}
+.pos{color:var(--ac)}.neg{color:var(--neg)}
 .hide{display:none!important}
-.wrap{max-width:1200px;margin:0 auto;padding:0 20px}
-
-/* — логотип: сигнал — */
-.brand{display:flex;align-items:center;gap:11px;font-family:Unb;font-weight:800;font-size:16px;letter-spacing:.02em;white-space:nowrap;color:var(--ink)}
-.brand svg{width:30px;height:30px;flex:none}
-.brand em{font-style:normal;font-weight:500;color:var(--haze);font-size:13px;margin-left:2px}
-
-/* — поверхности: три уровня — */
-.panel{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:20px;
- backdrop-filter:blur(18px) saturate(1.2);-webkit-backdrop-filter:blur(18px) saturate(1.2)}
-.panel:before{content:"";position:absolute;left:18px;right:18px;top:-1px;height:1px;pointer-events:none;
- background:linear-gradient(90deg,transparent,rgba(237,234,255,.35),transparent)}
-.inset{background:rgba(5,4,12,.45);border:1px solid var(--line);border-radius:14px}
-.ph{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin:0 0 14px}
-.ph .mut{font-size:13px}
-
-/* — кнопки и поля — */
-.btn{border:0;border-radius:13px;padding:11px 18px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;
- color:#06050b;background:linear-gradient(120deg,var(--sig),#7ab8ff 55%,var(--pulse));background-size:160% 100%;background-position:0 0;
- box-shadow:0 8px 28px -8px rgba(122,184,255,.6),inset 0 1px 0 rgba(255,255,255,.35);transition:background-position .5s var(--ease),transform .12s,box-shadow .3s}
-.btn:hover{background-position:100% 0;text-decoration:none}.btn:active{transform:scale(.97)}
-.btn.ghost{background:rgba(255,255,255,.04);color:var(--ink);border:1px solid var(--line2);box-shadow:none}
-.btn.ghost:hover{background:rgba(255,255,255,.08)}
-.btn.sm{padding:8px 13px;font-size:13px;border-radius:11px}
-.btn.danger{background:rgba(255,90,110,.1);color:var(--bad);border:1px solid rgba(255,90,110,.35);box-shadow:none}
-.btn[disabled]{opacity:.45;pointer-events:none}
-.icon-btn{width:38px;height:38px;border-radius:12px;border:1px solid var(--line2);background:rgba(255,255,255,.04);display:grid;place-items:center;cursor:pointer;color:var(--ink)}
+.wrap{max-width:1240px;margin:0 auto;padding:0 20px}
+svg.i{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px}
+svg.i.lg{width:20px;height:20px}
+.brand{display:flex;align-items:center;gap:10px;white-space:nowrap}
+.brand svg{width:26px;height:26px}
+.brand b{font-family:Unb;font-weight:800;font-size:14px;letter-spacing:.02em}
+.brand span{font-family:var(--mono);font-size:11px;color:var(--mu);border:1px solid var(--ln2);border-radius:4px;padding:1px 6px;letter-spacing:.08em}
+.pn{background:var(--s1);border:1px solid var(--ln);border-radius:var(--r);position:relative}
+.pn-h{display:flex;align-items:center;gap:10px;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--ln);min-height:46px}
+.pn-h h3{display:flex;align-items:center;gap:8px}
+.pn-h .meta{font-family:var(--mono);font-size:11px;color:var(--di);letter-spacing:.04em;white-space:nowrap}
+.pn-b{padding:16px}
+.brk:before,.brk:after{content:"";position:absolute;width:12px;height:12px;border-color:var(--ac);border-style:solid;opacity:.7;pointer-events:none}
+.brk:before{left:-1px;top:-1px;border-width:1.5px 0 0 1.5px;border-top-left-radius:var(--r)}
+.brk:after{right:-1px;bottom:-1px;border-width:0 1.5px 1.5px 0;border-bottom-right-radius:var(--r)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid transparent;border-radius:6px;padding:9px 14px;font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap;
+ background:var(--tx);color:#07080b;transition:background .15s,border-color .15s,transform .1s}
+.btn:hover{background:#fff;text-decoration:none}.btn:active{transform:translateY(1px)}
+.btn.gh{background:transparent;color:var(--tx);border-color:var(--ln2)}
+.btn.gh:hover{background:var(--s2);border-color:var(--ln3)}
+.btn.ac{background:var(--ac);color:#04110f}.btn.ac:hover{background:#5ff0e3}
+.btn.dg{background:transparent;color:var(--neg);border-color:rgba(255,92,122,.35)}
+.btn.s{padding:6px 10px;font-size:12px}
+.btn.ic{padding:6px 8px}
+.btn[disabled]{opacity:.4;pointer-events:none}
+kbd{font-family:var(--mono);font-size:10px;padding:1px 5px;border:1px solid var(--ln2);border-bottom-width:2px;border-radius:4px;color:var(--mu);background:var(--s2)}
 label.f{display:block;margin:0 0 14px}
-label.f>span{display:block;font-size:13px;color:var(--haze);margin:0 0 6px}
-.in{width:100%;background:rgba(5,4,12,.6);border:1px solid var(--line2);border-radius:13px;padding:12px 14px;outline:none;transition:border-color .2s,box-shadow .2s}
-.in:focus{border-color:var(--sig);box-shadow:0 0 0 4px rgba(25,211,197,.14)}
-select.in{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--haze) 50%),linear-gradient(135deg,var(--haze) 50%,transparent 50%);
- background-position:calc(100% - 19px) 52%,calc(100% - 14px) 52%;background-size:5px 5px;background-repeat:no-repeat;padding-right:36px}
-.err{color:var(--bad);font-size:13px;min-height:18px;margin:2px 0 8px}
-.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;padding:5px 11px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid var(--line2);white-space:nowrap}
-.seg{display:flex;gap:3px;padding:3px;background:rgba(5,4,12,.55);border:1px solid var(--line);border-radius:13px}
-.seg button{flex:1;border:0;background:none;padding:8px 12px;border-radius:10px;font-weight:800;color:var(--haze);cursor:pointer;font-size:13px;white-space:nowrap}
-.seg button.on{background:rgba(255,255,255,.09);color:var(--ink);box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
-.up{color:var(--ok)}.down{color:var(--bad)}
-.live{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--ok)}
-.live:before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 0 rgba(62,224,143,.6);animation:ping 2s infinite}
-@keyframes ping{70%{box-shadow:0 0 0 8px rgba(62,224,143,0)}100%{box-shadow:0 0 0 0 rgba(62,224,143,0)}}
-
-/* — вход — */
-#auth{min-height:100vh;display:grid;grid-template-columns:1.1fr .9fr;align-items:center;gap:40px;padding:40px max(20px,5vw)}
-.auth-art{position:relative;min-height:540px;display:flex;flex-direction:column;justify-content:center}
-.auth-art canvas{position:absolute;inset:0;width:100%;height:100%;z-index:0}
-.auth-art>div{position:relative;z-index:1;max-width:560px}
-.auth-art h1{font-size:clamp(36px,5vw,64px);line-height:1.02;margin:22px 0 18px}
-.auth-art h1 span{display:block;background:linear-gradient(90deg,var(--sig),var(--uv) 50%,var(--pulse));-webkit-background-clip:text;background-clip:text;color:transparent;padding-bottom:.06em}
-.auth-art p{color:var(--haze);font-size:17px;max-width:440px;margin:0}
-.auth-facts{display:flex;gap:26px;margin-top:30px;flex-wrap:wrap}
-.auth-facts b{display:block;font-family:Oxa,Man,sans-serif;font-size:26px;font-weight:600}
-.auth-facts span{color:var(--haze);font-size:13px}
-.auth-box{width:min(430px,100%);justify-self:center}
-.auth-box .panel{padding:26px}
-@media (max-width:900px){#auth{grid-template-columns:1fr;gap:10px;padding:28px 18px}.auth-art{min-height:auto;padding:8px 0 10px}.auth-art canvas{opacity:.55}.auth-facts{display:none}}
-
-/* — шапка и навигация — */
-header.top{position:sticky;top:0;z-index:30;background:rgba(6,5,11,.62);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
-.top .wrap{display:flex;align-items:center;gap:18px;height:64px}
-nav.main{display:flex;gap:2px;margin-left:10px}
-nav.main button{position:relative;border:0;background:none;color:var(--haze);font-weight:800;padding:10px 14px;border-radius:11px;cursor:pointer}
-nav.main button:hover{color:var(--ink)}
-nav.main button.on{color:var(--ink)}
-nav.main button.on:after{content:"";position:absolute;left:14px;right:14px;bottom:2px;height:2px;border-radius:2px;background:linear-gradient(90deg,var(--sig),var(--pulse))}
-.weekchip{margin-left:auto;font-size:13px;color:var(--haze);white-space:nowrap}
-.weekchip b{color:var(--ink);font-family:Oxa,Man,sans-serif;font-weight:600}
+label.f>span{display:block;font-size:12px;color:var(--mu);margin:0 0 6px}
+.in{width:100%;background:var(--bg);border:1px solid var(--ln2);border-radius:6px;padding:10px 12px;outline:none;transition:border-color .15s,box-shadow .15s}
+.in:focus{border-color:var(--ac);box-shadow:0 0 0 3px var(--ac2)}
+select.in{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--mu) 50%),linear-gradient(135deg,var(--mu) 50%,transparent 50%);
+ background-position:calc(100% - 17px) 52%,calc(100% - 12px) 52%;background-size:5px 5px;background-repeat:no-repeat;padding-right:32px}
+.err{color:var(--neg);font-size:12px;min-height:16px;margin:2px 0 8px}
+.tag{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;letter-spacing:.03em;padding:3px 7px;border-radius:4px;border:1px solid var(--ln2);color:var(--mu);white-space:nowrap}
+.tag.ac{color:var(--ac);border-color:rgba(46,230,214,.35);background:var(--ac2)}
+.cc{font-family:var(--mono);font-size:10px;padding:1px 4px;border-radius:3px;border:1px solid var(--ln2);color:var(--mu);letter-spacing:.05em}
+.seg{display:inline-flex;gap:2px;padding:2px;background:var(--bg);border:1px solid var(--ln2);border-radius:7px}
+.seg button{border:0;background:none;padding:6px 11px;border-radius:5px;font-weight:800;font-size:12px;color:var(--mu);cursor:pointer;white-space:nowrap}
+.seg button.on{background:var(--s3);color:var(--tx);box-shadow:inset 0 0 0 1px var(--ln2)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--ac);flex:none}
+.dot.live{animation:bl 2s infinite}
+@keyframes bl{0%{box-shadow:0 0 0 0 rgba(46,230,214,.5)}70%{box-shadow:0 0 0 7px rgba(46,230,214,0)}100%{box-shadow:0 0 0 0 rgba(46,230,214,0)}}
+.dot.off{background:var(--di)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+#auth{min-height:100vh;display:grid;grid-template-columns:1.15fr .85fr}
+.au-l{position:relative;padding:48px max(24px,5vw);display:flex;flex-direction:column;justify-content:space-between;border-right:1px solid var(--ln);overflow:hidden}
+.au-l h1{font-size:clamp(34px,4.2vw,56px);line-height:1.04;letter-spacing:-.035em;max-width:640px;margin:0 0 16px}
+.au-l p{color:var(--mu);font-size:16px;max-width:520px;margin:0}
+.au-chart{position:relative;height:260px;margin:28px 0 20px}
+.au-chart canvas{position:absolute;inset:0;width:100%;height:100%}
+.au-spec{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--ln)}
+.au-spec div{padding:14px 16px 0 0}
+.au-spec b{display:block;font-family:var(--mono);font-size:20px;font-weight:600}
+.au-spec span{color:var(--mu);font-size:12px}
+.au-r{display:grid;place-items:center;padding:32px 20px}
+.au-box{width:min(380px,100%)}
+@media (max-width:900px){#auth{grid-template-columns:1fr}.au-l{border-right:0;border-bottom:1px solid var(--ln);padding:28px 20px 20px}.au-chart{height:140px;margin:18px 0 0}.au-spec{display:none}}
+header.top{position:sticky;top:0;z-index:30;background:rgba(7,8,11,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--ln)}
+.top .wrap{display:flex;align-items:center;gap:22px;height:56px}
+nav.main{display:flex;gap:2px}
+nav.main button{display:flex;align-items:center;gap:7px;border:0;background:none;color:var(--mu);font-weight:800;font-size:13px;padding:8px 12px;border-radius:6px;cursor:pointer}
+nav.main button:hover{color:var(--tx);background:var(--s1)}
+nav.main button.on{color:var(--tx);background:var(--s2);box-shadow:inset 0 0 0 1px var(--ln)}
+.top .sp{flex:1}
+.cmdk{display:flex;align-items:center;gap:8px;border:1px solid var(--ln2);background:var(--s1);color:var(--mu);border-radius:6px;padding:6px 8px 6px 10px;cursor:pointer;font-size:12px;min-width:200px}
+.cmdk span{flex:1;text-align:left}
 .me{position:relative}
-.me>button{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:14px;padding:5px 11px 5px 5px;cursor:pointer}
-.ava{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;font-weight:800;font-size:13px;color:#06050b;background:linear-gradient(135deg,var(--sig),var(--uv) 60%,var(--pulse))}
-.menu{position:absolute;right:0;top:48px;min-width:250px;padding:6px;z-index:40;border-radius:16px}
-.menu button{display:flex;gap:10px;width:100%;text-align:left;border:0;background:none;padding:11px 12px;border-radius:11px;cursor:pointer}
-.menu button:hover{background:rgba(255,255,255,.06)}
-.menu hr{border:0;border-top:1px solid var(--line);margin:4px 6px}
+.me>button{display:flex;align-items:center;gap:8px;background:none;border:1px solid var(--ln2);border-radius:6px;padding:4px 10px 4px 4px;cursor:pointer;font-weight:800;font-size:13px}
+.ava{width:26px;height:26px;border-radius:5px;display:grid;place-items:center;font-family:var(--mono);font-size:12px;background:var(--s3);border:1px solid var(--ln2);color:var(--ac)}
+.menu{position:absolute;right:0;top:44px;min-width:250px;padding:5px;z-index:40;background:var(--s1);border:1px solid var(--ln2);border-radius:var(--r);box-shadow:0 24px 60px rgba(0,0,0,.6)}
+.menu button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:none;padding:9px 10px;border-radius:5px;cursor:pointer;font-size:13px}
+.menu button:hover{background:var(--s2)}
+.menu hr{border:0;border-top:1px solid var(--ln);margin:4px}
+.status{border-bottom:1px solid var(--ln);background:rgba(12,14,19,.6)}
+.status .wrap{display:flex;align-items:center;gap:18px;height:30px;font-family:var(--mono);font-size:11px;color:var(--di);letter-spacing:.03em;white-space:nowrap;overflow:hidden}
+.status .wrap>span{display:flex;align-items:center;gap:7px}
+.status b{color:var(--mu);font-weight:600}
 nav.bottom{display:none}
-@media (max-width:820px){
- nav.main,.weekchip{display:none}.me{margin-left:auto}.me .nk{display:none}
- nav.bottom{display:flex;position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:30;padding:6px;gap:4px;
-  background:rgba(16,13,30,.82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--line2);border-radius:20px;box-shadow:0 20px 50px rgba(0,0,0,.5)}
- nav.bottom button{flex:1;border:0;background:none;color:var(--haze);font-weight:800;font-size:11px;padding:8px 4px;border-radius:14px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
- nav.bottom svg{width:22px;height:22px}
- nav.bottom button.on{color:var(--ink);background:rgba(255,255,255,.07)}
- main{padding-bottom:110px!important}
+@media (max-width:860px){
+ nav.main,.cmdk,.me .nk,.status .hm{display:none}
+ nav.bottom{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:30;padding:6px 8px calc(6px + env(safe-area-inset-bottom));gap:4px;background:rgba(10,12,16,.94);backdrop-filter:blur(14px);border-top:1px solid var(--ln2)}
+ nav.bottom button{flex:1;border:0;background:none;color:var(--mu);font-weight:800;font-size:11px;padding:6px 4px;border-radius:6px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
+ nav.bottom button.on{color:var(--tx);background:var(--s2)}
+ main{padding-bottom:96px!important}
 }
-main{padding:26px 0 60px}
-.pgtitle{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin:0 0 18px}
-.pgtitle p{margin:6px 0 0;color:var(--haze)}
-.mbar{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 0 16px}
+main{padding:22px 0 60px}
+.pgt{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin:0 0 16px}
+.pgt p{margin:4px 0 0;color:var(--mu)}
+.mbar{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 0 14px}
 .mbar::-webkit-scrollbar{display:none}
-.mbar button{flex:none;border:1px solid var(--line2);background:rgba(255,255,255,.03);color:var(--haze);padding:8px 15px;border-radius:999px;font-weight:800;cursor:pointer;white-space:nowrap}
-.mbar button.on{color:var(--ink);border-color:rgba(25,211,197,.6);background:rgba(25,211,197,.1)}
-
-/* — главный экран: эфир — */
-.hero{position:relative;display:grid;grid-template-columns:minmax(260px,5fr) 7fr;gap:10px;align-items:stretch;margin:0 0 14px;padding:24px 4px 18px}
-.hero-score .lbl{color:var(--haze);font-size:14px}
-.hero-score .big{font-family:Oxa,Man,sans-serif;font-weight:600;font-size:clamp(76px,10vw,132px);line-height:.95;letter-spacing:-.02em;margin:8px 0 10px;
- background:linear-gradient(180deg,#fff 10%,#bff7f1 45%,var(--sig) 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
-.hero-score .delta{font-size:14px;color:var(--haze)}
-.hero-tags{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 18px}
-.hero-tags .chip{padding:7px 12px;font-size:13px}
-.hero-act{display:flex;gap:8px;flex-wrap:wrap}
-.signal{position:relative;min-height:240px}
-.signal canvas{position:absolute;inset:0;width:100%;height:100%}
-.signal .cap{position:absolute;right:4px;top:0;display:flex;gap:16px;align-items:center;font-size:13px;color:var(--haze)}
-.signal .last{position:absolute;left:8px;top:0;font-size:13px;color:var(--haze);max-width:58%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-@media (max-width:820px){.signal{min-height:220px}.signal .last{top:22px;max-width:100%}.signal .cap span+span{display:none}}
-.signal .last b{color:var(--ink);font-weight:800}
-@media (max-width:820px){.hero{grid-template-columns:1fr;padding:6px 0 4px}.signal{min-height:190px}}
-
-/* — чек-лист первого дня — */
-.onb{margin:0 0 14px;background:linear-gradient(110deg,rgba(25,211,197,.12),rgba(139,108,255,.08) 50%,rgba(255,79,139,.1));border-color:rgba(25,211,197,.25)}
-.onb-h{display:flex;align-items:center;gap:16px;margin:0 0 14px}
-.onb-h h3{flex:1}
-.ring{position:relative;width:58px;height:58px;flex:none}
-.ring svg{transform:rotate(-90deg)}
-.ring b{position:absolute;inset:0;display:grid;place-items:center;font-family:Oxa,Man,sans-serif;font-size:15px}
-.steps{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
-.step{display:flex;gap:10px;align-items:flex-start;padding:12px;border-radius:14px;border:1px solid var(--line);background:rgba(5,4,12,.35)}
-.step i{flex:none;width:22px;height:22px;border-radius:50%;border:1.5px solid var(--line2);display:grid;place-items:center;font-style:normal;font-size:12px;margin-top:1px}
-.step.done i{background:var(--sig);border-color:var(--sig);color:#06050b}
-.step.done{opacity:.55}
-.step.next{border-color:rgba(25,211,197,.65);background:rgba(25,211,197,.1);opacity:1}
-.step b{display:block;font-size:13px;line-height:1.35}.step span{display:block;font-size:12px;color:var(--haze);margin-top:3px;line-height:1.35}
-.onb-cta{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
-@media (max-width:980px){.steps{grid-template-columns:1fr}.step:not(.next):not(.done) span{display:none}}
-
-/* — сетки и данные — */
-.strip{display:grid;grid-template-columns:repeat(4,1fr);margin:0 0 14px;padding:0}
-.strip>div{padding:18px 20px;border-left:1px solid var(--line)}
+.mbar button{flex:none;display:flex;align-items:center;gap:7px;border:1px solid var(--ln2);background:var(--s1);color:var(--mu);padding:6px 11px;border-radius:6px;font-weight:800;font-size:12px;cursor:pointer;white-space:nowrap}
+.mbar button.on{color:var(--tx);border-color:rgba(46,230,214,.5);background:var(--ac2)}
+.mbar button i{width:6px;height:6px;border-radius:50%;background:var(--di)}
+.mbar button.on i{background:var(--ac)}
+.hero{display:grid;grid-template-columns:330px 1fr;margin:0 0 12px}
+.hero .kp{padding:20px;border-right:1px solid var(--ln);display:flex;flex-direction:column}
+.hero .lbl{font-family:var(--mono);font-size:11px;color:var(--di);letter-spacing:.06em}
+.hero .big{font-family:var(--mono);font-weight:600;font-size:clamp(64px,7vw,96px);line-height:1;letter-spacing:-.03em;margin:12px 0 8px}
+.hero .dl{font-family:var(--mono);font-size:12px}
+.kv{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--ln);margin-top:auto}
+.kv div{padding:12px 0 0}
+.kv div+div{padding-left:14px;border-left:1px solid var(--ln)}
+.kv b{display:block;font-family:var(--mono);font-size:18px;font-weight:600}
+.kv span{font-size:11px;color:var(--mu)}
+.hero .acts{display:flex;gap:6px;margin:16px 0 18px;flex-wrap:wrap}
+.hero .ch{position:relative;padding:12px 16px 8px;min-height:300px;display:flex;flex-direction:column}
+.hero .ch canvas{flex:1;width:100%;min-height:250px;cursor:crosshair}
+.ch-top{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12px;color:var(--mu)}
+@media (max-width:900px){.hero{grid-template-columns:1fr}.hero .kp{border-right:0;border-bottom:1px solid var(--ln)}.hero .ch{min-height:240px}.hero .ch canvas{min-height:200px}}
+.onb{margin:0 0 12px}
+.pipe{display:grid;grid-template-columns:repeat(5,1fr)}
+.pipe .st{padding:14px 16px;border-left:1px solid var(--ln);position:relative}
+.pipe .st:first-child{border-left:0}
+.pipe .st:before{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:var(--ln2)}
+.pipe .st.done:before{background:var(--ac)}
+.pipe .st.next:before{background:linear-gradient(90deg,var(--ac),transparent)}
+.pipe .n{font-family:var(--mono);font-size:11px;color:var(--di)}
+.pipe .st.done .n{color:var(--ac)}
+.pipe b{display:block;font-size:13px;margin:4px 0 2px}
+.pipe span{font-size:12px;color:var(--mu)}
+.pipe .st.done b,.pipe .st.done span{color:var(--di)}
+@media (max-width:900px){.pipe{grid-template-columns:1fr}.pipe .st{border-left:0;border-top:1px solid var(--ln)}.pipe .st:first-child{border-top:0}.pipe .st:not(.next) span{display:none}}
+.strip{display:grid;grid-template-columns:repeat(4,1fr);margin:0 0 12px}
+.strip>div{padding:14px 16px;border-left:1px solid var(--ln);min-width:0}
 .strip>div:first-child{border-left:0}
-.strip .v{font-family:Oxa,Man,sans-serif;font-weight:600;font-size:30px;line-height:1.1;margin:4px 0 2px}
-.strip .l{font-size:13px;color:var(--haze)}.strip .s{font-size:12px;color:var(--dim)}
-@media (max-width:820px){.strip{grid-template-columns:1fr 1fr}.strip>div:nth-child(3){border-left:0}.strip>div:nth-child(n+3){border-top:1px solid var(--line)}}
-.g2{display:grid;grid-template-columns:1.5fr 1fr;gap:14px;margin:0 0 14px;align-items:start}
-.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:0 0 14px;align-items:start}
+.strip .l{font-size:12px;color:var(--mu)}
+.strip .v{font-family:var(--mono);font-weight:600;font-size:26px;line-height:1.15;margin:6px 0 2px}
+.strip .s{font-size:11px;color:var(--di)}
+.strip canvas{height:28px;margin-top:8px}
+@media (max-width:900px){.strip{grid-template-columns:1fr 1fr}.strip>div:nth-child(3){border-left:0}.strip>div:nth-child(n+3){border-top:1px solid var(--ln)}}
+.g2{display:grid;grid-template-columns:1.6fr 1fr;gap:12px;margin:0 0 12px;align-items:start}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:0 0 12px;align-items:start}
 .g2>*,.g3>*{min-width:0}
-@media (max-width:980px){.g2,.g3{grid-template-columns:1fr}}
+@media (max-width:1000px){.g2,.g3{grid-template-columns:1fr}}
 canvas{display:block;width:100%}
-.bars .row{display:grid;grid-template-columns:118px 1fr 64px;align-items:center;gap:12px;margin:0 0 11px;font-size:14px}
-.bars .track{height:8px;border-radius:99px;background:rgba(255,255,255,.05);overflow:hidden}
-.bars .fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--sig),var(--uv),var(--pulse));transform-origin:left;animation:grow .9s var(--ease) both}
-@keyframes grow{from{transform:scaleX(0)}}
-.bars .n{text-align:right;color:var(--haze);font-family:Oxa,Man,sans-serif}
-.list .it{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
-.list .it:last-child{border-bottom:0}
-.list .grow{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.feed .it.new{animation:flash 1.8s var(--ease)}
-@keyframes flash{0%{background:rgba(25,211,197,.18)}100%{background:transparent}}
-.dot{width:8px;height:8px;border-radius:50%;flex:none;background:var(--ok);box-shadow:0 0 10px var(--ok)}.dot.off{background:var(--dim);box-shadow:none}
-.empty{text-align:center;padding:26px 12px;color:var(--haze);font-size:14px}
-.chi{width:34px;height:34px;flex:none;border-radius:11px;display:grid;place-items:center;font-size:16px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
-
-/* — ранги и ачивки — */
-.ach-row{display:grid;grid-template-columns:minmax(220px,300px) 1fr;gap:20px;align-items:center;padding:14px 0;border-bottom:1px solid var(--line)}
-.ach-row:last-child{border-bottom:0}
-.rk{display:flex;gap:13px;align-items:center}
-.rk .ico{width:48px;height:48px;border-radius:15px;display:grid;place-items:center;font-size:23px;background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.14),rgba(255,255,255,.03));border:1px solid var(--line2)}
-.prog{height:6px;border-radius:99px;background:rgba(255,255,255,.06);overflow:hidden;margin-top:7px}
-.prog i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--sig),var(--pulse));transform-origin:left;animation:grow 1.1s var(--ease) both}
-.bdg{display:flex;flex-wrap:wrap;gap:7px}
-.bdg span{font-size:12px;font-weight:800;padding:6px 10px;border-radius:999px;border:1px solid var(--line);color:var(--dim);background:rgba(255,255,255,.02);cursor:default}
-.bdg span.on{color:var(--ink);border-color:rgba(255,201,77,.5);background:linear-gradient(180deg,rgba(255,201,77,.16),rgba(255,201,77,.05));box-shadow:0 0 18px -6px rgba(255,201,77,.5)}
-@media (max-width:820px){.ach-row{grid-template-columns:1fr}}
-
-/* — конверсия — */
-.conv-bars{display:flex;gap:6px;align-items:flex-end;height:96px;margin:14px 0 6px}
-.conv-bars div{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;color:var(--dim)}
-.conv-bars i{display:block;width:100%;border-radius:6px 6px 2px 2px;background:linear-gradient(180deg,var(--pulse),rgba(255,79,139,.25));min-height:3px}
-.conv-bars i.na{background:repeating-linear-gradient(45deg,rgba(255,255,255,.05) 0 4px,transparent 4px 8px);height:12px}
-
-/* — модели и ссылки — */
-.mcard{padding:0;overflow:hidden;margin:0 0 16px}
-.mh{display:flex;align-items:center;gap:14px;padding:18px 20px;flex-wrap:wrap}
-.mh .ava{width:48px;height:48px;border-radius:15px;font-size:20px}
+.bars .row{display:grid;grid-template-columns:20px 1fr auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--ln)}
+.bars .row:last-child{border-bottom:0}
+.bars .nm{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+.bars .tr{height:3px;background:var(--s3);border-radius:2px;overflow:hidden}
+.bars .fl{height:100%;background:var(--ac);border-radius:2px;transform-origin:left;animation:gr .8s var(--ease) both}
+@keyframes gr{from{transform:scaleX(0)}}
+.bars .v{font-family:var(--mono);font-size:12px;color:var(--mu);text-align:right;min-width:70px}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl td,.tbl th{padding:9px 6px 9px 0;border-bottom:1px solid var(--ln);text-align:left}
+.tbl th{font-weight:500;font-size:11px;color:var(--di);font-family:var(--mono);letter-spacing:.04em}
+.tbl tr:last-child td{border-bottom:0}
+.tbl .r{text-align:right;padding-right:0}
+.feed tr.new td{animation:fl 1.6s var(--ease)}
+@keyframes fl{0%{background:var(--ac2)}100%{background:transparent}}
+.feed td.c-app,.feed th.c-app{color:var(--mu)}
+@media (max-width:860px){.feed .c-ch,.feed .c-app,.feed .c-slug,.feed th{display:none}.feed td{white-space:nowrap}.feed td.c-geo .mu{display:inline-block;max-width:110px;overflow:hidden;text-overflow:ellipsis;vertical-align:bottom}.pn-h{flex-wrap:wrap}.ch-top{flex-wrap:wrap}}
+.legend{white-space:nowrap}
+.split{margin:16px 0 18px}
+.split .row{display:grid;grid-template-columns:1fr auto;gap:4px 10px;font-size:12px;margin:0 0 9px}
+.split .row b{font-weight:800}.split .row span{font-family:var(--mono);color:var(--mu)}
+.split .tr{grid-column:1/-1;height:3px;background:var(--s3);border-radius:2px;overflow:hidden}.split .tr i{display:block;height:100%;background:var(--ac);opacity:.75}
+@media (max-width:900px){.split{display:none}}
+.bars.nh .row{grid-template-columns:1fr auto}
+.empty{padding:22px 4px;color:var(--mu);font-size:13px;text-align:center}
+.tier{display:inline-flex;gap:2px;vertical-align:middle}
+.tier i{width:4px;height:12px;border-radius:1px;background:var(--s3)}
+.tier i.on{background:var(--ac)}
+.ach{display:grid;grid-template-columns:minmax(220px,300px) 1fr;gap:18px;align-items:center;padding:14px 16px;border-top:1px solid var(--ln)}
+.ach:first-child{border-top:0}
+.prog{height:3px;background:var(--s3);border-radius:2px;margin-top:8px;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--ac);animation:gr 1s var(--ease) both;transform-origin:left}
+.bdg{display:flex;flex-wrap:wrap;gap:6px}
+.bdg span{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:5px 9px;border-radius:5px;border:1px solid var(--ln);color:var(--di);cursor:default}
+.bdg span.on{color:var(--tx);border-color:var(--ln3);background:var(--s2)}
+.bdg span.on svg{color:var(--gold)}
+@media (max-width:900px){.ach{grid-template-columns:1fr}}
+.cbars{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;align-items:end;height:84px;margin:6px 0 4px}
+.cbars div{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px;height:100%;font-family:var(--mono);font-size:10px;color:var(--di)}
+.cbars i{width:100%;background:var(--ac);border-radius:2px 2px 0 0;opacity:.85}
+.cbars i.na{background:repeating-linear-gradient(90deg,var(--ln2) 0 2px,transparent 2px 5px);height:10px;opacity:1}
+.mc{margin:0 0 12px;overflow:hidden}
+.mh{display:flex;align-items:center;gap:14px;padding:14px 16px;flex-wrap:wrap;border-bottom:1px solid var(--ln)}
+.mh .ava{width:40px;height:40px;font-size:16px;border-radius:7px}
 .mh .t{flex:1;min-width:200px}
-.mh .t b{font-family:Unb;font-weight:800;font-size:19px}
-.mh .t div{font-size:13px;color:var(--haze);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:560px}
+.mh .t b{font-size:17px;letter-spacing:-.01em}
+.mh .t>div+div{font-size:12px;color:var(--mu);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mh .acts{display:flex;gap:6px;flex-wrap:wrap}
-.lk{display:grid;grid-template-columns:44px 1fr auto auto;gap:14px;align-items:center;padding:14px 20px;border-top:1px solid var(--line)}
-.lk.arch{opacity:.42}
-.lk .url{font-family:Oxa,Man,sans-serif;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.lk .sub{font-size:12px;color:var(--haze);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.lst{display:inline-flex;gap:6px;align-items:center;font-size:12px;font-weight:800;color:var(--dim);margin-top:3px}
-.lst.ok{color:var(--ok)}.lst.chk{color:var(--sig)}
-.lk .st{display:flex;gap:18px;font-size:12px;color:var(--haze);text-align:right}
-.lk .st b{display:block;font-family:Oxa,Man,sans-serif;font-size:18px;font-weight:600;color:var(--ink)}
+.lk{display:grid;grid-template-columns:34px minmax(0,1fr) 150px auto;gap:14px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--ln)}
+.lk.arch{opacity:.4}
+.lk .ico{width:34px;height:34px;border-radius:6px;display:grid;place-items:center;background:var(--s2);border:1px solid var(--ln)}
+.lk .url{font-family:var(--mono);font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lk .sub{font-size:12px;color:var(--mu);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;gap:8px;align-items:center;margin-top:2px}
+.lk .st{display:flex;gap:18px;justify-content:flex-end;font-size:11px;color:var(--di)}
+.lk .st b{display:block;font-family:var(--mono);font-size:16px;font-weight:600;color:var(--tx);text-align:right}
 .lk .acts{display:flex;gap:6px}
-@media (max-width:820px){.lk{grid-template-columns:44px 1fr;gap:10px 12px}.lk .st{grid-column:2;text-align:left}.lk .acts{grid-column:1/-1}.lk .acts .btn{flex:1}.lk .acts .more{flex:0 0 46px}}
-.addlk{display:grid;grid-template-columns:170px 1fr 1fr auto;gap:10px;align-items:end;padding:16px 20px;border-top:1px solid var(--line);background:rgba(5,4,12,.3)}
+.state{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;letter-spacing:.04em;color:var(--di);flex:none}
+.state.ok{color:var(--ac)}.state.ck{color:var(--warn)}
+.state:before{content:"";width:6px;height:6px;border-radius:50%;border:1px solid currentColor}
+.state.ok:before{background:currentColor}
+@media (max-width:860px){.lk{grid-template-columns:34px minmax(0,1fr);gap:10px 12px}.lk .st{grid-column:2;justify-content:flex-start}.lk .st b{text-align:left}.lk .acts{grid-column:1/-1}.lk .acts .btn{flex:1}.lk .acts .more{flex:0 0 40px}}
+.addlk{display:grid;grid-template-columns:180px 1fr 1fr auto;gap:10px;align-items:end;padding:12px 16px;background:rgba(7,8,11,.4)}
 .addlk label.f{margin:0}
-@media (max-width:820px){.addlk{grid-template-columns:1fr}}
-.chs{display:flex;flex-wrap:wrap;gap:8px}
+@media (max-width:860px){.addlk{grid-template-columns:1fr}}
+.chs{display:flex;flex-wrap:wrap;gap:6px}
 .chs label{cursor:pointer}.chs input{position:absolute;opacity:0;pointer-events:none}
-.chs span{display:inline-block;padding:9px 13px;border-radius:12px;border:1px solid var(--line2);font-weight:800;font-size:13px;color:var(--haze);transition:.15s}
-.chs input:checked+span{color:#06050b;background:var(--sig);border-color:var(--sig)}
-.chs input:focus-visible+span{outline:2px solid var(--sig);outline-offset:2px}
-
-/* — лига — */
-.lg-head{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:end;margin:0 0 18px}
-.clock{display:flex;gap:6px}
-.clock div{min-width:70px;text-align:center;padding:12px 8px;border-radius:16px;background:rgba(5,4,12,.5);border:1px solid var(--line)}
-.clock b{display:block;font-family:Oxa,Man,sans-serif;font-weight:600;font-size:32px;line-height:1}
-.clock span{font-size:12px;color:var(--haze)}
-@media (max-width:820px){.lg-head{grid-template-columns:1fr}.clock div{flex:1;min-width:0}}
-.lg-ctl{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 14px}
-.lg-ctl .seg{flex:none}
-.podium{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:10px;align-items:end;margin:4px 0 16px}
-.pod{text-align:center;padding:16px 10px 14px;border-radius:18px;border:1px solid var(--line);background:rgba(5,4,12,.4);overflow:hidden}
-.pod.p1{padding-top:26px;border-color:rgba(255,201,77,.45);background:linear-gradient(180deg,rgba(255,201,77,.14),rgba(5,4,12,.4));box-shadow:0 20px 60px -30px rgba(255,201,77,.6)}
-.pod.mine{outline:2px solid rgba(25,211,197,.7)}
-.pod .m{font-size:26px}.pod b{display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:4px}
-.pod .pts{font-family:Oxa,Man,sans-serif;font-size:26px;font-weight:600;margin-top:6px}
-.board .r{display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center;padding:11px 14px;border-radius:14px;margin:0 0 5px;border:1px solid transparent}
-.board .r:nth-child(odd){background:rgba(255,255,255,.02)}
-.board .r.mine{border-color:rgba(25,211,197,.55);background:rgba(25,211,197,.08)}
-.board .pl{font-family:Oxa,Man,sans-serif;font-size:17px;text-align:center;color:var(--haze)}
-.board .nm{min-width:0}.board .nm b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.board .nm span{font-size:12px;color:var(--haze)}
-.board .pt{text-align:right;font-family:Oxa,Man,sans-serif;font-size:20px;font-weight:600}
-.board .pt small{display:block;font:500 11px Man,sans-serif;color:var(--haze)}
-.myplace .big{font-family:Oxa,Man,sans-serif;font-weight:600;font-size:68px;line-height:1;background:linear-gradient(180deg,#fff,var(--sig));-webkit-background-clip:text;background-clip:text;color:transparent}
-details.rules summary{cursor:pointer;font-family:Unb;font-weight:500;list-style:none;display:flex;justify-content:space-between}
+.chs span{display:inline-flex;align-items:center;gap:7px;padding:7px 11px;border-radius:6px;border:1px solid var(--ln2);font-weight:800;font-size:12px;color:var(--mu)}
+.chs input:checked+span{color:var(--tx);border-color:var(--ac);background:var(--ac2)}
+.chs input:focus-visible+span{outline:1.5px solid var(--ac);outline-offset:2px}
+.lgh{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:end;margin:0 0 14px}
+.clock{display:flex;align-items:baseline;gap:2px;font-family:var(--mono);font-weight:600;font-size:34px;letter-spacing:.02em}
+.clock small{font-size:11px;color:var(--di);margin:0 8px 0 3px;font-weight:600}
+@media (max-width:860px){.lgh{grid-template-columns:1fr}.clock{font-size:28px}}
+.lgc{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 12px}
+.lgc select{width:auto;padding:7px 32px 7px 10px;font-size:12px}
+.board{width:100%;border-collapse:collapse}
+.board td{padding:11px 16px;border-bottom:1px solid var(--ln);font-size:13px}
+.board tr:last-child td{border-bottom:0}
+.board .pl{font-family:var(--mono);color:var(--di);width:44px;position:relative}
+.board tr.p1 .pl{color:var(--gold)}.board tr.p2 .pl{color:var(--sil)}.board tr.p3 .pl{color:var(--brz)}
+.board tr.p1 .pl:before,.board tr.p2 .pl:before,.board tr.p3 .pl:before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:2px;background:currentColor}
+.board tr.mine td{background:var(--ac2)}
+.board .nm b{display:block}.board .nm>span{font-size:11px;color:var(--mu);display:inline-flex;gap:8px;align-items:center}
+.board .r{text-align:right;font-family:var(--mono)}
+.board .pts{font-size:16px;font-weight:600}
+.board .d{font-size:11px}
+.mp .big{font-family:var(--mono);font-weight:600;font-size:56px;line-height:1}
+details.rules summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;padding:12px 16px;font-weight:800}
 details.rules summary::-webkit-details-marker{display:none}
-details.rules ul{padding-left:18px;margin:12px 0 0;color:var(--haze);font-size:13px}
+details.rules ul{padding:0 16px 14px 32px;margin:0;color:var(--mu);font-size:12px}
 details.rules li{margin:0 0 6px}
-
-/* — админка — */
-.stuck .it{align-items:flex-start}
-.gate{height:10px;border-radius:99px;background:rgba(255,255,255,.06);position:relative;overflow:visible;margin:12px 0 4px}
-.gate i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--pulse),var(--gold),var(--ok))}
-.gate em{position:absolute;top:-6px;bottom:-6px;width:2px;background:var(--ink);left:60%}
-table.t{width:100%;border-collapse:collapse;font-size:13px}
-table.t th{text-align:left;color:var(--haze);font-weight:800;font-size:12px;padding:9px;border-bottom:1px solid var(--line2)}
-table.t td{padding:10px 9px;border-bottom:1px solid var(--line)}
+.gate{height:6px;border-radius:3px;background:var(--s3);position:relative;margin:22px 0 6px}
+.gate i{display:block;height:100%;border-radius:3px;background:var(--ac)}
+.gate em{position:absolute;top:-5px;bottom:-5px;width:1.5px;background:var(--tx);left:60%}
+.gate em:after{content:"60%";position:absolute;top:-17px;left:-9px;font-family:var(--mono);font-size:10px;color:var(--mu);font-style:normal}
 .tw{overflow-x:auto}
-
-/* — модалки, тосты, конфетти — */
-.modal{position:fixed;inset:0;z-index:60;background:rgba(3,2,8,.66);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:grid;place-items:center;padding:16px;animation:fade .2s}
-.modal>.panel{width:min(540px,100%);max-height:92vh;overflow:auto;animation:pop .28s var(--ease)}
-.modal.wide>.panel{width:min(820px,100%)}
-@keyframes fade{from{opacity:0}}@keyframes pop{from{opacity:0;transform:translateY(12px) scale(.98)}}
-.mx{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 6px}
-.toast{position:fixed;left:50%;bottom:calc(110px + env(safe-area-inset-bottom));transform:translate(-50%,16px);opacity:0;z-index:70;display:flex;gap:9px;align-items:center;
- background:rgba(22,19,40,.95);border:1px solid var(--line2);padding:12px 18px;border-radius:14px;font-weight:800;box-shadow:0 20px 50px rgba(0,0,0,.5);transition:.3s var(--ease);pointer-events:none}
-.toast:before{content:"";width:8px;height:8px;border-radius:50%;background:var(--sig);box-shadow:0 0 10px var(--sig)}
+.modal{position:fixed;inset:0;z-index:60;background:rgba(3,4,6,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:grid;place-items:center;padding:16px;animation:fd .15s}
+.modal>.pn{width:min(520px,100%);max-height:92vh;overflow:auto;animation:pp .2s var(--ease);box-shadow:0 40px 100px rgba(0,0,0,.6)}
+.modal.wide>.pn{width:min(820px,100%)}
+.modal.top{place-items:start center;padding-top:12vh}
+@keyframes fd{from{opacity:0}}@keyframes pp{from{opacity:0;transform:translateY(8px)}}
+.toggle{display:flex;gap:12px;align-items:flex-start;cursor:pointer;padding:12px;border-radius:6px;border:1px solid var(--ln2)}
+.toggle input{width:16px;height:16px;accent-color:var(--ac);margin-top:2px;flex:none}
+.pal input{border:0;border-bottom:1px solid var(--ln2);border-radius:0;padding:14px 16px;font-size:15px;background:transparent}
+.pal input:focus{box-shadow:none;border-color:var(--ln2)}
+.pal ul{list-style:none;margin:0;padding:6px;max-height:50vh;overflow:auto}
+.pal li{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:5px;cursor:pointer;font-size:13px}
+.pal li .k{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--di)}
+.pal li.on{background:var(--s3);box-shadow:inset 2px 0 0 var(--ac)}
+.pal .grp{font-family:var(--mono);font-size:10px;color:var(--di);padding:8px 10px 4px;letter-spacing:.06em;cursor:default}
+.toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translate(-50%,10px);opacity:0;z-index:70;display:flex;gap:9px;align-items:center;background:var(--s2);border:1px solid var(--ln3);padding:10px 14px;border-radius:6px;font-size:13px;font-weight:800;box-shadow:0 20px 50px rgba(0,0,0,.5);transition:.25s var(--ease);pointer-events:none}
+.toast svg{color:var(--ac)}
 .toast.on{opacity:1;transform:translate(-50%,0)}
-@media (min-width:821px){.toast{bottom:30px}}
-#confetti{position:fixed;inset:0;z-index:80;pointer-events:none}
-.cardprev{display:block;width:100%;max-width:280px;margin:14px auto;border-radius:18px;border:1px solid var(--line2);aspect-ratio:9/16;background:#0d0b18;object-fit:cover;box-shadow:0 30px 80px -30px rgba(25,211,197,.45)}
-.banner{display:flex;gap:12px;align-items:center;margin:0 0 14px;padding:12px 16px}
-.banner p{margin:0;flex:1;font-size:14px}
-.toggle{display:flex;gap:12px;align-items:flex-start;cursor:pointer;padding:12px;border-radius:14px;border:1px solid var(--line)}
-.toggle input{width:20px;height:20px;accent-color:var(--sig);margin-top:2px;flex:none}
-.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--haze)}
-.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+@media (min-width:861px){.toast{bottom:24px}}
+.sweep{position:fixed;left:0;top:0;height:2px;width:100%;z-index:80;pointer-events:none;background:linear-gradient(90deg,transparent,var(--ac),transparent);background-size:40% 100%;background-repeat:no-repeat;animation:sw 1.1s var(--ease) forwards}
+@keyframes sw{from{background-position:-40% 0}to{background-position:140% 0;opacity:.2}}
+.cardprev{display:block;width:100%;max-width:260px;margin:14px auto;border-radius:8px;border:1px solid var(--ln2);aspect-ratio:9/16;background:var(--s2);object-fit:cover}
+.banner{display:flex;gap:12px;align-items:center;margin:0 0 12px;padding:10px 14px}
+.banner p{margin:0;flex:1;font-size:13px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--mu)}
+.legend i{display:inline-block;width:10px;height:2px;margin-right:6px;vertical-align:3px}
 </style>
 </head>
 <body>
-<div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
-<div class="grain" aria-hidden="true"></div>
-<canvas id="confetti" aria-hidden="true"></canvas>
 
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
- <defs>
-  <linearGradient id="gSig" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#19d3c5"/><stop offset=".55" stop-color="#8b6cff"/><stop offset="1" stop-color="#ff4f8b"/></linearGradient>
-  <symbol id="logo" viewBox="0 0 32 32"><rect width="32" height="32" rx="10" fill="#0d0b18" stroke="rgba(170,160,255,.25)"/>
-   <path d="M7 21a10 10 0 0 1 18 0" fill="none" stroke="#ff4f8b" stroke-width="2.2" stroke-linecap="round"/>
-   <path d="M10.5 21a6.2 6.2 0 0 1 11 0" fill="none" stroke="#8b6cff" stroke-width="2.2" stroke-linecap="round"/>
-   <path d="M13.8 21a2.6 2.6 0 0 1 4.4 0" fill="none" stroke="#19d3c5" stroke-width="2.2" stroke-linecap="round"/>
-   <circle cx="16" cy="23.2" r="1.9" fill="#edeaff"/></symbol>
-  <symbol id="i-ov" viewBox="0 0 24 24"><path d="M3 15c2.5 0 2.5-6 5-6s2.5 9 5 9 2.5-12 5-12 2 6 3 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-  <symbol id="i-lk" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
-  <symbol id="i-lg" viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
- </defs>
-</svg>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+ <symbol id="logo" viewBox="0 0 26 26"><rect x=".5" y=".5" width="25" height="25" rx="6" fill="#0c0e13" stroke="rgba(255,255,255,.14)"/><path d="M5 17.5h3l2-6 3 9 3-13 2 10h3" fill="none" stroke="#2ee6d6" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+ <symbol id="i-ov" viewBox="0 0 24 24"><path d="M3 13h3l2.5-6 4 11 3-8 1.5 3H21"/></symbol>
+ <symbol id="i-lk" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+ <symbol id="i-lg" viewBox="0 0 24 24"><path d="M7 21h10M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4.5v1A2.5 2.5 0 0 0 7 9.5M17 6h2.5v1A2.5 2.5 0 0 1 17 9.5"/></symbol>
+ <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></symbol>
+ <symbol id="i-play" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/></symbol>
+ <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r=".8"/><circle cx="12" cy="12" r=".8"/><circle cx="19" cy="12" r=".8"/></symbol>
+ <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+ <symbol id="i-cmp" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></symbol>
+ <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-2-1.2L14.3 3h-4l-.4 2.6a7 7 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.5a7 7 0 0 0 0 2.4l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 2 1.2l.4 2.6h4l.4-2.6a7 7 0 0 0 2-1.2l2.3 1 2-3.4-2-1.5c.1-.4.1-.8.1-1.2z"/></symbol>
+ <symbol id="i-img" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></symbol>
+ <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></symbol>
+ <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+ <symbol id="i-phone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></symbol>
+ <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 9.3-9.3M17 6l3 3M14 9l2 2"/></symbol>
+ <symbol id="i-out" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
+ <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></symbol>
+ <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+ <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+ <symbol id="i-dl" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></symbol>
+ <symbol id="i-share" viewBox="0 0 24 24"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7M16 6l-4-4-4 4M12 2v14"/></symbol>
+ <symbol id="ch-threads" viewBox="0 0 24 24"><path d="M16.6 11.3c-.4-2.7-2-4.2-4.5-4.2-2.8 0-4.6 2-4.6 5s1.8 5 4.7 5c1.6 0 2.9-.5 3.7-1.5"/><path d="M15.6 12.3c0 2-1.3 3.2-3 3.2-1.6 0-2.6-1.1-2.6-2.7 0-1.7 1.1-2.9 2.9-2.9 2 0 3 1.3 3 3.6 0 1.5.6 2.3 1.6 2.3 1.4 0 2.2-1.5 2.2-3.6 0-4.8-3-7.4-7.5-7.4-4.4 0-7.6 3.3-7.6 7.7s3.2 7.7 7.7 7.7c1.9 0 3.5-.5 4.7-1.3"/></symbol>
+ <symbol id="ch-instagram" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="17" cy="7" r=".6"/></symbol>
+ <symbol id="ch-tiktok" viewBox="0 0 24 24"><path d="M14 3.5v11a3.5 3.5 0 1 1-3.5-3.5M14 3.5c.5 2.6 2.2 4.3 5 4.6"/></symbol>
+ <symbol id="ch-youtube" viewBox="0 0 24 24"><rect x="2.5" y="5.5" width="19" height="13" rx="4"/><path d="m10.5 9.5 4 2.5-4 2.5z"/></symbol>
+ <symbol id="ch-telegram" viewBox="0 0 24 24"><path d="M21 4.5 3 11.5l6 2.2 2.3 6.3 3.4-4.2 4.8 3.7zM9 13.7l8-6.2"/></symbol>
+ <symbol id="ch-x" viewBox="0 0 24 24"><path d="M4.5 4h4l11 16h-4zM19.5 4l-6.7 7.6M4.5 20l6.6-7.5"/></symbol>
+ <symbol id="ch-reddit" viewBox="0 0 24 24"><ellipse cx="12" cy="14.5" rx="7.5" ry="5"/><path d="M12 9.5 13.2 4l4 1M9.5 16.5c1.4.9 3.6.9 5 0"/><circle cx="17.8" cy="5" r="1.3"/><circle cx="9.3" cy="13.8" r=".5"/><circle cx="14.7" cy="13.8" r=".5"/></symbol>
+ <symbol id="ch-other" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+ <symbol id="b-first_fan" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".6"/></symbol>
+ <symbol id="b-multichannel" viewBox="0 0 24 24"><path d="M4 12h6l4-6h6M10 12l4 6h6M17 3l3 3-3 3M17 15l3 3-3 3"/></symbol>
+ <symbol id="b-geo" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3.5 9h17M3.5 15h17M12 3a13 13 0 0 1 0 18M12 3a13 13 0 0 0 0 18"/></symbol>
+ <symbol id="b-streak3" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M7 14h2M11 14h2M15 14h2"/></symbol>
+ <symbol id="b-night" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></symbol>
+ <symbol id="b-hundred_week" viewBox="0 0 24 24"><path d="M4 20h16M6 16v-4M10 16V8M14 16v-6M18 16V4"/></symbol>
+ <symbol id="b-rush" viewBox="0 0 24 24"><path d="m3 17 6-6 4 4 8-8M15 7h6v6"/></symbol>
+ <symbol id="b-top10" viewBox="0 0 24 24"><circle cx="12" cy="14" r="6"/><path d="m8.5 9-3-6h4l2.5 5M15.5 9l3-6h-4L12 8"/></symbol>
+ <symbol id="b-podium" viewBox="0 0 24 24"><path d="M9 21V9h6v12M3 21v-7h6M15 21v-9h6v9M2 21h20M12 3l.9 1.8 2 .3-1.4 1.4.3 2-1.8-1-1.8 1 .3-2L9.1 5.1l2-.3z"/></symbol>
+</defs></svg>
 
-<!-- ВХОД -->
 <section id="auth" class="hide">
- <div class="auth-art">
-  <canvas id="authCv"></canvas>
+ <div class="au-l">
+  <div class="brand"><svg><use href="#logo"/></svg><b>NEUROFANS</b><span>LAB</span></div>
   <div>
-   <div class="brand"><svg><use href="#logo"/></svg>NeuroFans <em>Lab</em></div>
-   <h1>Твоя модель<span>в эфире</span></h1>
-   <p>Отдельная ссылка под каждый канал, живые переходы по минутам и лига недели среди учеников курса. Считаем только людей — боты и превью соцсетей отсекаются.</p>
-   <div class="auth-facts"><div><b>2 мин</b><span>до первой ссылки</span></div><div><b>15 с</b><span>обновление цифр</span></div><div><b>пн 00:00</b><span>старт новой недели лиги</span></div></div>
+   <h1>Трафик ваших моделей — по секундам и без ботов.</h1>
+   <p>Отдельная ссылка под каждый канал, живые переходы, лига недели среди учеников курса. Считаем только людей: боты и превью соцсетей отсекаются автоматически.</p>
+   <div class="au-chart"><canvas id="auCv"></canvas></div>
   </div>
+  <div class="au-spec"><div><b>~2 мин</b><span>до первой рабочей ссылки</span></div><div><b>15 s</b><span>интервал обновления</span></div><div><b>MON 00:00</b><span>старт недели лиги, МСК</span></div></div>
  </div>
- <div class="auth-box">
-  <div class="panel">
-   <div class="seg" style="margin:0 0 20px" id="authSeg"><button data-t="login" class="on">Вход</button><button data-t="reg">Регистрация по инвайту</button></div>
-   <form id="fLogin">
-    <label class="f"><span>Ник</span><input class="in" name="nick" autocomplete="username" required></label>
-    <label class="f"><span>Пароль</span><input class="in" name="password" type="password" autocomplete="current-password" required></label>
-    <div class="err"></div>
-    <button class="btn" style="width:100%">Войти</button>
-   </form>
-   <form id="fReg" class="hide">
-    <label class="f"><span>Инвайт-код от куратора</span><input class="in num" name="invite" placeholder="NF-XXXXXX" autocomplete="off" required></label>
-    <label class="f"><span>Ник</span><input class="in" name="nick" autocomplete="username" placeholder="например, leo_creator" required></label>
-    <label class="f"><span>Пароль, от 8 символов</span><input class="in" name="password" type="password" autocomplete="new-password" minlength="8" required></label>
-    <div class="err"></div>
-    <button class="btn" style="width:100%">Создать кабинет</button>
-    <p class="mut small" style="margin:14px 0 0;text-align:center">Забыли пароль — напишите куратору, он сбросит.</p>
-   </form>
-  </div>
- </div>
+ <div class="au-r"><div class="au-box">
+  <div class="seg" id="authSeg" style="width:100%;margin:0 0 22px"><button data-t="login" class="on" style="flex:1">Вход</button><button data-t="reg" style="flex:1">Регистрация по инвайту</button></div>
+  <form id="fLogin">
+   <label class="f"><span>Ник</span><input class="in" name="nick" autocomplete="username" required></label>
+   <label class="f"><span>Пароль</span><input class="in" name="password" type="password" autocomplete="current-password" required></label>
+   <div class="err"></div><button class="btn" style="width:100%;padding:11px">Войти</button>
+  </form>
+  <form id="fReg" class="hide">
+   <label class="f"><span>Инвайт-код от куратора</span><input class="in mono" name="invite" placeholder="NF-XXXXXX" autocomplete="off" required></label>
+   <label class="f"><span>Ник</span><input class="in" name="nick" autocomplete="username" placeholder="leo_creator" required></label>
+   <label class="f"><span>Пароль, от 8 символов</span><input class="in" name="password" type="password" autocomplete="new-password" minlength="8" required></label>
+   <div class="err"></div><button class="btn" style="width:100%;padding:11px">Создать кабинет</button>
+   <p class="mu sm" style="margin:14px 0 0">Забыли пароль — напишите куратору, он сбросит.</p>
+  </form>
+ </div></div>
 </section>
 
-<!-- КАБИНЕТ -->
 <section id="app" class="hide">
  <header class="top"><div class="wrap">
-  <div class="brand"><svg><use href="#logo"/></svg>NeuroFans <em>Lab</em></div>
-  <nav class="main"><button data-p="ov" class="on">Эфир</button><button data-p="lk">Модели и ссылки</button><button data-p="lg">Лига</button></nav>
-  <div class="weekchip" id="weekchip"></div>
-  <div class="me"><button id="meBtn" aria-haspopup="true"><span class="ava" id="meAva">?</span><span class="nk" id="meNick"></span><span class="mut">▾</span></button>
-   <div class="menu panel hide" id="menu">
-    <button data-m="card">🖼 Карточка недели</button><button data-m="tg">🔔 Уведомления в Telegram</button>
-    <button data-m="priv">🛡 Приватность</button><button data-m="app">📲 Установить приложение</button>
-    <hr><button data-m="pw">🔑 Сменить пароль</button><button data-m="out">↩ Выйти</button></div></div>
+  <div class="brand"><svg><use href="#logo"/></svg><b>NEUROFANS</b><span>LAB</span></div>
+  <nav class="main"><button data-p="ov" class="on"><svg class="i"><use href="#i-ov"/></svg>Эфир</button><button data-p="lk"><svg class="i"><use href="#i-lk"/></svg>Модели и ссылки</button><button data-p="lg"><svg class="i"><use href="#i-lg"/></svg>Лига</button></nav>
+  <div class="sp"></div>
+  <button class="cmdk" id="cmdk"><svg class="i"><use href="#i-search"/></svg><span>Найти или сделать…</span><kbd id="kbdK">⌘K</kbd></button>
+  <div class="me"><button id="meBtn" aria-haspopup="true"><span class="ava" id="meAva">?</span><span class="nk" id="meNick"></span></button>
+   <div class="menu hide" id="menu">
+    <button data-m="card"><svg class="i"><use href="#i-img"/></svg>Карточка недели</button><button data-m="tg"><svg class="i"><use href="#i-bell"/></svg>Уведомления в Telegram</button>
+    <button data-m="priv"><svg class="i"><use href="#i-shield"/></svg>Приватность</button><button data-m="app"><svg class="i"><use href="#i-phone"/></svg>Установить приложение</button>
+    <hr><button data-m="pw"><svg class="i"><use href="#i-key"/></svg>Сменить пароль</button><button data-m="out"><svg class="i"><use href="#i-out"/></svg>Выйти</button></div></div>
  </div></header>
+ <div class="status"><div class="wrap" id="status"></div></div>
 
  <main><div class="wrap">
-  <div id="pwaBanner" class="panel banner hide"><span style="font-size:22px">📲</span><p id="pwaText"></p><button class="btn sm" id="pwaGo">Установить</button><button class="icon-btn" id="pwaX" aria-label="Скрыть">✕</button></div>
+  <div id="pwaBanner" class="pn banner hide"><svg class="i lg"><use href="#i-phone"/></svg><p id="pwaText"></p><button class="btn s" id="pwaGo">Установить</button><button class="btn gh s ic" id="pwaX" aria-label="Скрыть"><svg class="i"><use href="#i-x"/></svg></button></div>
 
-  <!-- ЭФИР -->
   <div id="pg-ov">
    <div class="mbar" id="mbar"></div>
    <div id="ovEmpty" class="hide"></div>
    <div id="ovBody">
-    <section class="hero">
-     <div class="hero-score">
-      <div class="lbl" id="hLbl">Очки этой недели</div>
-      <div class="big num" id="hScore">0</div>
-      <div class="delta" id="hDelta"></div>
-      <div class="hero-tags" id="hTags"></div>
-      <div class="hero-act"><button class="btn" data-card>Карточка недели</button><button class="btn ghost" data-go="lk">Мои ссылки</button></div>
+    <section class="pn hero">
+     <div class="kp">
+      <div class="lbl" id="hLbl">LIVE PEOPLE · WEEK</div>
+      <div class="big" id="hScore">0</div>
+      <div class="dl" id="hDelta"></div>
+      <div class="acts" style="margin-bottom:0"><button class="btn s" data-card><svg class="i"><use href="#i-img"/></svg>Карточка недели</button><button class="btn gh s" data-go="lk"><svg class="i"><use href="#i-lk"/></svg>Мои ссылки</button></div>
+      <div class="split" id="hSplit"></div><div class="kv" id="hKv"></div>
      </div>
-     <div class="signal">
-      <canvas id="sigCv" aria-label="Люди за 14 дней"></canvas>
-      <div class="cap"><span class="live">в эфире</span><span>люди за 14 дней</span></div>
-      <div class="last" id="hLast"></div>
+     <div class="ch brk">
+      <div class="ch-top"><span id="hLast"></span><span class="legend"><span><i style="background:var(--ac)"></i>люди</span><span><i style="background:var(--di)"></i>клики</span></span></div>
+      <canvas id="sigCv" aria-label="Люди и клики за 14 дней"></canvas>
      </div>
     </section>
-    <section class="panel onb hide" id="onb"></section>
-    <section class="panel strip" id="strip"></section>
+    <section class="pn onb hide" id="onb"></section>
+    <section class="pn strip" id="strip"></section>
     <div class="g2">
-     <section class="panel"><div class="ph"><h3>Переходы по дням</h3><div class="legend"><span><i style="background:var(--uv)"></i>клики</span><span><i style="background:var(--sig)"></i>люди</span></div></div><canvas id="cvDays" height="230"></canvas></section>
-     <section class="panel"><div class="ph"><h3>Каналы</h3><span class="mut">люди / клики</span></div><div class="bars" id="chBars"></div></section>
+     <section class="pn"><div class="pn-h"><h3>Каналы</h3><span class="meta">PEOPLE / CLICKS · 14D</span></div><div class="pn-b bars" id="chBars"></div></section>
+     <section class="pn"><div class="pn-h"><h3>Когда кликают</h3><span class="meta" id="tzHint"></span></div><div class="pn-b"><canvas id="cvHours" height="130"></canvas><div class="mu sm" id="peak" style="margin-top:10px"></div></div></section>
     </div>
-    <section class="panel" style="margin:0 0 14px"><div class="ph"><h3>Ранги и ачивки</h3><span class="mut">ранг растёт с числом людей за всё время</span></div><div id="ach"></div></section>
+    <section class="pn" style="margin:0 0 12px"><div class="pn-h"><h3>Ранги и ачивки</h3><span class="meta">RANK = PEOPLE ALL-TIME</span></div><div id="ach"></div></section>
     <div class="g3">
-     <section class="panel" id="convBox"></section>
-     <section class="panel"><div class="ph"><h3>Когда кликают</h3><span class="mut" id="tzHint"></span></div><canvas id="cvHours" height="150"></canvas><div class="mut small" id="peak" style="margin-top:10px"></div></section>
-     <section class="panel"><div class="ph"><h3>Города</h3></div><div class="list" id="cities"></div></section>
+     <section class="pn" id="convBox"></section>
+     <section class="pn"><div class="pn-h"><h3>Города</h3><span class="meta">14D</span></div><div class="pn-b" id="cities"></div></section>
+     <section class="pn"><div class="pn-h"><h3>Откуда открывают</h3><span class="meta">14D</span></div><div class="pn-b"><div class="bars nh" id="apps"></div><div class="di xs mono" id="devs" style="margin-top:8px"></div></div></section>
     </div>
-    <div class="g2">
-     <section class="panel"><div class="ph"><h3>Последние переходы</h3><span class="live">обновляется сам</span></div><div class="list feed" id="feed"></div></section>
-     <section class="panel"><div class="ph"><h3>Откуда открывают</h3></div><div class="bars" id="apps"></div><div class="mut small" id="devs" style="margin-top:8px"></div></section>
-    </div>
+    <section class="pn"><div class="pn-h"><h3><span class="dot live"></span>Последние переходы</h3><span class="meta">AUTO-REFRESH 15S</span></div><div class="pn-b tw" style="padding-top:4px"><table class="tbl feed" id="feed"></table></div></section>
    </div>
   </div>
 
-  <!-- МОДЕЛИ И ССЫЛКИ -->
   <div id="pg-lk" class="hide">
-   <div class="pgtitle"><div><h1>Модели и ссылки</h1><p>Ссылку ставь в био, описание или закреп — переходы появятся в эфире.</p></div>
-    <button class="btn" id="addModel">Добавить модель</button></div>
+   <div class="pgt"><div><h1>Модели и ссылки</h1><p>Ставьте ссылку в био, описание или закреп — переходы появятся в эфире.</p></div><button class="btn" id="addModel"><svg class="i"><use href="#i-plus"/></svg>Добавить модель</button></div>
    <div id="models"></div>
   </div>
 
-  <!-- ЛИГА -->
   <div id="pg-lg" class="hide">
-   <div class="lg-head"><div><h1>Лига недели</h1><p class="mut" id="lgSub" style="margin:8px 0 0"></p></div><div class="clock" id="clock"></div></div>
-   <div class="lg-ctl"><div class="seg" id="lgDiv"></div><select class="in" id="lgCh" style="width:auto;padding:9px 36px 9px 13px"></select></div>
+   <div class="lgh"><div><h1>Лига недели</h1><p class="mu" id="lgSub" style="margin:4px 0 0"></p></div><div class="clock" id="clock"></div></div>
+   <div class="lgc"><div class="seg" id="lgDiv"></div><select class="in" id="lgCh"></select></div>
    <div class="g2">
-    <section class="panel"><div id="podium"></div><div class="board" id="board"></div></section>
+    <section class="pn"><div class="pn-h"><h3>Таблица</h3><span class="meta">PEOPLE · WEEK</span></div><table class="board" id="board"></table></section>
     <div>
-     <section class="panel myplace" style="margin:0 0 14px"><h3 style="margin:0 0 12px">Твоё место</h3><div id="myplace"></div></section>
-     <section class="panel" style="margin:0 0 14px"><div class="ph"><h3>Рывок недели</h3><span class="mut">рост к прошлой</span></div><div class="board" id="rush"></div></section>
-     <section class="panel" style="margin:0 0 14px"><h3 style="margin:0 0 12px">Победители прошлой недели</h3><div class="board" id="winners"></div></section>
-     <section class="panel"><details class="rules"><summary>Как считаются очки <span class="mut">+</span></summary><ul>
-      <li>Очко — новый человек, перешедший по ссылкам модели за неделю. Повторные клики того же человека не добавляют очков.</li>
-      <li>Свои клики не считаются: браузер, где ты входил в кабинет, отмечен. «Проверить» тоже не считается.</li>
+     <section class="pn mp" style="margin:0 0 12px"><div class="pn-h"><h3>Ваше место</h3></div><div class="pn-b" id="myplace"></div></section>
+     <section class="pn" style="margin:0 0 12px"><div class="pn-h"><h3>Рывок недели</h3><span class="meta">GROWTH VS LAST WEEK</span></div><table class="board" id="rush"></table></section>
+     <section class="pn" style="margin:0 0 12px"><div class="pn-h"><h3>Победители прошлой недели</h3></div><table class="board" id="winners"></table></section>
+     <section class="pn"><details class="rules"><summary>Как считаются очки <svg class="i"><use href="#i-plus"/></svg></summary><ul>
+      <li>Очко — новый человек, перешедший по ссылкам модели за неделю. Повторные клики того же человека очков не добавляют.</li>
+      <li>Свои клики не считаются: браузер, где вы входили в кабинет, отмечен. «Проверить» тоже не считается.</li>
       <li>Один человек засчитывается максимум трём моделям за неделю, с одного IP — не больше 100 очков.</li>
       <li>Боты и превью ссылок в соцсетях не считаются.</li>
-      <li>Дивизион зависит от людей до этой недели: «Старт» — до 50, «Про» — 50–999, «Элита» — 1000+.</li>
-      <li>«Рывок» — для тех, кто растёт: сравнение с прошлой неделей, от 10 очков.</li>
+      <li>Дивизион — по людям до этой недели: «Старт» до 50, «Про» 50–999, «Элита» 1000+.</li>
+      <li>«Рывок» — рост к прошлой неделе, от 10 очков.</li>
       <li>Неделя — с понедельника 00:00 до воскресенья 23:59 (<span id="tzR"></span>).</li>
      </ul></details></section>
     </div>
    </div>
   </div>
  </div></main>
-
- <nav class="bottom">
-  <button data-p="ov" class="on"><svg><use href="#i-ov"/></svg>Эфир</button>
-  <button data-p="lk"><svg><use href="#i-lk"/></svg>Ссылки</button>
-  <button data-p="lg"><svg><use href="#i-lg"/></svg>Лига</button></nav>
+ <nav class="bottom"><button data-p="ov" class="on"><svg class="i lg"><use href="#i-ov"/></svg>Эфир</button><button data-p="lk"><svg class="i lg"><use href="#i-lk"/></svg>Ссылки</button><button data-p="lg"><svg class="i lg"><use href="#i-lg"/></svg>Лига</button></nav>
 </section>
 
-<!-- АДМИНКА -->
 <section id="admin" class="hide">
- <header class="top"><div class="wrap"><div class="brand"><svg><use href="#logo"/></svg>NeuroFans <em>Lab · куратор</em></div>
-  <div style="margin-left:auto;display:flex;gap:8px" id="adTop" class="hide">
-   <button class="btn ghost sm" id="adPost">Пост итогов</button><button class="btn ghost sm" id="adBackup">Скачать копию базы</button><button class="btn ghost sm" id="adOut">Выйти</button></div></div></header>
+ <header class="top"><div class="wrap"><div class="brand"><svg><use href="#logo"/></svg><b>NEUROFANS</b><span>CURATOR</span></div><div class="sp"></div>
+  <div style="display:flex;gap:6px" id="adTop" class="hide"><button class="btn gh s" id="adPost">Пост итогов</button><button class="btn gh s" id="adBackup"><svg class="i"><use href="#i-dl"/></svg>Копия базы</button><button class="btn gh s ic" id="adOut" aria-label="Выйти"><svg class="i"><use href="#i-out"/></svg></button></div></div></header>
  <main><div class="wrap" id="adMain"></div></main>
 </section>
 
-<div class="modal hide" id="modal"><div class="panel" id="modalBox"></div></div>
+<div class="modal hide" id="modal"><div class="pn" id="modalBox"></div></div>
 <div class="toast" id="toast" role="status"></div>
 
 <script>
 "use strict";
-const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fmt=n=>(+n||0).toLocaleString("ru-RU");
-const CH_ICON={threads:"🧵",instagram:"📸",tiktok:"🎵",youtube:"▶️",telegram:"✈️",x:"✖️",reddit:"👽",other:"🔗"};
-const CH_COL=["#19d3c5","#ff4f8b","#8b6cff","#ffc94d","#3ee08f","#7ab8ff"];
-const FLAG=cc=>cc&&cc.length===2?String.fromCodePoint(...[...cc.toUpperCase()].map(c=>127397+c.charCodeAt(0))):"🌐";
+const ic=(id,cls="")=>`<svg class="i ${cls}"><use href="#${id}"/></svg>`;
+const chI=ch=>ic("ch-"+(["threads","instagram","tiktok","youtube","telegram","x","reddit"].includes(ch)?ch:"other"));
+const CC=cc=>`<span class="cc">${esc(cc||"··")}</span>`;
+const COLS=["#2ee6d6","#e8c46a","#8a90ff","#ff5c7a","#7fd88f","#c98d5f"];
 const REDUCED=matchMedia("(prefers-reduced-motion: reduce)").matches;
-const S={me:null,mid:"all",page:"ov",stats:null,league:null,ach:null,seen:new Set(),lgCh:"",lgDiv:null,counted:false};
+const S={me:null,mid:"all",page:"ov",stats:null,league:null,ach:null,seen:new Set(),lgCh:"",lgDiv:null,counted:false,sync:0,hover:-1,pulse:0};
 const qs=new URLSearchParams(location.search);
 const LS={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
+const IS_MAC=/mac|iphone|ipad/i.test(navigator.platform||navigator.userAgent);
+const FONT="600 10px Oxa, Man, sans-serif";
 
-async function api(path,opt={}){
-  const o={headers:{},credentials:"same-origin",...opt};
+async function api(path,opt={}){const o={headers:{},credentials:"same-origin",...opt};
   if(opt.body!==undefined){o.headers["Content-Type"]="application/json";o.body=JSON.stringify(opt.body)}
-  const r=await fetch(path,o);let j={};
-  try{j=await r.json()}catch(e){}
+  const r=await fetch(path,o);let j={};try{j=await r.json()}catch(e){}
   if(r.status===401&&location.pathname!=="/admin"){showAuth();throw new Error("auth")}
-  if(!r.ok||j.ok===false)throw new Error(j.error||("Ошибка "+r.status));
-  return j;
-}
-function toast(t){const e=$("#toast");e.textContent=t;e.classList.add("on");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("on"),2400)}
+  if(!r.ok||j.ok===false)throw new Error(j.error||("Ошибка "+r.status));return j}
+function toast(t){const e=$("#toast");e.innerHTML=ic("i-check")+esc(t);e.classList.add("on");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("on"),2300)}
 async function copy(t,msg){try{await navigator.clipboard.writeText(t)}catch(e){const a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();document.execCommand("copy");a.remove()}toast(msg||"Скопировано")}
+function celebrate(msg){if(!REDUCED){const d=document.createElement("div");d.className="sweep";document.body.appendChild(d);setTimeout(()=>d.remove(),1200)}if(msg)toast(msg)}
 function ago(ts){const s=(Date.now()-new Date(ts))/1000;if(s<60)return"только что";if(s<3600)return Math.floor(s/60)+" мин назад";if(s<86400)return Math.floor(s/3600)+" ч назад";return new Date(ts).toLocaleDateString("ru-RU",{day:"numeric",month:"short"})}
+const hm=ts=>new Date(ts).toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"});
+const dm=d=>{const x=new Date(d);return String(x.getDate()).padStart(2,"0")+"."+String(x.getMonth()+1).padStart(2,"0")};
 function plural(n,a,b,c){n=Math.abs(n)%100;const m=n%10;if(n>10&&n<20)return c;if(m>1&&m<5)return b;if(m===1)return a;return c}
-function setupCanvas(cv){const dpr=Math.min(2,devicePixelRatio||1),w=cv.clientWidth,h=+(cv.dataset.h||(cv.dataset.h=cv.getAttribute("height")||cv.clientHeight));
-  cv.width=w*dpr;cv.height=h*dpr;cv.style.height=h+"px";const x=cv.getContext("2d");x.setTransform(dpr,0,0,dpr,0,0);return[x,w,h]}
-function rr(x,X,Y,W,H,r){if(H<=0)return;r=Math.min(r,H/2,W/2);x.beginPath();x.moveTo(X,Y+H);x.lineTo(X,Y+r);x.quadraticCurveTo(X,Y,X+r,Y);x.lineTo(X+W-r,Y);x.quadraticCurveTo(X+W,Y,X+W,Y+r);x.lineTo(X+W,Y+H);x.fill()}
+const tierHTML=l=>`<span class="tier" title="ранг ${l+1} из 6">${[0,1,2,3,4,5].map(i=>`<i class="${i<=l?"on":""}"></i>`).join("")}</span>`;
+const pct=(a,b)=>b?((a-b)/b*100):null;
+function setupCanvas(cv,hh){const dpr=Math.min(2,devicePixelRatio||1),w=cv.clientWidth,h=hh||+(cv.dataset.h||(cv.dataset.h=cv.getAttribute("height")||cv.clientHeight));
+  cv.width=w*dpr;cv.height=h*dpr;if(!hh)cv.style.height=h+"px";const x=cv.getContext("2d");x.setTransform(dpr,0,0,dpr,0,0);return[x,w,h]}
 function curve(x,pts){const lo=Math.min(...pts.map(p=>p[1])),hi=Math.max(...pts.map(p=>p[1])),cl=v=>Math.max(lo,Math.min(hi,v));
   x.moveTo(pts[0][0],pts[0][1]);for(let i=0;i<pts.length-1;i++){const p0=pts[i-1]||pts[i],p1=pts[i],p2=pts[i+1],p3=pts[i+2]||p2;
   x.bezierCurveTo(p1[0]+(p2[0]-p0[0])/6,cl(p1[1]+(p2[1]-p0[1])/6),p2[0]-(p3[0]-p1[0])/6,cl(p2[1]-(p3[1]-p1[1])/6),p2[0],p2[1])}}
-const dayLbl=(i,n,step)=>i===n-1||(i%step===0&&n-1-i>=Math.ceil(step/2));
+function niceTop(v){const raw=Math.max(4,v*1.08)/4,p=Math.pow(10,Math.floor(Math.log10(raw))),st=([1,1.5,2,2.5,3,4,5,6,8,10].find(k=>k*p>=raw&&Number.isInteger(k*p))||10)*p;return st*4}
 
-/* ---------- конфетти: только на настоящие победы ---------- */
-function confetti(){if(REDUCED)return;const cv=$("#confetti"),x=cv.getContext("2d");cv.width=innerWidth;cv.height=innerHeight;
-  const P=Array.from({length:120},()=>({x:innerWidth/2+(Math.random()-.5)*200,y:innerHeight*.35,vx:(Math.random()-.5)*12,vy:-Math.random()*12-4,r:Math.random()*6+3,c:CH_COL[Math.random()*5|0],a:Math.random()*6,s:(Math.random()-.5)*.3}));
-  let t=0;(function f(){x.clearRect(0,0,cv.width,cv.height);P.forEach(p=>{p.vy+=.35;p.x+=p.vx;p.y+=p.vy;p.vx*=.99;p.a+=p.s;x.save();x.translate(p.x,p.y);x.rotate(p.a);x.fillStyle=p.c;x.globalAlpha=Math.max(0,1-t/120);x.fillRect(-p.r/2,-p.r/4,p.r,p.r/2);x.restore()});
-    if(++t<130)requestAnimationFrame(f);else x.clearRect(0,0,cv.width,cv.height)})()}
-
-/* ---------- вход ---------- */
-function showAuth(){$("#app").classList.add("hide");$("#auth").classList.remove("hide");authArt();
+function showAuth(){$("#app").classList.add("hide");$("#auth").classList.remove("hide");authChart();
   if(qs.get("invite")){setTab("reg");$("#fReg [name=invite]").value=qs.get("invite").toUpperCase()}}
 function setTab(t){$$("#authSeg button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));$("#fLogin").classList.toggle("hide",t!=="login");$("#fReg").classList.toggle("hide",t!=="reg")}
 $$("#authSeg button").forEach(b=>b.onclick=()=>setTab(b.dataset.t));
 async function authSubmit(e,path){e.preventDefault();const f=e.target,er=f.querySelector(".err"),bt=f.querySelector("button");er.textContent="";bt.disabled=true;
-  try{await api(path,{method:"POST",body:Object.fromEntries(new FormData(f))});history.replaceState(null,"","/");boot()}
-  catch(x){if(x.message!=="auth")er.textContent=x.message}finally{bt.disabled=false}}
-$("#fLogin").onsubmit=e=>authSubmit(e,"/api/login");
-$("#fReg").onsubmit=e=>authSubmit(e,"/api/register");
-function authArt(){const cv=$("#authCv");if(!cv||cv._on)return;cv._on=1;let t=0;
-  const draw=()=>{if($("#auth").classList.contains("hide"))return;const[x,w,h]=setupCanvas(cv.dataset.h?cv:(cv.dataset.h=cv.clientHeight||540,cv));x.clearRect(0,0,w,h);
-    const cx=w*.72,cy=h*.5;for(let i=0;i<9;i++){const r=((t*.35+i*46)%420);x.beginPath();x.arc(cx,cy,r,0,7);x.strokeStyle=`rgba(${i%3==0?"25,211,197":i%3==1?"139,108,255":"255,79,139"},${.28*(1-r/420)})`;x.lineWidth=1.4;x.stroke()}
-    x.beginPath();for(let X=0;X<=w;X+=6){const Y=h*.78+Math.sin(X/60+t/30)*14*Math.sin(X/300+t/90)+Math.sin(X/23+t/14)*3;X?x.lineTo(X,Y):x.moveTo(X,Y)}
-    const g=x.createLinearGradient(0,0,w,0);g.addColorStop(0,"rgba(25,211,197,0)");g.addColorStop(.4,"rgba(25,211,197,.7)");g.addColorStop(1,"rgba(255,79,139,.8)");x.strokeStyle=g;x.lineWidth=2;x.stroke();
-    t++;if(!REDUCED)requestAnimationFrame(draw)};draw()}
+  try{await api(path,{method:"POST",body:Object.fromEntries(new FormData(f))});history.replaceState(null,"","/");boot()}catch(x){if(x.message!=="auth")er.textContent=x.message}finally{bt.disabled=false}}
+$("#fLogin").onsubmit=e=>authSubmit(e,"/api/login");$("#fReg").onsubmit=e=>authSubmit(e,"/api/register");
+function authChart(){const cv=$("#auCv");if(!cv||cv._on)return;cv._on=1;const N=48,data=[];let v=30;for(let i=0;i<N;i++){v=Math.max(6,v+(Math.random()-.42)*9);data.push(v)}let t=0;
+  const draw=()=>{if($("#auth").classList.contains("hide"))return;const[x,w,h]=setupCanvas(cv,cv.clientHeight);x.clearRect(0,0,w,h);
+    if(t%40===0){data.shift();v=Math.max(6,v+(Math.random()-.42)*9);data.push(v)}
+    const mx=niceTop(Math.max(...data)),L=34,B=18;x.font=FONT;x.fillStyle="#596071";x.textAlign="right";
+    for(let i=0;i<=4;i++){const y=4+(h-B-4)*i/4;x.strokeStyle="rgba(255,255,255,.06)";x.beginPath();x.moveTo(L,y);x.lineTo(w,y);x.stroke();x.fillText(Math.round(mx*(1-i/4)),L-6,y+3)}
+    const pts=data.map((d,i)=>[L+(w-L-6)*i/(N-1),4+(h-B-4)*(1-d/mx)]);
+    x.beginPath();curve(x,pts);x.lineTo(w-6,h-B);x.lineTo(L,h-B);x.closePath();const g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,"rgba(46,230,214,.18)");g.addColorStop(1,"rgba(46,230,214,0)");x.fillStyle=g;x.fill();
+    x.beginPath();curve(x,pts);x.strokeStyle="#2ee6d6";x.lineWidth=1.6;x.stroke();
+    const L1=pts[N-1];x.fillStyle="#2ee6d6";x.beginPath();x.arc(L1[0],L1[1],3,0,7);x.fill();x.strokeStyle="rgba(46,230,214,.35)";x.beginPath();x.arc(L1[0],L1[1],6+(t%40)/4,0,7);x.stroke();
+    x.textAlign="left";x.fillStyle="#596071";x.fillText("DEMO · LIVE PEOPLE / MIN",L,h-3);t++;if(!REDUCED)requestAnimationFrame(draw)};draw()}
 
-/* ---------- навигация и меню ---------- */
-function go(p){S.page=p;$$("[data-p]").forEach(b=>b.classList.toggle("on",b.dataset.p===p));
-  ["ov","lk","lg"].forEach(x=>$("#pg-"+x).classList.toggle("hide",x!==p));
+function go(p){S.page=p;$$("[data-p]").forEach(b=>b.classList.toggle("on",b.dataset.p===p));["ov","lk","lg"].forEach(x=>$("#pg-"+x).classList.toggle("hide",x!==p));
   if(p==="ov")loadStats();if(p==="lg")loadLeague();if(p==="lk")renderModels();LS.set("nf_page",p);scrollTo({top:0})}
 $$("[data-p]").forEach(b=>b.onclick=()=>go(b.dataset.p));
 document.addEventListener("click",e=>{const g=e.target.closest("[data-go]");if(g)go(g.dataset.go);const c=e.target.closest("[data-card]");if(c)openCard(c.dataset.card||undefined)});
 $("#meBtn").onclick=e=>{e.stopPropagation();$("#menu").classList.toggle("hide")};
 document.addEventListener("click",()=>$("#menu").classList.add("hide"));
-$("#menu").onclick=async e=>{const m=e.target.closest("button")?.dataset.m;if(!m)return;
-  if(m==="out"){await api("/api/logout",{method:"POST",body:{}});location.href="/"}
-  if(m==="pw")openPw();if(m==="tg")openTg();if(m==="card")openCard();if(m==="priv")openPrivacy();if(m==="app")installApp(true)};
+const MENU={out:async()=>{await api("/api/logout",{method:"POST",body:{}});location.href="/"},pw:()=>openPw(),tg:()=>openTg(),card:()=>openCard(),priv:()=>openPrivacy(),app:()=>installApp()};
+$("#menu").onclick=e=>{const m=e.target.closest("button")?.dataset.m;if(m)MENU[m]()};
 $("#addModel").onclick=()=>openModel();
+$("#kbdK").textContent=IS_MAC?"⌘K":"Ctrl K";$("#cmdk").onclick=()=>openPalette();
+addEventListener("keydown",e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k"&&S.me){e.preventDefault();openPalette()}if(e.key==="Escape")closeModal()});
 
-async function boot(){
-  try{S.me=await api("/api/me")}catch(e){return}
+async function boot(){try{S.me=await api("/api/me")}catch(e){return}
   $("#auth").classList.add("hide");$("#app").classList.remove("hide");
   $("#meNick").textContent=S.me.nick;$("#meAva").textContent=(S.me.nick[0]||"?").toUpperCase();
-  const tzName={"Europe/Moscow":"по Москве","Asia/Bangkok":"по Бангкоку"}[S.me.tz]||S.me.tz;$("#tzHint").textContent=$("#tzR").textContent=tzName;
-  renderMbar();weekChip();setInterval(weekChip,30000);
+  const tz={"Europe/Moscow":"MSK","Asia/Bangkok":"BKK"}[S.me.tz]||S.me.tz;$("#tzHint").textContent="TZ "+tz+" · 14D";$("#tzR").textContent=tz==="MSK"?"по Москве":S.me.tz;
+  renderMbar();statusLine();setInterval(statusLine,1000);
   let p=LS.get("nf_page")||"ov";if(!S.me.models.length)p="lk";go(p);
-  clearInterval(S.poll);S.poll=setInterval(()=>{if(document.hidden)return;if(S.page==="ov")loadStats(true);if(S.page==="lg")loadLeague(true)},15000);
-  pwaInit();if("serviceWorker" in navigator)navigator.serviceWorker.register("/sw.js").catch(()=>{});
-}
-async function refreshMe(){try{const r=await api("/api/me");S.me.models=r.models;S.me.onboarding=r.onboarding;if(S.page==="lk")renderModels();renderOnb()}catch(e){}}
-function weekChip(){if(!S.me)return;const s=Math.max(0,(new Date(S.me.week_end)-Date.now())/1000),d=Math.floor(s/86400),h=Math.floor(s%86400/3600);
-  $("#weekchip").innerHTML=`Неделя <b>${S.me.week.split("-W")[1]}</b>, до конца <b>${d?d+" д ":""}${h} ч</b>`}
+  clearInterval(S.poll);S.poll=setInterval(()=>{if(document.hidden)return;if(S.page==="ov")loadStats(true);if(S.page==="lg")loadLeague()},15000);
+  pwaInit();if("serviceWorker" in navigator)navigator.serviceWorker.register("/sw.js").catch(()=>{})}
+async function refreshMe(){try{const r=await api("/api/me");S.me.models=r.models;S.me.onboarding=r.onboarding;S.me.public_ok=r.public_ok;if(S.page==="lk")renderModels();renderOnb()}catch(e){}}
+function statusLine(){if(!S.me)return;const s=Math.max(0,(new Date(S.me.week_end)-Date.now())/1000),p=v=>String(v).padStart(2,"0"),d=Math.floor(s/86400);
+  const ag=S.sync?Math.round((Date.now()-S.sync)/1000):null,ok=ag!==null&&ag<40;
+  $("#status").innerHTML=`<span><span class="dot ${ok?"live":"off"}"></span><b>${ok?"ONLINE":"SYNC…"}</b></span><span>SYNC <b>${ag===null?"—":ag+"s"}</b> AGO</span><span>WEEK <b>${S.me.week.split("-W")[1]}</b></span><span>ENDS IN <b>${d}d ${p(Math.floor(s%86400/3600))}:${p(Math.floor(s%3600/60))}:${p(Math.floor(s%60))}</b></span><span class="hm">MODELS <b>${activeModels().length}</b></span><span class="hm">LINKS <b>${activeModels().reduce((a,m)=>a+m.links.filter(l=>!l.archived).length,0)}</b></span>`}
 function activeModels(){return S.me.models.filter(m=>!m.archived)}
 function renderMbar(){const ms=activeModels();
-  $("#mbar").innerHTML=ms.length>1?[`<button data-m="all">Все модели</button>`,...ms.map(m=>`<button data-m="${m.id}">${esc(m.name)}</button>`)].join(""):"";
-  $$("#mbar button").forEach(b=>{b.classList.toggle("on",String(S.mid)===b.dataset.m);b.onclick=()=>{S.mid=b.dataset.m;S.seen.clear();renderMbar();loadStats()}})}
+  $("#mbar").innerHTML=ms.length>1?[`<button data-m="all"><i></i>Все модели</button>`,...ms.map(m=>`<button data-m="${m.id}"><i></i>${esc(m.name)}</button>`)].join(""):"";
+  $$("#mbar button").forEach(b=>{b.classList.toggle("on",String(S.mid)===b.dataset.m);b.onclick=()=>{S.mid=b.dataset.m;S.seen.clear();S.counted=false;renderMbar();loadStats()}})}
 
-/* ---------- эфир ---------- */
 async function loadStats(quiet){
   if(!activeModels().length){$("#ovBody").classList.add("hide");$("#ovEmpty").classList.remove("hide");$("#ovEmpty").innerHTML=onboardHTML();return}
   $("#ovBody").classList.remove("hide");$("#ovEmpty").classList.add("hide");
-  try{S.stats=await api("/api/stats?mid="+S.mid)}catch(e){return}
+  try{S.stats=await api("/api/stats?mid="+S.mid);S.sync=Date.now()}catch(e){return}
   if(!S.league||!quiet){try{S.league=await api("/api/league")}catch(e){}}
   if(!S.ach||!quiet){try{S.ach=await api("/api/achievements")}catch(e){}}
-  renderStats();renderAch();renderOnb();if(!quiet)loadConv();
-}
-function heroModelWeek(){const A=S.ach;if(!A)return null;const ms=S.mid==="all"?A.models:A.models.filter(m=>String(m.mid)===String(S.mid));
-  return ms.slice().sort((a,b)=>(a.week.place||999)-(b.week.place||999))[0]}
-function renderStats(){
-  const st=S.stats,t=st.totals;
-  const target=t.week_people,el=$("#hScore");
-  if(!S.counted&&!REDUCED){S.counted=true;const t0=performance.now();(function f(n){const k=Math.min(1,(n-t0)/1100),e=1-Math.pow(1-k,3);el.textContent=fmt(Math.round(target*e));if(k<1)requestAnimationFrame(f)})(t0)}else el.textContent=fmt(target);
-  const d=t.week_people-t.prev_week_people;
-  $("#hDelta").innerHTML=t.prev_week_people||t.week_people?`<span class="${d>=0?"up":"down"}">${d>=0?"▲":"▼"} ${fmt(Math.abs(d))}</span> к прошлой неделе (${fmt(t.prev_week_people)})`:"Первая неделя — каждый человек на счету";
-  $("#hLbl").textContent=S.mid==="all"?"Живые люди этой недели":"Живые люди этой недели · "+(activeModels().find(m=>String(m.id)===String(S.mid))||{}).name;
-  const mw=heroModelWeek(),tags=[];
-  if(mw&&mw.week.place)tags.push(`<span class="chip">🏆 #${mw.week.place} в лиге из ${mw.week.total}</span>`);
-  if(mw)tags.push(`<span class="chip">${mw.rank.icon} ${esc(mw.rank.name)}</span>`);
-  if(mw&&mw.week.rush_x)tags.push(`<span class="chip">🚀 рывок ×${String(mw.week.rush_x).replace(".",",")}</span>`);
-  $("#hTags").innerHTML=tags.join("");
-  const r0=st.recent[0];$("#hLast").innerHTML=r0?`Последний переход: <b>${FLAG(r0.cc)} ${esc(r0.city||"город скрыт")}</b>, ${ago(r0.ts)}`:"Ждём первого человека";
-  const newOnes=st.recent.filter(r=>!S.seen.has(r.ts+r.slug)).length;
-  sigData(st.days,S.seen.size&&newOnes?newOnes:0);
-  $("#strip").innerHTML=[["Люди сегодня",fmt(t.today_people),`${fmt(t.today_clicks)} ${plural(t.today_clicks,"клик","клика","кликов")}`],
-    ["Клики за 14 дней",fmt(t.period_clicks),`из них ${fmt(t.period_people)} уникальных`],
-    ["Людей за всё время",fmt(t.all_people),`${fmt(t.all_clicks)} кликов всего`],
-    ["Свои клики",fmt(t.own_week),"на этой неделе — в очки не идут"]].map(([l,v,s])=>`<div><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join("");
-  drawDays(st.days);drawHours(st.hours);
+  renderStats();renderAch();renderOnb();if(!quiet)loadConv()}
+function heroMW(){const A=S.ach;if(!A)return null;const ms=S.mid==="all"?A.models:A.models.filter(m=>String(m.mid)===String(S.mid));return ms.slice().sort((a,b)=>(a.week.place||999)-(b.week.place||999))[0]}
+function spark(cv,vals,col){const[x,w,h]=setupCanvas(cv,28);const mx=Math.max(1,...vals),pts=vals.map((v,i)=>[1+(w-2)*i/(vals.length-1),h-2-(h-4)*v/mx]);
+  x.beginPath();curve(x,pts);x.strokeStyle=col||"#2ee6d6";x.lineWidth=1.3;x.stroke();x.lineTo(w-1,h);x.lineTo(1,h);x.closePath();const g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,col?"rgba(138,144,162,.12)":"rgba(46,230,214,.14)");g.addColorStop(1,"rgba(0,0,0,0)");x.fillStyle=g;x.fill()}
+function renderStats(){const st=S.stats,t=st.totals,el=$("#hScore");
+  if(!S.counted&&!REDUCED){S.counted=true;const t0=performance.now(),T=t.week_people;(function f(n){const k=Math.min(1,(n-t0)/900),e=1-Math.pow(1-k,3);el.textContent=fmt(Math.round(T*e));if(k<1)requestAnimationFrame(f)})(t0)}else el.textContent=fmt(t.week_people);
+  const p=pct(t.week_people,t.prev_week_people),d=t.week_people-t.prev_week_people;
+  $("#hDelta").innerHTML=t.prev_week_people?`<span class="${d>=0?"pos":"neg"}">${d>=0?"▲ +":"▼ "}${fmt(d)} (${p>=0?"+":""}${p.toFixed(1).replace(".",",")}%)</span> <span class="di">vs прошлая неделя · ${fmt(t.prev_week_people)}</span>`:`<span class="di">первая неделя — каждый человек на счету</span>`;
+  const mname=S.mid==="all"?"ALL MODELS":(activeModels().find(m=>String(m.id)===String(S.mid))||{name:""}).name.toUpperCase();
+  $("#hLbl").textContent=`LIVE PEOPLE · WEEK ${S.me.week.split("-W")[1]} · ${mname}`;
+  const mw=heroMW();
+  $("#hKv").innerHTML=`<div><b>${mw&&mw.week.place?"#"+mw.week.place:"—"}<span class="di" style="font-size:12px">${mw&&mw.week.place?" / "+mw.week.total:""}</span></b><span>место в лиге</span></div><div><b style="display:flex;gap:8px;align-items:center">${mw?tierHTML(mw.rank.lvl):""}<span style="font-family:Man,sans-serif;font-size:13px;font-weight:800">${mw?esc(mw.rank.name):"—"}</span></b><span>${mw&&mw.week.rush_x?"рывок ×"+String(mw.week.rush_x).replace(".",","):"ранг модели"}</span></div>`;
+  const sp=S.mid==="all"&&S.ach?S.ach.models.slice().sort((a,b)=>b.week.pts-a.week.pts):[],sm=Math.max(1,...sp.map(m=>m.week.pts));
+  $("#hSplit").innerHTML=sp.length>1?sp.slice(0,4).map(m=>`<div class="row"><b>${esc(m.name)}</b><span>${fmt(m.week.pts)}</span><div class="tr"><i style="width:${Math.max(2,m.week.pts/sm*100)}%"></i></div></div>`).join(""):"";
+  const r0=st.recent[0];$("#hLast").innerHTML=r0?`<span class="dot live" style="display:inline-block;margin-right:7px;vertical-align:1px"></span>Последний переход ${CC(r0.cc)} ${esc(r0.city||"")}, <span class="mono">${hm(r0.ts)}</span>`:"Ждём первого человека";
+  const fresh=S.seen.size?st.recent.filter(r=>!S.seen.has(r.ts+r.slug)).length:0;if(fresh)S.pulse=performance.now();
+  const pd=st.days.map(x=>x.people),cd=st.days.map(x=>x.clicks);let acc=t.all_people-pd.reduce((a,b)=>a+b,0);const cum=pd.map(v=>acc+=v);
+  $("#strip").innerHTML=[["Люди сегодня",fmt(t.today_people),`${fmt(t.today_clicks)} ${plural(t.today_clicks,"клик","клика","кликов")}`,"s0"],["Клики · 14 дней",fmt(t.period_clicks),`${fmt(t.period_people)} уникальных`,"s1"],["Люди · всё время",fmt(t.all_people),`${fmt(t.all_clicks)} кликов всего`,"s2"],["Свои клики · неделя",fmt(t.own_week),"не идут в очки",""]]
+    .map(([l,v,s,id])=>`<div><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div>${id?`<canvas id="${id}"></canvas>`:""}</div>`).join("");
+  S.sparks=[pd,cd,cum];drawCanvases();
   const mx=Math.max(1,...st.channels.map(c=>c.clicks));
-  $("#chBars").innerHTML=st.channels.length?st.channels.map(c=>`<div class="row"><div>${CH_ICON[c.ch]||"🔗"} ${esc(c.name)}</div><div class="track"><div class="fill" style="width:${Math.max(4,c.clicks/mx*100)}%"></div></div><div class="n">${fmt(c.people)}/${fmt(c.clicks)}</div></div>`).join(""):`<div class="empty">Пока тихо. Поставь ссылку в био — и здесь появятся каналы.</div>`;
-  $("#cities").innerHTML=st.cities.length?st.cities.slice(0,7).map((c,i)=>`<div class="it"><span class="dim num" style="width:16px">${i+1}</span><span>${FLAG(c.cc)}</span><span class="grow">${esc(c.city)}</span><b class="num">${fmt(c.n)}</b></div>`).join(""):`<div class="empty">Города появятся с первыми переходами</div>`;
+  $("#chBars").innerHTML=st.channels.length?st.channels.map(c=>`<div class="row">${chI(c.ch)}<div><div class="nm"><span>${esc(c.name)}</span></div><div class="tr"><div class="fl" style="width:${Math.max(2,c.clicks/mx*100)}%"></div></div></div><div class="v">${fmt(c.people)} / ${fmt(c.clicks)}</div></div>`).join(""):`<div class="empty">Пока тихо. Поставьте ссылку в био — здесь появятся каналы.</div>`;
+  $("#cities").innerHTML=st.cities.length?`<table class="tbl">${st.cities.slice(0,7).map((c,i)=>`<tr><td class="mono di" style="width:26px">${String(i+1).padStart(2,"0")}</td><td>${CC(c.cc)} ${esc(c.city)}</td><td class="r mono">${fmt(c.n)}</td></tr>`).join("")}</table>`:`<div class="empty">Города появятся с первыми переходами</div>`;
   const am=Math.max(1,...st.apps.map(a=>a.n));
-  $("#apps").innerHTML=st.apps.length?st.apps.slice(0,6).map(a=>`<div class="row"><div>${esc(a.k)}</div><div class="track"><div class="fill" style="width:${Math.max(4,a.n/am*100)}%"></div></div><div class="n">${fmt(a.n)}</div></div>`).join(""):`<div class="empty">—</div>`;
-  const dt=st.devices.reduce((s,x)=>s+x.n,0)||1;
-  $("#devs").textContent=st.devices.map(x=>`${x.k==="iOS"?"iPhone":x.k==="Android"?"Android":"Компьютер"} ${Math.round(x.n/dt*100)}%`).join(", ");
-  const ph=st.hours.indexOf(Math.max(...st.hours));$("#peak").textContent=Math.max(...st.hours)?`Пик: ${ph}:00–${ph+1}:00. Публикуй посты за час до пика.`:"";
+  $("#apps").innerHTML=st.apps.length?st.apps.slice(0,6).map(a=>`<div class="row"><div><div class="nm"><span>${esc(a.k)}</span></div><div class="tr"><div class="fl" style="width:${Math.max(2,a.n/am*100)}%;background:var(--mu)"></div></div></div><div class="v">${fmt(a.n)}</div></div>`).join(""):`<div class="empty">—</div>`;
+  const dt=st.devices.reduce((s,x)=>s+x.n,0)||1;$("#devs").textContent=st.devices.map(x=>`${{iOS:"IOS",Android:"ANDROID",Desktop:"DESKTOP"}[x.k]||x.k} ${Math.round(x.n/dt*100)}%`).join("   ");
+  const ph=st.hours.indexOf(Math.max(...st.hours));$("#peak").textContent=Math.max(...st.hours)?`Пик ${String(ph).padStart(2,"0")}:00–${String(ph+1).padStart(2,"0")}:00 — публикуйте за час до пика.`:"";
   const first=S.seen.size===0;
-  $("#feed").innerHTML=st.recent.length?st.recent.slice(0,10).map(r=>{const k=r.ts+r.slug,isNew=!first&&!S.seen.has(k);S.seen.add(k);
-    const why={own:"твой клик",repeat:"повтор",cap_vis:"лимит",cap_ip:"лимит IP"}[r.why]||"";
-    return`<div class="it ${isNew?"new":""}"><span class="dot ${r.scored?"":"off"}"></span><span class="chi">${CH_ICON[r.ch]||"🔗"}</span>
-     <span class="grow"><b>${esc(r.model)}</b> <span class="dim">${esc(r.slug)}</span><br><span class="mut small">${FLAG(r.cc)} ${esc(r.city||"город скрыт")}, ${esc(r.app)}</span></span>
-     <span style="text-align:right;font-size:12px"><span class="${r.scored?"up":"dim"}">${r.scored?"+1 очко":why}</span><br><span class="dim">${ago(r.ts)}</span></span></div>`}).join(""):`<div class="empty">Здесь появятся переходы в реальном времени</div>`;
-}
-/* живой сигнал: одна главная анимация экрана */
-const SIG={pts:[],pulses:[],t:0,raf:0};
-function sigData(days,fresh){SIG.days=days;if(fresh)for(let i=0;i<Math.min(fresh,6);i++)SIG.pulses.push({t:-i*14});if(!SIG.raf)sigLoop()}
-function sigLoop(){const cv=$("#sigCv");if(!cv||!SIG.days)return;
-  const draw=()=>{SIG.raf=0;if(S.page!=="ov"||document.hidden||!cv.clientWidth){SIG.raf=requestAnimationFrame(draw);return}
-    const dpr=Math.min(2,devicePixelRatio||1),w=cv.clientWidth,h=cv.clientHeight;if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=w*dpr;cv.height=h*dpr}
-    const x=cv.getContext("2d");x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,w,h);
-    const d=SIG.days.map(v=>v.people),mx=Math.max(3,...d),T=w<500?58:40,B=26,n=d.length;
-    const pts=d.map((v,i)=>[10+(w-36)*i/(n-1),T+(h-T-B)*(1-v/mx)]);
-    for(let i=0;i<4;i++){x.beginPath();x.moveTo(0,T+(h-T-B)*i/3);x.lineTo(w,T+(h-T-B)*i/3);x.strokeStyle="rgba(170,160,255,.06)";x.stroke()}
-    // заливка
-    x.beginPath();curve(x,pts);x.lineTo(pts[n-1][0],h-B);x.lineTo(pts[0][0],h-B);x.closePath();
-    const gf=x.createLinearGradient(0,T,0,h-B);gf.addColorStop(0,"rgba(25,211,197,.32)");gf.addColorStop(1,"rgba(25,211,197,0)");x.fillStyle=gf;x.fill();
-    // линия
-    const gl=x.createLinearGradient(0,0,w,0);gl.addColorStop(0,"#19d3c5");gl.addColorStop(.6,"#8b6cff");gl.addColorStop(1,"#ff4f8b");
-    x.beginPath();curve(x,pts);x.strokeStyle=gl;x.lineWidth=3;x.shadowColor="rgba(139,108,255,.8)";x.shadowBlur=18;x.stroke();x.shadowBlur=0;
-    // бегущий блик по линии
-    if(!REDUCED){const k=(SIG.t%240)/240,i=Math.min(n-2,Math.floor(k*(n-1))),f=k*(n-1)-i,px=pts[i][0]+(pts[i+1][0]-pts[i][0])*f,py=pts[i][1]+(pts[i+1][1]-pts[i][1])*f;
-      const rg=x.createRadialGradient(px,py,0,px,py,14);rg.addColorStop(0,"rgba(255,255,255,.85)");rg.addColorStop(.35,"rgba(190,240,255,.35)");rg.addColorStop(1,"rgba(255,255,255,0)");x.fillStyle=rg;x.beginPath();x.arc(px,py,14,0,7);x.fill()}
-    // сегодня + импульсы новых людей
-    const L=pts[n-1];x.fillStyle="#fff";x.beginPath();x.arc(L[0],L[1],5,0,7);x.fill();
-    SIG.pulses=SIG.pulses.filter(p=>p.t<90);SIG.pulses.forEach(p=>{p.t++;if(p.t<0)return;const r=6+p.t*.9;x.beginPath();x.arc(L[0],L[1],r,0,7);x.strokeStyle=`rgba(255,79,139,${1-p.t/90})`;x.lineWidth=2;x.stroke()});
-    // подписи дней
-    x.fillStyle="#5f5a82";x.font="600 11px Oxa,Man,sans-serif";x.textAlign="center";
-    const stp=w<500?4:3;SIG.days.forEach((v,i)=>{if(dayLbl(i,n,stp)){const dd=new Date(v.day);x.fillText(i===n-1?"сегодня":dd.getDate()+"."+String(dd.getMonth()+1).padStart(2,"0"),Math.min(w-26,Math.max(18,pts[i][0])),h-6)}});
-    SIG.t++;if(!REDUCED||SIG.pulses.length)SIG.raf=requestAnimationFrame(draw)};
-  draw()}
-function drawDays(days){const[x,w,h]=setupCanvas($("#cvDays"));const L=34,B=22,T=10,cw=w-L-6,chh=h-B-T;
-  const mx=Math.max(4,...days.map(d=>d.clicks)),step=Math.pow(10,Math.floor(Math.log10(mx))),top=Math.ceil(mx/step)*step;
-  x.font="600 11px Oxa,Man,sans-serif";x.fillStyle="#5f5a82";x.strokeStyle="rgba(170,160,255,.07)";
-  for(let i=0;i<=4;i++){const y=T+chh-chh*i/4;x.beginPath();x.moveTo(L,y);x.lineTo(w,y);x.stroke();x.textAlign="right";x.fillText(Math.round(top*i/4),L-7,y+4)}
-  const n=days.length,bw=cw/n;
-  days.forEach((d,i)=>{const bh=d.clicks/top*chh,bx=L+i*bw+bw*.2,by=T+chh-bh,g=x.createLinearGradient(0,by,0,T+chh);g.addColorStop(0,"rgba(139,108,255,.85)");g.addColorStop(1,"rgba(139,108,255,.08)");x.fillStyle=g;rr(x,bx,by,bw*.6,bh,5);
-    if(dayLbl(i,n,Math.ceil(n/7))){x.fillStyle="#5f5a82";x.textAlign="center";const dd=new Date(d.day);x.fillText(dd.getDate()+"."+String(dd.getMonth()+1).padStart(2,"0"),L+i*bw+bw/2,h-5)}});
-  const pts=days.map((d,i)=>[L+i*bw+bw/2,T+chh-d.people/top*chh]);x.beginPath();curve(x,pts);x.strokeStyle="#19d3c5";x.lineWidth=2.5;x.shadowColor="#19d3c5";x.shadowBlur=10;x.stroke();x.shadowBlur=0}
-function drawHours(hs){const[x,w,h]=setupCanvas($("#cvHours"));const B=18,mx=Math.max(1,...hs),bw=w/24;
-  hs.forEach((v,i)=>{const bh=(h-B-4)*v/mx,a=.15+.85*v/mx;x.fillStyle=`rgba(${Math.round(25+230*i/23)},${Math.round(211-132*i/23)},${Math.round(197-58*i/23)},${a})`;rr(x,i*bw+1.5,h-B-bh,bw-3,Math.max(bh,2),3)});
-  x.fillStyle="#5f5a82";x.font="600 10px Oxa,Man,sans-serif";x.textAlign="center";[0,6,12,18,23].forEach(i=>x.fillText(i,i*bw+bw/2,h-4))}
-addEventListener("resize",()=>{clearTimeout(S.rz);S.rz=setTimeout(()=>{if(S.page==="ov"&&S.stats){drawDays(S.stats.days);drawHours(S.stats.hours)}},150)});
+  $("#feed").innerHTML=st.recent.length?`<tr><th>ВРЕМЯ</th><th class="c-ch">КАНАЛ</th><th>МОДЕЛЬ / МЕТКА</th><th>ГЕО</th><th class="c-app">ОТКУДА</th><th class="r">СТАТУС</th></tr>`+st.recent.slice(0,10).map(r=>{const k=r.ts+r.slug,isNew=!first&&!S.seen.has(k);S.seen.add(k);
+    const why={own:"СВОЙ",repeat:"ПОВТОР",cap_vis:"ЛИМИТ",cap_ip:"ЛИМИТ IP"}[r.why]||"";
+    return`<tr class="${isNew?"new":""}"><td class="mono di">${hm(r.ts)}</td><td class="c-ch">${chI(r.ch)}</td><td><b>${esc(r.model)}</b> <span class="di mono sm c-slug">${esc(r.slug)}</span></td><td class="c-geo" style="white-space:nowrap">${CC(r.cc)} <span class="mu">${esc(r.city||"")}</span></td><td class="c-app">${esc(r.app)}</td><td class="r">${r.scored?`<span class="tag ac">+1</span>`:`<span class="tag">${why}</span>`}</td></tr>`}).join(""):`<tr><td class="empty">Здесь появятся переходы в реальном времени</td></tr>`}
+function drawSignal(){const cv=$("#sigCv");if(!cv||!S.stats||!cv.clientWidth)return;const days=S.stats.days,[x,w,h]=setupCanvas(cv,cv.clientHeight||250),L=34,R=8,T=12,B=22,n=days.length;
+  const mx=niceTop(Math.max(...days.map(d=>d.clicks),4)),X=i=>L+(w-L-R)*i/(n-1),Y=v=>T+(h-T-B)*(1-v/mx);
+  x.font=FONT;x.textAlign="right";
+  for(let i=0;i<=4;i++){const y=Math.round(T+(h-T-B)*i/4)+.5;x.strokeStyle="rgba(255,255,255,"+(i===4?.14:.05)+")";x.beginPath();x.moveTo(L,y);x.lineTo(w-R,y);x.stroke();x.fillStyle="#596071";x.fillText(fmt(Math.round(mx*(1-i/4))),L-6,y+3)}
+  x.textAlign="center";days.forEach((d,i)=>{x.strokeStyle="rgba(255,255,255,.12)";x.beginPath();x.moveTo(X(i),h-B);x.lineTo(X(i),h-B+3);x.stroke();if((i%(w<520?4:2)===0&&X(n-1)-X(i)>48)||i===n-1){x.fillStyle=i===n-1?"#e6e8ee":"#596071";x.fillText(i===n-1?"TODAY":dm(d.day),Math.min(w-R-14,Math.max(L+12,X(i))),h-6)}});
+  const pc=days.map((d,i)=>[X(i),Y(d.clicks)]),pp=days.map((d,i)=>[X(i),Y(d.people)]);
+  x.setLineDash([3,3]);x.beginPath();curve(x,pc);x.strokeStyle="#596071";x.lineWidth=1.2;x.stroke();x.setLineDash([]);
+  x.beginPath();curve(x,pp);x.lineTo(X(n-1),h-B);x.lineTo(X(0),h-B);x.closePath();const g=x.createLinearGradient(0,T,0,h-B);g.addColorStop(0,"rgba(46,230,214,.22)");g.addColorStop(1,"rgba(46,230,214,0)");x.fillStyle=g;x.fill();
+  x.beginPath();curve(x,pp);x.strokeStyle="#2ee6d6";x.lineWidth=1.8;x.stroke();
+  const Lp=pp[n-1];x.fillStyle="#2ee6d6";x.beginPath();x.arc(Lp[0],Lp[1],3.2,0,7);x.fill();
+  const age=S.pulse?(performance.now()-S.pulse)/1000:9;if(age<2.4&&!REDUCED){x.strokeStyle=`rgba(46,230,214,${1-age/2.4})`;x.lineWidth=1.5;x.beginPath();x.arc(Lp[0],Lp[1],4+age*16,0,7);x.stroke();requestAnimationFrame(drawSignal)}
+  const i=S.hover;if(i>=0&&i<n){const d=days[i];x.strokeStyle="rgba(230,232,238,.35)";x.setLineDash([2,3]);x.beginPath();x.moveTo(X(i),T);x.lineTo(X(i),h-B);x.stroke();x.setLineDash([]);
+    [[pp[i],"#2ee6d6"],[pc[i],"#8a90a2"]].forEach(([q,c])=>{x.fillStyle="#07080b";x.beginPath();x.arc(q[0],q[1],4,0,7);x.fill();x.strokeStyle=c;x.lineWidth=1.5;x.stroke()});
+    const lines=[new Date(d.day).toLocaleDateString("ru-RU",{weekday:"short",day:"numeric",month:"short"}),`люди  ${fmt(d.people)}`,`клики  ${fmt(d.clicks)}`];
+    x.font="600 11px Oxa, Man, sans-serif";const bw=Math.max(...lines.map(s=>x.measureText(s).width))+20,bh=58,bx=X(i)+12+bw>w-R?X(i)-12-bw:X(i)+12,by=T+6;
+    x.fillStyle="rgba(17,20,27,.96)";x.strokeStyle="rgba(255,255,255,.14)";x.beginPath();x.roundRect?x.roundRect(bx,by,bw,bh,5):x.rect(bx,by,bw,bh);x.fill();x.stroke();
+    x.textAlign="left";lines.forEach((s,k)=>{x.fillStyle=k===0?"#8a90a2":k===1?"#2ee6d6":"#e6e8ee";x.fillText(s,bx+10,by+17+k*15)})}}
+(()=>{const cv=$("#sigCv");const mv=e=>{const r=cv.getBoundingClientRect(),n=S.stats?S.stats.days.length:14,L=34,R=8,cx=(e.touches?e.touches[0].clientX:e.clientX)-r.left;S.hover=Math.max(0,Math.min(n-1,Math.round((cx-L)/((r.width-L-R)/(n-1)))));drawSignal()};
+  cv.addEventListener("mousemove",mv);cv.addEventListener("touchstart",mv,{passive:true});cv.addEventListener("touchmove",mv,{passive:true});cv.addEventListener("mouseleave",()=>{S.hover=-1;drawSignal()})})();
+function drawHours(hs){const[x,w,h]=setupCanvas($("#cvHours"));const B=16,mx=Math.max(1,...hs),bw=w/24,pk=hs.indexOf(mx);
+  hs.forEach((v,i)=>{const bh=(h-B-4)*v/mx;x.fillStyle=i===pk?"#2ee6d6":`rgba(138,144,162,${.25+.5*v/mx})`;x.fillRect(i*bw+1,h-B-bh,bw-2,Math.max(bh,1))});
+  x.strokeStyle="rgba(255,255,255,.14)";x.beginPath();x.moveTo(0,h-B+.5);x.lineTo(w,h-B+.5);x.stroke();
+  x.fillStyle="#596071";x.font=FONT;x.textAlign="center";[0,6,12,18,23].forEach(i=>x.fillText(String(i).padStart(2,"0"),i*bw+bw/2,h-3))}
+function drawCanvases(){if(!S.stats)return;drawSignal();drawHours(S.stats.hours);if(S.sparks&&$("#s0")){spark($("#s0"),S.sparks[0]);spark($("#s1"),S.sparks[1],"#8a90a2");spark($("#s2"),S.sparks[2])}}
+addEventListener("resize",()=>{clearTimeout(S.rz);S.rz=setTimeout(()=>{if(S.page==="ov")drawCanvases()},150)});
 
-/* чек-лист первого дня */
 const ONB_ACT={model:()=>openModel(),link:()=>go("lk"),check:()=>go("lk"),person:()=>go("lk"),tg:()=>openTg()};
 function renderOnb(){const o=S.me.onboarding,box=$("#onb");if(!o||o.hidden){box.classList.add("hide");return}
-  const prev=+(LS.get("nf_onb")||0);LS.set("nf_onb",o.done);if(o.done>prev&&prev>0)confetti();
-  const next=o.steps.find(s=>!s.done),C=2*Math.PI*24,k=o.done/o.total;box.classList.remove("hide");
-  box.innerHTML=`<div class="onb-h"><div class="ring"><svg width="58" height="58"><circle cx="29" cy="29" r="24" stroke="rgba(170,160,255,.15)" stroke-width="6" fill="none"/><circle cx="29" cy="29" r="24" stroke="url(#gSig)" stroke-width="6" fill="none" stroke-linecap="round" stroke-dasharray="${C*k} ${C}"/></svg><b>${o.done}/${o.total}</b></div>
-   <h3>Первый день в кабинете<br><span class="mut small" style="font-family:Man,sans-serif">${next?"Следующий шаг: "+esc(next.title.toLowerCase()):"Всё готово"}</span></h3><button class="btn ghost sm" id="onbHide">Скрыть</button></div>
-   <div class="steps">${o.steps.map(s=>`<div class="step ${s.done?"done":""} ${next&&s.id===next.id?"next":""}"><i>${s.done?"✓":""}</i><div><b>${esc(s.title)}</b><span>${esc(s.hint)}</span></div></div>`).join("")}</div>
-   ${next?`<div class="onb-cta"><button class="btn" id="onbGo">${esc(next.title)}</button></div>`:""}`;
+  const prev=+(LS.get("nf_onb")||0);LS.set("nf_onb",o.done);if(o.done>prev&&prev>0)celebrate("Шаг пройден");
+  const next=o.steps.find(s=>!s.done);box.classList.remove("hide");
+  box.innerHTML=`<div class="pn-h"><h3>Первый день в кабинете <span class="tag ${o.done===o.total?"ac":""}">${o.done}/${o.total}</span></h3><div style="display:flex;gap:6px">${next?`<button class="btn ac s" id="onbGo">${esc(next.title)}</button>`:""}<button class="btn gh s" id="onbHide">Скрыть</button></div></div>
+   <div class="pipe">${o.steps.map((s,i)=>`<div class="st ${s.done?"done":""} ${next&&s.id===next.id?"next":""}"><div class="n">${s.done?"✓ ":""}STEP ${String(i+1).padStart(2,"0")}</div><b>${esc(s.title)}</b><span>${esc(s.hint)}</span></div>`).join("")}</div>`;
   if(next)$("#onbGo").onclick=ONB_ACT[next.id];
   $("#onbHide").onclick=async()=>{await api("/api/onboarding/hide",{method:"POST",body:{}});S.me.onboarding.hidden=true;renderOnb()}}
-function onboardHTML(){return`<section class="panel onb" style="display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center"><div><h2 style="margin:0 0 8px">Начнём с первой модели</h2><p class="mut" style="margin:0">Имя, ссылка на Fanvue или Telegram — и кабинет сразу выдаст ссылки под каждый канал.</p></div><button class="btn" onclick="openModel()">Добавить модель</button></section>`}
+function onboardHTML(){return`<section class="pn"><div class="pn-b" style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;justify-content:space-between"><div><h2 style="margin:0 0 4px">Начнём с первой модели</h2><p class="mu" style="margin:0">Имя и ссылка на Fanvue или Telegram — кабинет сразу выдаст ссылки под каждый канал.</p></div><button class="btn" onclick="openModel()">${ic("i-plus")}Добавить модель</button></div></section>`}
 
-/* ранги и ачивки */
 function renderAch(){const A=S.ach;if(!A)return;let ms=A.models;if(S.mid!=="all")ms=ms.filter(m=>String(m.mid)===String(S.mid));
   const known=new Set((LS.get("nf_badges")||"").split(",").filter(Boolean)),now=A.models.flatMap(m=>m.badges.map(b=>m.mid+":"+b.id));
-  if(known.size&&now.some(k=>!known.has(k))){confetti();toast("Новая ачивка!")}LS.set("nf_badges",now.join(","));
+  if(known.size&&now.some(k=>!known.has(k)))celebrate("Новая ачивка");LS.set("nf_badges",now.join(","));
   $("#ach").innerHTML=ms.length?ms.map(m=>{const rk=m.rank,got=new Set(m.badges.map(b=>b.id));
-    return`<div class="ach-row"><div class="rk"><span class="ico">${rk.icon}</span><div style="flex:1;min-width:0"><b>${esc(m.name)}</b> <span class="mut">— ${esc(rk.name)}</span>
-     <div class="mut small">${rk.next_at?`до «${esc(rk.next_name)}» ещё ${fmt(rk.next_at-rk.people)} ${plural(rk.next_at-rk.people,"человек","человека","человек")}`:"максимальный ранг"}</div>
-     <div class="prog"><i style="width:${Math.max(3,rk.progress*100)}%"></i></div></div></div>
-     <div class="bdg">${A.defs.map(d=>`<span class="${got.has(d.id)?"on":""}" title="${esc(d.desc)}">${d.icon} ${esc(d.name)}</span>`).join("")}</div></div>`}).join(""):`<div class="empty">Добавь модель — и здесь появятся ранг и ачивки</div>`}
+    return`<div class="ach"><div><div style="display:flex;gap:10px;align-items:center">${tierHTML(rk.lvl)}<b>${esc(m.name)}</b><span class="mu">${esc(rk.name)}</span></div>
+     <div class="di sm" style="margin-top:4px">${rk.next_at?`до «${esc(rk.next_name)}»: <span class="mono">${fmt(rk.next_at-rk.people)}</span> ${plural(rk.next_at-rk.people,"человек","человека","человек")}`:"максимальный ранг"}</div><div class="prog"><i style="width:${Math.max(2,rk.progress*100)}%"></i></div></div>
+     <div class="bdg">${A.defs.map(d=>`<span class="${got.has(d.id)?"on":""}" title="${esc(d.desc)}">${ic("b-"+d.id)}${esc(d.name)}</span>`).join("")}</div></div>`}).join(""):`<div class="empty">Добавьте модель — здесь появятся ранг и ачивки</div>`}
 
-/* своя конверсия */
-async function loadConv(){const ms=activeModels();if(!ms.length)return;const mid=S.mid!=="all"?S.mid:ms[0].id;
-  let C;try{C=await api("/api/conv?mid="+mid)}catch(e){return}renderConv(C,mid)}
+async function loadConv(){const ms=activeModels();if(!ms.length)return;const mid=S.mid!=="all"?S.mid:ms[0].id;let C;try{C=await api("/api/conv?mid="+mid)}catch(e){return}renderConv(C,mid)}
 function renderConv(C,mid){const m=activeModels().find(x=>String(x.id)===String(mid))||{},cur=C.weeks[C.weeks.length-1],mxr=Math.max(1,...C.weeks.map(w=>w.rate||0));
-  $("#convBox").innerHTML=`<h3>Конверсия в подписку</h3><div class="mut small" style="margin:2px 0 10px">🔒 видишь только ты</div>
-   <div class="mut small">${esc(m.name||"")}: сколько подписчиков дали живые люди. Впиши новых подписчиков за неделю — посчитаем процент.</div>
-   <div class="conv-bars">${C.weeks.map(w=>`<div title="Неделя ${w.n}: ${w.people} людей${w.subs!=null?", "+w.subs+" подписок":""}"><span>${w.rate!=null?String(w.rate).replace(".",",")+"%":""}</span><i class="${w.rate==null?"na":""}" style="height:${w.rate!=null?Math.max(4,w.rate/mxr*72):12}px"></i>${w.n}</div>`).join("")}</div>
-   <form id="fConv" style="display:flex;gap:8px;margin-top:10px"><input class="in num" name="subs" type="number" min="0" max="100000" placeholder="подписок за неделю ${cur.n}" value="${cur.subs??""}"><button class="btn sm">Сохранить</button></form>
-   <div class="mut small" style="margin-top:8px">${cur.people?`На этой неделе ${fmt(cur.people)} ${plural(cur.people,"человек","человека","человек")}${cur.rate!=null?` → ${String(cur.rate).replace(".",",")}%`:""}`:"Людей на этой неделе пока нет"}</div>`;
-  $("#fConv").onsubmit=async e=>{e.preventDefault();const v=new FormData(e.target).get("subs");if(v==="")return;
-    try{renderConv(await api("/api/conv",{method:"POST",body:{mid:+mid,subs:+v}}),mid);toast("Сохранено")}catch(x){toast(x.message)}}}
+  $("#convBox").innerHTML=`<div class="pn-h"><h3>Конверсия в подписку</h3><span class="meta">PRIVATE</span></div><div class="pn-b">
+   <div class="mu sm">${esc(m.name||"")} · видите только вы. Впишите новых подписчиков за неделю — посчитаем процент от живых людей.</div>
+   <div class="cbars">${C.weeks.map(w=>`<div title="Неделя ${w.n}: ${w.people} людей${w.subs!=null?", "+w.subs+" подписок":""}"><span>${w.rate!=null?String(w.rate).replace(".",","):""}</span><i class="${w.rate==null?"na":""}" style="height:${w.rate!=null?Math.max(3,w.rate/mxr*56):10}px"></i>W${w.n}</div>`).join("")}</div>
+   <form id="fConv" style="display:flex;gap:6px;margin-top:10px"><input class="in mono" name="subs" type="number" min="0" max="100000" placeholder="подписок · W${cur.n}" value="${cur.subs??""}"><button class="btn s">Сохранить</button></form>
+   <div class="di xs mono" style="margin-top:8px">W${cur.n}: ${fmt(cur.people)} PEOPLE${cur.rate!=null?" → "+String(cur.rate).replace(".",",")+"%":""}</div></div>`;
+  $("#fConv").onsubmit=async e=>{e.preventDefault();const v=new FormData(e.target).get("subs");if(v==="")return;try{renderConv(await api("/api/conv",{method:"POST",body:{mid:+mid,subs:+v}}),mid);toast("Сохранено")}catch(x){toast(x.message)}}}
 
-/* ---------- модели и ссылки ---------- */
-function renderModels(){const box=$("#models"),ms=S.me.models;
-  if(!ms.length){box.innerHTML=onboardHTML();return}
-  const ls=(S.stats&&S.stats.links)||{},chOpts=S.me.channels.map(c=>`<option value="${c.id}">${CH_ICON[c.id]||""} ${esc(c.name)}</option>`).join("");
-  box.innerHTML=ms.map(m=>`<section class="panel mcard ${m.archived?"dim":""}">
+function renderModels(){const box=$("#models"),ms=S.me.models;if(!ms.length){box.innerHTML=onboardHTML();return}
+  const ls=(S.stats&&S.stats.links)||{},chOpts=S.me.channels.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("");
+  box.innerHTML=ms.map(m=>`<section class="pn mc ${m.archived?"di":""}">
    <div class="mh"><span class="ava">${esc((m.name[0]||"?").toUpperCase())}</span>
-    <div class="t"><b>${esc(m.name)}</b> ${m.rank?`<span class="chip" style="margin-left:6px">${m.rank.icon} ${esc(m.rank.name)}</span>`:""}${m.hidden?' <span class="chip">скрыта из лиги</span>':""}${m.archived?' <span class="chip">в архиве</span>':""}
-     <div>ведёт на <a href="${esc(m.target)}" target="_blank" rel="noopener noreferrer">${esc(m.target.replace(/^https?:\/\//,""))}</a></div></div>
-    <div class="acts">${m.links.length>1?`<button class="btn ghost sm" data-cmp="${m.id}">Сравнить ссылки</button>`:""}${m.links.length?`<button class="btn ghost sm" data-copyall="${m.id}">Копировать все</button>`:""}<button class="btn ghost sm" data-edit="${m.id}">Настроить</button></div></div>
-   ${m.links.map(l=>{const s=ls[l.id]||{};return`<div class="lk ${l.archived?"arch":""}"><span class="chi" title="${esc(l.ch_name)}">${CH_ICON[l.ch]||"🔗"}</span>
+    <div class="t"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><b>${esc(m.name)}</b>${m.rank?`${tierHTML(m.rank.lvl)}<span class="mu sm">${esc(m.rank.name)}</span>`:""}${m.hidden?'<span class="tag">HIDDEN</span>':""}${m.archived?'<span class="tag">ARCHIVED</span>':""}</div>
+     <div>→ <a href="${esc(m.target)}" target="_blank" rel="noopener noreferrer">${esc(m.target.replace(/^https?:\/\//,""))}</a></div></div>
+    <div class="acts">${m.links.length>1?`<button class="btn gh s" data-cmp="${m.id}">${ic("i-cmp")}Сравнить</button>`:""}${m.links.length?`<button class="btn gh s" data-copyall="${m.id}">${ic("i-copy")}Все ссылки</button>`:""}<button class="btn gh s ic" data-edit="${m.id}" aria-label="Настроить модель">${ic("i-gear")}</button></div></div>
+   ${m.links.map(l=>{const s=ls[l.id]||{};return`<div class="lk ${l.archived?"arch":""}"><span class="ico" title="${esc(l.ch_name)}">${chI(l.ch)}</span>
      <div style="min-width:0"><div class="url">${esc(l.url.replace("https://",""))}</div>
-      <div class="sub">${esc(l.ch_name)}${l.note?", "+esc(l.note):""}${l.target?" → "+esc(l.target.replace(/^https?:\/\//,"")):""}</div>
-      ${l.first_at?`<span class="lst ok">● работает, первый человек ${new Date(l.first_at).toLocaleDateString("ru-RU",{day:"numeric",month:"short"})}</span>`
-        :l.checked_at?`<span class="lst chk">✓ проверена ${ago(l.checked_at)}${l.checked_app?", "+esc(l.checked_app):""}. Ждём первого человека</span>`
-        :`<span class="lst">○ не проверена</span>`}</div>
+      <div class="sub">${l.first_at?`<span class="state ok">LIVE</span>`:l.checked_at?`<span class="state ck">CHECKED</span>`:`<span class="state">NOT CHECKED</span>`}<span>${esc(l.ch_name)}${l.note?" · "+esc(l.note):""}${l.target?" → "+esc(l.target.replace(/^https?:\/\//,"")):""}</span></div></div>
      <div class="st"><div><b>${fmt(s.people||0)}</b>людей</div><div><b>${fmt(s.today||0)}</b>сегодня</div></div>
-     <div class="acts"><button class="btn sm" data-copy="${esc(l.url)}">Копировать</button><a class="btn ghost sm" href="${esc(l.url)}?check=1" target="_blank" rel="noopener" data-check title="Откроется как у подписчика, в статистику не попадёт">Проверить</a><button class="btn ghost sm more" data-lmenu="${l.id}" aria-label="Настройки ссылки">⋯</button></div></div>`}).join("")}
-   ${m.archived?"":`<form class="addlk" data-mid="${m.id}"><label class="f"><span>Новая ссылка: канал</span><select class="in" name="ch">${chOpts}</select></label>
-     <label class="f"><span>Своя метка, необязательно</span><input class="in" name="slug" placeholder="${esc(m.slug)}-reels" pattern="[a-z0-9][a-z0-9\\-]{1,39}"></label>
-     <label class="f"><span>Заметка, необязательно</span><input class="in" name="note" placeholder="аккаунт @anna.ai"></label><button class="btn ghost">Добавить ссылку</button></form>`}
-  </section>`).join("")+`<p class="mut small" style="text-align:center">Архив только прячет ссылку из списка — в старых био она продолжает работать.</p>`;
-  $$("[data-copy]").forEach(b=>b.onclick=()=>copy(b.dataset.copy,"Ссылка скопирована — ставь в био"));
-  $$("[data-check]").forEach(b=>b.addEventListener("click",()=>{toast("Открываю как у подписчика — в статистику не попадёт");setTimeout(refreshMe,4000)}));
+     <div class="acts"><button class="btn s" data-copy="${esc(l.url)}">${ic("i-copy")}Копировать</button><a class="btn gh s" href="${esc(l.url)}?check=1" target="_blank" rel="noopener" data-check title="Откроется как у подписчика, в статистику не попадёт">${ic("i-play")}Проверить</a><button class="btn gh s ic more" data-lmenu="${l.id}" aria-label="Настройки ссылки">${ic("i-more")}</button></div></div>`}).join("")}
+   ${m.archived?"":`<form class="addlk" data-mid="${m.id}"><label class="f"><span>Новая ссылка · канал</span><select class="in" name="ch">${chOpts}</select></label>
+     <label class="f"><span>Своя метка (необязательно)</span><input class="in mono" name="slug" placeholder="${esc(m.slug)}-reels" pattern="[a-z0-9][a-z0-9\\-]{1,39}"></label>
+     <label class="f"><span>Заметка (необязательно)</span><input class="in" name="note" placeholder="аккаунт @anna.ai"></label><button class="btn gh">${ic("i-plus")}Добавить</button></form>`}
+  </section>`).join("")+`<p class="di sm" style="text-align:center">Архив только прячет ссылку из списка — в старых био она продолжает работать.</p>`;
+  $$("[data-copy]").forEach(b=>b.onclick=()=>copy(b.dataset.copy,"Ссылка скопирована"));
+  $$("[data-check]").forEach(b=>b.addEventListener("click",()=>{toast("Тест-переход: в статистику не попадёт");setTimeout(refreshMe,4000)}));
   $$("[data-copyall]").forEach(b=>b.onclick=()=>{const m=S.me.models.find(x=>x.id==b.dataset.copyall);copy(m.links.filter(l=>!l.archived).map(l=>`${l.ch_name}: ${l.url}${l.note?" ("+l.note+")":""}`).join("\n"),"Все ссылки скопированы")});
   $$("[data-edit]").forEach(b=>b.onclick=()=>openModel(S.me.models.find(m=>m.id==b.dataset.edit)));
   $$("[data-lmenu]").forEach(b=>b.onclick=()=>openLink(b.dataset.lmenu));
   $$("[data-cmp]").forEach(b=>b.onclick=()=>openCompare(+b.dataset.cmp));
   $$(".addlk").forEach(f=>f.onsubmit=async e=>{e.preventDefault();const d=Object.fromEntries(new FormData(f));d.mid=+f.dataset.mid;
-    try{const r=await api("/api/links",{method:"POST",body:d});S.me.models=r.models;renderModels();toast("Ссылка готова — нажми «Проверить»")}catch(x){toast(x.message)}});
-  if(!S.stats&&activeModels().length)api("/api/stats?mid=all").then(r=>{S.stats=r;if(S.page==="lk")renderModels()}).catch(()=>{});
-}
-function modal(html,wide){$("#modalBox").innerHTML=html;$("#modal").classList.toggle("wide",!!wide);$("#modal").classList.remove("hide");$$("#modalBox [data-close]").forEach(b=>b.onclick=closeModal);setTimeout(()=>$("#modalBox input,#modalBox button")?.focus(),50)}
+    try{const r=await api("/api/links",{method:"POST",body:d});S.me.models=r.models;renderModels();toast("Ссылка готова — нажмите «Проверить»")}catch(x){toast(x.message)}});
+  if(!S.stats&&activeModels().length)api("/api/stats?mid=all").then(r=>{S.stats=r;if(S.page==="lk")renderModels()}).catch(()=>{})}
+function modal(html,cls){$("#modalBox").innerHTML=html;$("#modal").className="modal "+(cls||"");$$("#modalBox [data-close]").forEach(b=>b.onclick=closeModal);setTimeout(()=>$("#modalBox input:not([type=checkbox]):not([type=radio])")?.focus(),40)}
 function closeModal(){$("#modal").classList.add("hide")}
 $("#modal").onclick=e=>{if(e.target.id==="modal")closeModal()};
-addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
-const X=`<button class="icon-btn" data-close aria-label="Закрыть">✕</button>`;
+const MH=t=>`<div class="pn-h"><h3>${t}</h3><button class="btn gh s ic" data-close aria-label="Закрыть">${ic("i-x")}</button></div>`;
 
 async function openCompare(mid){const m=S.me.models.find(x=>x.id===mid);if(!m)return;const ids=m.links.filter(l=>!l.archived).slice(0,6).map(l=>l.id);
   let C;try{C=await api("/api/compare?ids="+ids.join(","))}catch(e){toast(e.message);return}
-  const L=C.links.slice().sort((a,b)=>b.week-a.week),mxw=Math.max(1,...L.map(l=>l.week));
-  modal(`<div class="mx"><h2>Какая ссылка приводит людей</h2>${X}</div><p class="mut" style="margin:0 0 14px">${esc(m.name)}: живые люди по каждой ссылке за 14 дней.</p>
-   <canvas id="cmpCv" height="200"></canvas><div class="legend" style="margin:10px 0 16px">${C.links.map((l,i)=>`<span><i style="background:${CH_COL[i]}"></i>${esc(l.ch_name)}${l.note?" — "+esc(l.note):""}</span>`).join("")}</div>
-   <div class="list">${L.map((l,i)=>{const d=l.week-l.prev;return`<div class="it"><span class="dim num" style="width:18px">${i+1}</span><span class="chi">${CH_ICON[l.ch]||"🔗"}</span>
-    <span class="grow"><b>${esc(l.slug)}</b><br><span class="mut small">${esc(l.ch_name)}${l.note?", "+esc(l.note):""}</span><div class="prog"><i style="width:${l.week/mxw*100}%"></i></div></span>
-    <span style="text-align:right"><b class="num" style="font-size:20px">${fmt(l.week)}</b><br><span class="small ${d>=0?"up":"down"}">${d>=0?"+":""}${fmt(d)} к прошлой</span></span></div>`}).join("")}</div>
-   ${L.length>1&&L[0].week?`<p class="mut small" style="margin:14px 0 0">Лидер недели — ${esc(L[0].ch_name)}${L[0].note?" ("+esc(L[0].note)+")":""}: ${Math.round(L[0].week/Math.max(1,L.reduce((s,l)=>s+l.week,0))*100)}% людей модели.</p>`:""}`,true);
-  const[x,w,h]=setupCanvas($("#cmpCv")),mx=Math.max(2,...C.links.flatMap(l=>l.days)),n=C.days.length;
-  for(let i=0;i<4;i++){x.beginPath();x.moveTo(0,10+(h-30)*i/3);x.lineTo(w,10+(h-30)*i/3);x.strokeStyle="rgba(170,160,255,.07)";x.stroke()}
-  C.links.forEach((l,j)=>{const pts=l.days.map((v,i)=>[8+(w-16)*i/(n-1),10+(h-30)*(1-v/mx)]);x.beginPath();curve(x,pts);x.strokeStyle=CH_COL[j];x.lineWidth=2.4;x.shadowColor=CH_COL[j];x.shadowBlur=8;x.stroke();x.shadowBlur=0});
-  x.fillStyle="#5f5a82";x.font="600 11px Oxa,Man,sans-serif";x.textAlign="center";C.days.forEach((d,i)=>{if(dayLbl(i,n,w<500?4:3)){const dd=new Date(d);x.fillText(dd.getDate()+"."+String(dd.getMonth()+1).padStart(2,"0"),Math.min(w-18,Math.max(14,8+(w-16)*i/(n-1))),h-4)}})}
-
+  const L=C.links.slice().sort((a,b)=>b.week-a.week),tot=Math.max(1,L.reduce((s,l)=>s+l.week,0));
+  modal(MH(`Сравнение ссылок · ${esc(m.name)}`)+`<div class="pn-b"><canvas id="cmpCv" height="190"></canvas><div class="legend" style="margin:10px 0 6px">${C.links.map((l,i)=>`<span><i style="background:${COLS[i]}"></i>${esc(l.ch_name)}${l.note?" · "+esc(l.note):""}</span>`).join("")}</div>
+   <table class="tbl"><tr><th>#</th><th>ССЫЛКА</th><th class="r">НЕДЕЛЯ</th><th class="r">Δ</th><th class="r">ДОЛЯ</th></tr>${L.map((l,i)=>{const d=l.week-l.prev;return`<tr><td class="mono di">${String(i+1).padStart(2,"0")}</td><td>${chI(l.ch)} <span class="mono">${esc(l.slug)}</span></td><td class="r mono">${fmt(l.week)}</td><td class="r mono ${d>=0?"pos":"neg"}">${d>=0?"+":""}${fmt(d)}</td><td class="r mono">${Math.round(l.week/tot*100)}%</td></tr>`}).join("")}</table></div>`,"wide");
+  const[x,w,h]=setupCanvas($("#cmpCv")),mx=niceTop(Math.max(2,...C.links.flatMap(l=>l.days))),n=C.days.length,Lx=30,X=i=>Lx+(w-Lx-6)*i/(n-1),Y=v=>6+(h-24)*(1-v/mx);
+  x.font=FONT;x.textAlign="right";for(let i=0;i<=3;i++){const y=6+(h-24)*i/3;x.strokeStyle="rgba(255,255,255,.05)";x.beginPath();x.moveTo(Lx,y);x.lineTo(w,y);x.stroke();x.fillStyle="#596071";x.fillText(Math.round(mx*(1-i/3)),Lx-5,y+3)}
+  C.links.forEach((l,j)=>{x.beginPath();curve(x,l.days.map((v,i)=>[X(i),Y(v)]));x.strokeStyle=COLS[j];x.lineWidth=1.6;x.stroke()});
+  x.textAlign="center";x.fillStyle="#596071";C.days.forEach((d,i)=>{if(i%(w<520?4:2)===0||i===n-1)x.fillText(i===n-1?"TODAY":dm(d),Math.min(w-16,Math.max(Lx+10,X(i))),h-3)})}
 function openModel(m){if(!(m&&m.id))m=null;
-  const chs=S.me.channels.filter(c=>c.id!=="other").map(c=>`<label><input type="checkbox" name="ch" value="${c.id}" ${["threads","tiktok","instagram"].includes(c.id)?"checked":""}><span>${CH_ICON[c.id]} ${esc(c.name)}</span></label>`).join("");
-  modal(`<div class="mx"><h2>${m?"Настройки модели":"Новая модель"}</h2>${X}</div><form id="fModel" style="margin-top:16px">
+  const chs=S.me.channels.filter(c=>c.id!=="other").map(c=>`<label><input type="checkbox" name="ch" value="${c.id}" ${["threads","tiktok","instagram"].includes(c.id)?"checked":""}><span>${chI(c.id)}${esc(c.name)}</span></label>`).join("");
+  modal(MH(m?"Настройки модели":"Новая модель")+`<form id="fModel" class="pn-b">
    <label class="f"><span>Имя модели</span><input class="in" name="name" maxlength="40" required value="${m?esc(m.name):""}" placeholder="Anna Moore"></label>
-   <label class="f"><span>Куда вести людей</span><input class="in" name="target" required value="${m?esc(m.target):""}" placeholder="https://fanvue.com/… или https://t.me/…"></label>
-   ${m?`<label class="toggle"><input type="checkbox" name="hidden" ${m.hidden?"checked":""}><span><b>Не показывать в лиге</b><br><span class="mut small">Статистика продолжит считаться, просто модели не будет в общей таблице.</span></span></label>`
-     :`<div class="f"><span class="mut small" style="display:block;margin:0 0 8px">Сразу сделать ссылки для каналов</span><div class="chs">${chs}</div></div>`}
-   <div class="err"></div>
-   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn" style="flex:1">${m?"Сохранить":"Создать и получить ссылки"}</button>
-    ${m?`<button type="button" class="btn ${m.archived?"ghost":"danger"}" id="arch">${m.archived?"Вернуть из архива":"В архив"}</button>`:""}</div></form>`);
+   <label class="f"><span>Куда вести людей</span><input class="in mono" name="target" required value="${m?esc(m.target):""}" placeholder="https://fanvue.com/…"></label>
+   ${m?`<label class="toggle"><input type="checkbox" name="hidden" ${m.hidden?"checked":""}><span><b>Не показывать в лиге</b><br><span class="mu sm">Статистика продолжит считаться, модели просто не будет в общей таблице.</span></span></label>`
+     :`<div class="f"><span class="mu sm" style="display:block;margin:0 0 8px">Сразу создать ссылки для каналов</span><div class="chs">${chs}</div></div>`}
+   <div class="err"></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn" style="flex:1">${m?"Сохранить":"Создать и получить ссылки"}</button>${m?`<button type="button" class="btn ${m.archived?"gh":"dg"}" id="arch">${m.archived?"Вернуть из архива":"В архив"}</button>`:""}</div></form>`);
   $("#fModel").onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.target),er=e.target.querySelector(".err");
-    try{const r=m?await api("/api/models/"+m.id,{method:"PATCH",body:{name:fd.get("name"),target:fd.get("target"),hidden:fd.get("hidden")==="on"}})
-      :await api("/api/models",{method:"POST",body:{name:fd.get("name"),target:fd.get("target"),channels:fd.getAll("ch")}});
+    try{const r=m?await api("/api/models/"+m.id,{method:"PATCH",body:{name:fd.get("name"),target:fd.get("target"),hidden:fd.get("hidden")==="on"}}):await api("/api/models",{method:"POST",body:{name:fd.get("name"),target:fd.get("target"),channels:fd.getAll("ch")}});
       S.me.models=r.models;closeModal();renderMbar();refreshMe();if(S.page!=="lk")go("lk");else renderModels();toast(m?"Сохранено":"Модель создана — ссылки готовы")}catch(x){er.textContent=x.message}};
   if(m)$("#arch").onclick=async()=>{const r=await api("/api/models/"+m.id,{method:"PATCH",body:{archived:!m.archived}});S.me.models=r.models;closeModal();renderMbar();renderModels()}}
 function openLink(id){let l,mm;S.me.models.forEach(m=>m.links.forEach(x=>{if(x.id==id){l=x;mm=m}}));if(!l)return;
-  modal(`<div class="mx"><h2>${CH_ICON[l.ch]||"🔗"} ${esc(l.ch_name)}</h2>${X}</div><div class="num" style="margin:6px 0 16px;color:var(--sig)">${esc(l.url)}</div>
-   <form id="fLink"><label class="f"><span>Заметка</span><input class="in" name="note" maxlength="60" value="${esc(l.note)}"></label>
-   <label class="f"><span>Своя ссылка назначения — если пусто, ведёт на ссылку модели</span><input class="in" name="target" value="${esc(l.target)}" placeholder="${esc(mm.target)}"></label>
-   <div class="err"></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" style="flex:1">Сохранить</button><button type="button" class="btn ${l.archived?"ghost":"danger"}" id="larch">${l.archived?"Вернуть":"В архив"}</button></div>
-   <p class="mut small" style="margin:12px 0 0">Архив только прячет ссылку — она продолжает работать и считать переходы.</p></form>`);
+  modal(MH(`${chI(l.ch)} ${esc(l.ch_name)}`)+`<form id="fLink" class="pn-b"><div class="mono" style="margin:0 0 14px;color:var(--ac)">${esc(l.url)}</div>
+   <label class="f"><span>Заметка</span><input class="in" name="note" maxlength="60" value="${esc(l.note)}"></label>
+   <label class="f"><span>Своя ссылка назначения — пусто: ведёт на ссылку модели</span><input class="in mono" name="target" value="${esc(l.target)}" placeholder="${esc(mm.target)}"></label>
+   <div class="err"></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" style="flex:1">Сохранить</button><button type="button" class="btn ${l.archived?"gh":"dg"}" id="larch">${l.archived?"Вернуть":"В архив"}</button></div>
+   <p class="di sm" style="margin:12px 0 0">Архив прячет ссылку из списка — она продолжает работать и считать переходы.</p></form>`);
   $("#fLink").onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.target);try{const r=await api("/api/links/"+l.id,{method:"PATCH",body:{note:fd.get("note"),target:fd.get("target")}});S.me.models=r.models;closeModal();renderModels();toast("Сохранено")}catch(x){e.target.querySelector(".err").textContent=x.message}};
   $("#larch").onclick=async()=>{const r=await api("/api/links/"+l.id,{method:"PATCH",body:{archived:!l.archived}});S.me.models=r.models;closeModal();renderModels()}}
-function openPw(){modal(`<div class="mx"><h2>Сменить пароль</h2>${X}</div><form id="fPw" style="margin-top:16px"><label class="f"><span>Старый пароль</span><input class="in" type="password" name="old" autocomplete="current-password" required></label>
+function openPw(){modal(MH("Сменить пароль")+`<form id="fPw" class="pn-b"><label class="f"><span>Старый пароль</span><input class="in" type="password" name="old" autocomplete="current-password" required></label>
    <label class="f"><span>Новый пароль, от 8 символов</span><input class="in" type="password" name="new" autocomplete="new-password" minlength="8" required></label><div class="err"></div><button class="btn" style="width:100%">Сменить пароль</button></form>`);
   $("#fPw").onsubmit=async e=>{e.preventDefault();try{await api("/api/password",{method:"POST",body:Object.fromEntries(new FormData(e.target))});closeModal();toast("Пароль изменён")}catch(x){e.target.querySelector(".err").textContent=x.message}}}
-function openPrivacy(){modal(`<div class="mx"><h2>Приватность</h2>${X}</div>
-   <p class="mut" style="margin:8px 0 16px">В лиге другие ученики видят только имя модели, твой ник и очки. Ссылки, города и статистика видны только тебе.</p>
-   <label class="toggle"><input type="checkbox" id="pubOk" ${S.me.public_ok?"checked":""}><span><b>Можно упоминать мой ник в итогах недели</b><br><span class="mut small">Если модель попадёт в топ-3, куратор сможет отметить тебя в канале курса. Без галочки — только имя модели.</span></span></label>`);
+function openPrivacy(){modal(MH("Приватность")+`<div class="pn-b"><p class="mu" style="margin:0 0 14px">В лиге другие ученики видят только имя модели, ваш ник и очки. Ссылки, города и статистика видны только вам.</p>
+   <label class="toggle"><input type="checkbox" id="pubOk" ${S.me.public_ok?"checked":""}><span><b>Можно упоминать мой ник в итогах недели</b><br><span class="mu sm">Если модель попадёт в топ-3, куратор сможет отметить вас в канале курса. Без галочки — только имя модели.</span></span></label></div>`);
   $("#pubOk").onchange=async e=>{const r=await api("/api/privacy",{method:"POST",body:{public_ok:e.target.checked}});S.me.public_ok=r.public_ok;toast("Сохранено")}}
-
-/* карточка недели */
-function openCard(mid){const ms=activeModels();if(!ms.length){toast("Сначала добавь модель");return}
+function openCard(mid){const ms=activeModels();if(!ms.length){toast("Сначала добавьте модель");return}
   const st={mid:mid||(S.mid!=="all"?S.mid:ms[0].id),kind:"week",nick:false};
-  modal(`<div class="mx"><h2>Карточка для сторис</h2>${X}</div><p class="mut" style="margin:4px 0 14px">Только имя модели, очки, место и ачивки. Ссылок и городов на карточке нет.</p>
-    ${ms.length>1?`<select class="in" id="cdM" style="margin-bottom:10px">${ms.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join("")}</select>`:""}
-    <div class="seg" id="cdK"><button data-k="week" class="on">Эта неделя</button><button data-k="last">Итог прошлой</button></div>
-    <label class="toggle" style="margin-top:10px;padding:10px"><input type="checkbox" id="cdN"><span>Показать мой ник</span></label>
+  modal(MH("Карточка для сторис")+`<div class="pn-b"><p class="mu sm" style="margin:0 0 12px">Только имя модели, очки, место и ачивки. Ссылок и городов на карточке нет.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">${ms.length>1?`<select class="in" id="cdM" style="flex:1;min-width:140px">${ms.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join("")}</select>`:""}<div class="seg" id="cdK"><button data-k="week" class="on">Эта неделя</button><button data-k="last">Итог прошлой</button></div></div>
+    <label class="toggle" style="margin-top:8px;padding:9px"><input type="checkbox" id="cdN"><span class="sm">Показать мой ник</span></label>
     <img class="cardprev" id="cdImg" alt="Карточка недели">
-    <div style="display:flex;gap:8px"><button class="btn" style="flex:1" id="cdShare">Поделиться</button><a class="btn ghost" id="cdDl" download="neurofans-week.png">Скачать</a></div>`);
+    <div style="display:flex;gap:8px"><button class="btn" style="flex:1" id="cdShare">${ic("i-share")}Поделиться</button><a class="btn gh" id="cdDl" download="neurofans-week.png">${ic("i-dl")}Скачать</a></div></div>`);
   const url=()=>`/api/card.png?mid=${st.mid}&kind=${st.kind}&nick=${st.nick?1:0}`,upd=()=>{$("#cdImg").src=url()+"&t="+Date.now();$("#cdDl").href=url()};
   if($("#cdM")){$("#cdM").value=st.mid;$("#cdM").onchange=e=>{st.mid=e.target.value;upd()}}
   $$("#cdK button").forEach(b=>b.onclick=()=>{st.kind=b.dataset.k;$$("#cdK button").forEach(x=>x.classList.toggle("on",x===b));upd()});
   $("#cdN").onchange=e=>{st.nick=e.target.checked;upd()};
   $("#cdShare").onclick=async()=>{try{const blob=await(await fetch(url(),{credentials:"same-origin"})).blob(),file=new File([blob],"neurofans-week.png",{type:"image/png"});
-    if(navigator.canShare&&navigator.canShare({files:[file]}))await navigator.share({files:[file],title:"Моя неделя в NeuroFans Lab"});
-    else{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="neurofans-week.png";a.click();toast("Сохранено — выкладывай в сторис")}}catch(e){}};
-  upd()}
-
-/* Telegram */
+    if(navigator.canShare&&navigator.canShare({files:[file]}))await navigator.share({files:[file],title:"Моя неделя в NeuroFans Lab"});else{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="neurofans-week.png";a.click();toast("Сохранено")}}catch(e){}};upd()}
 async function openTg(){let t;try{t=await api("/api/tg")}catch(e){return}
-  if(!t.enabled){modal(`<div class="mx"><h2>Уведомления в Telegram</h2>${X}</div><p class="mut" style="margin:10px 0 0">Скоро здесь можно будет подключить бота: первый человек по ссылке, места в лиге, ачивки и итоги недели.</p>`);return}
+  if(!t.enabled){modal(MH("Уведомления в Telegram")+`<div class="pn-b"><p class="mu" style="margin:0">Скоро здесь можно будет подключить бота: первый человек по ссылке, места в лиге, ачивки и итоги недели.</p></div>`);return}
   const modes=[["all","Все события","первый человек, круглые числа, места, ачивки, итоги"],["digest","Только итоги недели","воскресный дайджест и итоги в понедельник"],["off","Выключены",""]];
-  modal(`<div class="mx"><h2>Уведомления в Telegram</h2>${X}</div>
-   ${t.linked?`<p class="mut" style="margin:8px 0 14px"><span class="up">Подключено.</span> Не больше 4 сообщений в день, с 23:00 до 9:00 — тишина.</p>
-     <div style="display:flex;flex-direction:column;gap:8px" id="tgM">${modes.map(([k,n,d])=>`<label class="toggle"><input type="radio" name="tgm" value="${k}" ${t.mode===k?"checked":""}><span><b>${n}</b>${d?`<br><span class="mut small">${d}</span>`:""}</span></label>`).join("")}</div>
-     <button class="btn ghost" id="tgUn" style="margin-top:14px">Отвязать Telegram</button>`
-   :`<p class="mut" style="margin:8px 0 16px">Бот напишет, когда по новой ссылке придёт первый человек, модель наберёт круглое число людей, войдёт в топ лиги или получит ачивку. Плюс воскресный дайджест и итоги недели.</p>
-     <button class="btn" id="tgGo" style="width:100%">Подключить Telegram</button><p class="mut small" id="tgWait" style="text-align:center;margin:12px 0 0"></p>`}`);
+  modal(MH("Уведомления в Telegram")+`<div class="pn-b">${t.linked?`<p class="mu sm" style="margin:0 0 12px"><span class="pos">● Подключено.</span> Не больше 4 сообщений в день, с 23:00 до 9:00 — тишина.</p>
+     <div style="display:flex;flex-direction:column;gap:6px" id="tgM">${modes.map(([k,n,d])=>`<label class="toggle"><input type="radio" name="tgm" value="${k}" ${t.mode===k?"checked":""}><span><b>${n}</b>${d?`<br><span class="mu sm">${d}</span>`:""}</span></label>`).join("")}</div>
+     <button class="btn gh" id="tgUn" style="margin-top:12px">Отвязать Telegram</button>`
+   :`<p class="mu" style="margin:0 0 16px">Бот напишет, когда по новой ссылке придёт первый человек, модель наберёт круглое число людей, войдёт в топ лиги или получит ачивку. Плюс воскресный дайджест и итоги недели.</p>
+     <button class="btn" id="tgGo" style="width:100%">${ic("i-bell")}Подключить Telegram</button><p class="mu sm" id="tgWait" style="text-align:center;margin:12px 0 0"></p>`}</div>`);
   $$("#tgM input").forEach(i=>i.onchange=async()=>{await api("/api/tg/mode",{method:"POST",body:{mode:i.value}});toast("Сохранено")});
   if($("#tgUn"))$("#tgUn").onclick=async()=>{await api("/api/tg/unlink",{method:"POST",body:{}});closeModal();toast("Telegram отвязан");refreshMe()};
-  if($("#tgGo"))$("#tgGo").onclick=async()=>{try{const r=await api("/api/tg/link",{method:"POST",body:{}});window.open(r.url,"_blank");$("#tgWait").textContent="Нажми «Старт» в боте — я подожду…";let n=0;
-    const iv=setInterval(async()=>{n++;try{const s=await api("/api/tg");if(s.linked){clearInterval(iv);closeModal();toast("Telegram подключён");confetti();refreshMe()}}catch(e){}if(n>60)clearInterval(iv)},3000)}catch(x){$("#tgWait").textContent=x.message}}}
+  if($("#tgGo"))$("#tgGo").onclick=async()=>{try{const r=await api("/api/tg/link",{method:"POST",body:{}});window.open(r.url,"_blank");$("#tgWait").textContent="Нажмите «Старт» в боте — я подожду…";let n=0;
+    const iv=setInterval(async()=>{n++;try{const s=await api("/api/tg");if(s.linked){clearInterval(iv);closeModal();celebrate("Telegram подключён");refreshMe()}}catch(e){}if(n>60)clearInterval(iv)},3000)}catch(x){$("#tgWait").textContent=x.message}}}
 
-/* приложение на экран телефона */
-let deferredPrompt=null;
-addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredPrompt=e;pwaInit()});
-function isStandalone(){return matchMedia("(display-mode: standalone)").matches||navigator.standalone}
+function palItems(){const it=[["Навигация","Эфир","i-ov",()=>go("ov")],["Навигация","Модели и ссылки","i-lk",()=>go("lk")],["Навигация","Лига недели","i-lg",()=>go("lg")],
+  ["Действия","Добавить модель","i-plus",()=>openModel()],["Действия","Карточка недели","i-img",()=>openCard()],["Действия","Уведомления в Telegram","i-bell",()=>openTg()],["Действия","Приватность","i-shield",()=>openPrivacy()]];
+  activeModels().forEach(m=>{if(m.links.length>1)it.push(["Действия","Сравнить ссылки · "+m.name,"i-cmp",()=>openCompare(m.id)])});
+  activeModels().forEach(m=>m.links.filter(l=>!l.archived).forEach(l=>it.push(["Скопировать ссылку",`${m.name} · ${l.ch_name}${l.note?" · "+l.note:""}`,"ch-"+(["threads","instagram","tiktok","youtube","telegram","x","reddit"].includes(l.ch)?l.ch:"other"),()=>copy(l.url,"Ссылка скопирована"),l.slug])));return it}
+function openPalette(){if(!S.me)return;const all=palItems();let sel=0,list=all;
+  modal(`<div class="pal"><input class="in" id="palQ" placeholder="Команда или ссылка…" autocomplete="off"><ul id="palL"></ul></div>`,"top");
+  const draw=()=>{let g="";$("#palL").innerHTML=list.map((x,i)=>{const h=x[0]!==g?`<li class="grp">${esc(x[0].toUpperCase())}</li>`:"";g=x[0];return h+`<li data-i="${i}" class="${i===sel?"on":""}">${ic(x[2])}${esc(x[1])}${x[4]?`<span class="k">${esc(x[4])}</span>`:""}</li>`}).join("")||`<li class="grp">НИЧЕГО НЕ НАЙДЕНО</li>`;
+    $$("#palL li[data-i]").forEach(li=>li.onclick=()=>run(+li.dataset.i));$("#palL li.on")?.scrollIntoView({block:"nearest"})};
+  const run=i=>{const x=list[i];if(!x)return;closeModal();x[3]()};
+  $("#palQ").oninput=e=>{const q=e.target.value.toLowerCase().trim();list=all.filter(x=>(x[1]+" "+(x[4]||"")+" "+x[0]).toLowerCase().includes(q));sel=0;draw()};
+  $("#palQ").onkeydown=e=>{if(e.key==="ArrowDown"){sel=Math.min(list.length-1,sel+1);draw();e.preventDefault()}if(e.key==="ArrowUp"){sel=Math.max(0,sel-1);draw();e.preventDefault()}if(e.key==="Enter")run(sel)};draw()}
+
+let deferredPrompt=null;addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredPrompt=e;pwaInit()});
+const isStandalone=()=>matchMedia("(display-mode: standalone)").matches||navigator.standalone;
 function pwaInit(){if(isStandalone()||LS.get("nf_pwa_x")||!S.me)return;const ios=/iphone|ipad|ipod/i.test(navigator.userAgent),mob=/android|iphone|ipad/i.test(navigator.userAgent);
   if(!mob||!(deferredPrompt||ios)||(S.me.onboarding&&S.me.onboarding.done<2))return;
-  $("#pwaText").textContent=ios?"Добавь кабинет на экран «Домой» — откроется как приложение, в один тап.":"Установи кабинет как приложение — открывается в один тап.";
-  $("#pwaBanner").classList.remove("hide");$("#pwaGo").onclick=()=>installApp(true);$("#pwaX").onclick=()=>{LS.set("nf_pwa_x",1);$("#pwaBanner").classList.add("hide")}}
+  $("#pwaText").textContent=ios?"Добавьте кабинет на экран «Домой» — откроется как приложение.":"Установите кабинет как приложение — открывается в один тап.";
+  $("#pwaBanner").classList.remove("hide");$("#pwaGo").onclick=()=>installApp();$("#pwaX").onclick=()=>{LS.set("nf_pwa_x",1);$("#pwaBanner").classList.add("hide")}}
 async function installApp(){if(deferredPrompt){deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;$("#pwaBanner").classList.add("hide");return}
   if(isStandalone()){toast("Кабинет уже установлен");return}
-  modal(`<div class="mx"><h2>Кабинет как приложение</h2>${X}</div><ol class="mut" style="padding-left:20px;margin:12px 0 0;line-height:1.9">
-   <li><b>iPhone (Safari):</b> кнопка «Поделиться» внизу → «На экран „Домой“».</li><li><b>Android (Chrome):</b> меню ⋮ → «Установить приложение».</li>
-   <li><b>Компьютер (Chrome):</b> значок установки в адресной строке справа.</li></ol>`)}
+  modal(MH("Кабинет как приложение")+`<div class="pn-b"><table class="tbl"><tr><td class="mono di">IPHONE</td><td>Safari → «Поделиться» → «На экран „Домой“»</td></tr><tr><td class="mono di">ANDROID</td><td>Chrome → меню ⋮ → «Установить приложение»</td></tr><tr><td class="mono di">DESKTOP</td><td>Chrome → значок установки справа в адресной строке</td></tr></table></div>`)}
 
-/* ---------- лига ---------- */
-async function loadLeague(){
-  const q=new URLSearchParams();if(S.lgCh)q.set("ch",S.lgCh);if(S.lgDiv)q.set("div",S.lgDiv);
-  try{S.league=await api("/api/league"+(q.toString()?"?"+q:""))}catch(e){return}
+async function loadLeague(){const q=new URLSearchParams();if(S.lgCh)q.set("ch",S.lgCh);if(S.lgDiv)q.set("div",S.lgDiv);
+  try{S.league=await api("/api/league"+(q.toString()?"?"+q:""));S.sync=Date.now()}catch(e){return}
   const L=S.league;if(S.lgDiv===null){S.lgDiv=L.my_div;return loadLeague()}
-  $("#lgSub").textContent=`Неделя ${L.week.split("-W")[1]}. В таблице ${L.rows.length} ${plural(L.rows.length,"модель","модели","моделей")}, всего в лиге ${L.models_total}.`;
-  $("#lgDiv").innerHTML=[...L.divs.map(d=>`<button data-d="${d.id}" title="${esc(d.range)}">${esc(d.name)}${d.id===L.my_div?" •":""}</button>`),`<button data-d="">Все</button>`].join("");
+  $("#lgSub").textContent=`Неделя ${L.week.split("-W")[1]} · в таблице ${L.rows.length} из ${L.models_total} ${plural(L.models_total,"модели","моделей","моделей")}`;
+  $("#lgDiv").innerHTML=[...L.divs.map(d=>`<button data-d="${d.id}" title="${esc(d.range)}">${esc(d.name)}${d.id===L.my_div?" ·":""}</button>`),`<button data-d="">Все</button>`].join("");
   $$("#lgDiv button").forEach(b=>{b.classList.toggle("on",b.dataset.d===(S.lgDiv||""));b.onclick=()=>{S.lgDiv=b.dataset.d;loadLeague()}});
-  $("#lgCh").innerHTML=[`<option value="">Все каналы</option>`,...L.channels.map(c=>`<option value="${c.id}">${CH_ICON[c.id]||""} ${esc(c.name)}</option>`)].join("");$("#lgCh").value=S.lgCh;
-  $("#lgCh").onchange=e=>{S.lgCh=e.target.value;loadLeague()};
-  const row=(r,extra)=>`<div class="r ${r.mine?"mine":""}"><div class="pl">${r.place}</div><div class="nm"><b>${r.rank?r.rank+" ":""}${esc(r.model)}${r.mine?" — ты":""}</b><span>@${esc(r.nick)}</span></div><div class="pt">${fmt(r.pts)}${extra||""}</div></div>`;
-  const top=L.rows.slice(0,3),ord=[top[1],top[0],top[2]];
-  $("#podium").innerHTML=top.length?`<div class="podium">${ord.map(r=>r?`<div class="pod p${r.place} ${r.mine?"mine":""}"><div class="m">${["","🥇","🥈","🥉"][r.place]}</div><b>${esc(r.model)}</b><span class="mut small">@${esc(r.nick)}</span><div class="pts">${fmt(r.pts)}</div></div>`:"<div></div>").join("")}</div>`:"";
-  $("#board").innerHTML=L.rows.length?L.rows.slice(3).map(r=>row(r,`<small>${r.prev?"прошлая "+fmt(r.prev):"новичок недели"}</small>`)).join(""):`<div class="empty">В этом дивизионе пока ни одного очка.<br>Первый человек по твоей ссылке — и ты на пьедестале.</div>`;
-  $("#rush").innerHTML=L.rush.length?L.rush.slice(0,5).map((r,i)=>row({...r,place:i+1},`<small>×${String(r.x).replace(".",",")}, было ${fmt(r.prev)}</small>`)).join(""):`<div class="empty">Появится, когда у моделей будет от 10 очков и рост к прошлой неделе</div>`;
-  $("#winners").innerHTML=L.winners.length?L.winners.map(r=>row(r)).join(""):`<div class="empty">Первая неделя лиги — победители появятся в понедельник</div>`;
+  $("#lgCh").innerHTML=[`<option value="">Все каналы</option>`,...L.channels.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`)].join("");$("#lgCh").value=S.lgCh;$("#lgCh").onchange=e=>{S.lgCh=e.target.value;loadLeague()};
+  const row=(r,extra)=>`<tr class="${r.place<=3?"p"+r.place:""} ${r.mine?"mine":""}"><td class="pl">${String(r.place).padStart(2,"0")}</td><td class="nm"><b>${esc(r.model)}${r.mine?' <span class="tag ac">ВЫ</span>':""}</b><span>@${esc(r.nick)} ${r.lvl!=null?tierHTML(r.lvl):""}</span></td><td class="r"><div class="pts">${fmt(r.pts)}</div>${extra||""}</td></tr>`;
+  $("#board").innerHTML=L.rows.length?L.rows.map(r=>{const d=r.pts-r.prev;return row(r,`<div class="d ${r.prev?(d>=0?"pos":"neg"):"di"}">${r.prev?(d>=0?"+":"")+fmt(d):"NEW"}</div>`)}).join(""):`<tr><td class="empty">В этом дивизионе пока нет очков. Первый человек по вашей ссылке — и вы в таблице.</td></tr>`;
+  $("#rush").innerHTML=L.rush.length?L.rush.slice(0,5).map((r,i)=>row({...r,place:i+1},`<div class="d pos">×${String(r.x).replace(".",",")}</div>`)).join(""):`<tr><td class="empty">Появится при росте к прошлой неделе от 10 очков</td></tr>`;
+  $("#winners").innerHTML=L.winners.length?L.winners.map(r=>row(r)).join(""):`<tr><td class="empty">Первая неделя лиги — победители появятся в понедельник</td></tr>`;
   const mine=L.mine;
-  $("#myplace").innerHTML=mine.length?`<div style="display:flex;gap:18px;align-items:center"><div class="big">#${mine[0].place}</div><div><b>${esc(mine[0].model)}</b><div class="mut small">${fmt(mine[0].pts)} ${plural(mine[0].pts,"очко","очка","очков")}${mine[0].place>1?`, до #${mine[0].place-1} — ${fmt(L.rows[mine[0].place-2].pts-mine[0].pts+1)}`:", ты лидер"}</div>
-    ${mine.slice(1,4).map(x=>`<div class="mut small">${esc(x.model)} — #${x.place}</div>`).join("")}</div></div><button class="btn sm" data-card style="margin-top:14px">Карточка для сторис</button>`
-    :`<p class="mut" style="margin:0">Пока без очков в этом дивизионе. Первый человек по ссылке — и ты в таблице.</p>`;
+  $("#myplace").innerHTML=mine.length?`<div style="display:flex;gap:18px;align-items:center"><div class="big">#${mine[0].place}</div><div><b>${esc(mine[0].model)}</b><div class="mu sm"><span class="mono">${fmt(mine[0].pts)}</span> ${plural(mine[0].pts,"очко","очка","очков")}${mine[0].place>1?` · до #${mine[0].place-1}: <span class="mono">${fmt(L.rows[mine[0].place-2].pts-mine[0].pts+1)}</span>`:" · лидер дивизиона"}</div>
+    ${mine.slice(1,4).map(x=>`<div class="di sm">${esc(x.model)} — #${x.place}</div>`).join("")}</div></div><button class="btn s" data-card style="margin-top:14px">${ic("i-img")}Карточка для сторис</button>`:`<p class="mu" style="margin:0">Пока без очков в этом дивизионе.</p>`;
   tick();clearInterval(S.timerT);S.timerT=setInterval(tick,1000)}
-function tick(){if(!S.league)return;const s=Math.max(0,(new Date(S.league.week_end)-Date.now())/1000),d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60),sec=Math.floor(s%60);
-  $("#clock").innerHTML=[[d,"дней"],[h,"часов"],[m,"минут"],[sec,"секунд"]].map(([v,l])=>`<div><b>${String(v).padStart(2,"0")}</b><span>${l}</span></div>`).join("")}
+function tick(){if(!S.league)return;const s=Math.max(0,(new Date(S.league.week_end)-Date.now())/1000),p=v=>String(v).padStart(2,"0");
+  $("#clock").innerHTML=`${p(Math.floor(s/86400))}<small>d</small>${p(Math.floor(s%86400/3600))}<small>h</small>${p(Math.floor(s%3600/60))}<small>m</small>${p(Math.floor(s%60))}<small>s</small>`}
 
-/* ---------- кабинет куратора ---------- */
-async function bootAdmin(){
-  $("#admin").classList.remove("hide");const tok=qs.get("token");if(tok)history.replaceState(null,"","/admin");
-  let st;try{st=await api("/api/admin/state")}catch(e){return}
-  if(!st.logged)return adminAuth(st,tok);
-  $("#adTop").classList.remove("hide");renderAdmin()}
-function adminAuth(st,tok){const box=$("#adMain");
-  box.innerHTML=`<div style="max-width:440px;margin:6vh auto 0"><section class="panel" style="padding:26px">
-   ${st.has_password?`<h2 style="margin:0 0 6px">Вход для куратора</h2><p class="mut" style="margin:0 0 18px">Пароль админки кабинета.</p>
-     <form id="fA"><label class="f"><span>Пароль</span><input class="in" type="password" name="password" autocomplete="current-password" required></label><div class="err"></div><button class="btn" style="width:100%">Войти</button></form>
-     <p class="mut small" style="margin:16px 0 0">Забыли пароль — задайте новый с токеном с сервера: <a href="#" id="toSetup">сбросить пароль</a>.</p>`
-    :`<h2 style="margin:0 0 6px">Защитим админку паролем</h2><p class="mut" style="margin:0 0 18px">Один раз: токен с сервера + новый пароль. Дальше вход только по паролю, токен остаётся ключом восстановления.</p>`}
-   <form id="fS" class="${st.has_password?"hide":""}" style="margin-top:${st.has_password?"18px":"0"}"><label class="f"><span>Токен с сервера (lab-data/admin_token.txt)</span><input class="in num" name="token" autocomplete="off" required value="${esc(tok||"")}"></label>
+async function bootAdmin(){$("#admin").classList.remove("hide");const tok=qs.get("token");if(tok)history.replaceState(null,"","/admin");
+  let st;try{st=await api("/api/admin/state")}catch(e){return}if(!st.logged)return adminAuth(st,tok);$("#adTop").classList.remove("hide");renderAdmin()}
+function adminAuth(st,tok){$("#adMain").innerHTML=`<div style="max-width:420px;margin:8vh auto 0"><section class="pn">
+   ${st.has_password?`<div class="pn-h"><h3>Вход для куратора</h3></div><form id="fA" class="pn-b"><label class="f"><span>Пароль админки</span><input class="in" type="password" name="password" autocomplete="current-password" required></label><div class="err"></div><button class="btn" style="width:100%">Войти</button>
+     <p class="mu sm" style="margin:14px 0 0">Забыли пароль — задайте новый с токеном с сервера: <a href="#" id="toSetup">сбросить</a>.</p></form>`
+    :`<div class="pn-h"><h3>Защитим админку паролем</h3></div><p class="mu sm pn-b" style="margin:0;padding-bottom:0">Один раз: токен с сервера + новый пароль. Дальше вход только по паролю, токен остаётся ключом восстановления.</p>`}
+   <form id="fS" class="pn-b ${st.has_password?"hide":""}"><label class="f"><span>Токен с сервера (lab-data/admin_token.txt)</span><input class="in mono" name="token" autocomplete="off" required value="${esc(tok||"")}"></label>
     <label class="f"><span>Новый пароль админки, от 10 символов</span><input class="in" type="password" name="password" autocomplete="new-password" minlength="10" required></label><div class="err"></div><button class="btn" style="width:100%">Сохранить пароль и войти</button></form></section></div>`;
   const sub=(f,path)=>f&&(f.onsubmit=async e=>{e.preventDefault();try{await api(path,{method:"POST",body:Object.fromEntries(new FormData(e.target))});location.reload()}catch(x){e.target.querySelector(".err").textContent=x.message}});
-  sub($("#fA"),"/api/admin/login");sub($("#fS"),"/api/admin/setup");
-  if($("#toSetup"))$("#toSetup").onclick=e=>{e.preventDefault();$("#fS").classList.remove("hide")}}
+  sub($("#fA"),"/api/admin/login");sub($("#fS"),"/api/admin/setup");if($("#toSetup"))$("#toSetup").onclick=e=>{e.preventDefault();$("#fS").classList.remove("hide")}}
 async function renderAdmin(){let A;try{A=await api("/api/admin/overview")}catch(e){return bootAdmin()}
   const t=A.totals,F=A.funnel||{},pc=(a,b)=>b?Math.round(a/b*100):0,gate=pc(F.with_person_7d,F.users);
-  $("#adMain").innerHTML=`<div class="pgtitle"><div><h1>Кабинет куратора</h1><p>Неделя ${A.week.split("-W")[1]}. Учеников ${fmt(t.users)}, моделей ${fmt(t.models)}.</p></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost sm" id="adTg">${A.backups.admin_tg?"Telegram куратора подключён":"Подключить Telegram куратора"}</button></div></div>
-   <section class="panel strip">${[["Живые люди за неделю",fmt(t.week_people),`${fmt(t.week_clicks)} кликов`],["Активны на неделе",fmt(F.active_week),`из ${fmt(F.users)} учеников`],["Telegram у учеников",fmt(F.tg_linked),A.tg_enabled?`${fmt(F.notify_sent_week)} уведомлений за неделю`:"бот кабинета не подключён"],["Карточек за неделю",fmt(F.cards_week),`согласились на упоминание: ${fmt(A.consent)}`]].map(([l,v,s])=>`<div><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join("")}</section>
-   <div class="g2">
-    <section class="panel"><div class="ph"><h3>Ворота роста: первый человек за 7 дней</h3><span class="mut">цель — 60%</span></div>
-     <div style="display:flex;align-items:baseline;gap:10px"><b class="num" style="font-size:44px">${gate}%</b><span class="mut">${fmt(F.with_person_7d)} из ${fmt(F.users)} учеников</span></div>
-     <div class="gate"><i style="width:${gate}%"></i><em title="цель 60%"></em></div>
-     <div class="list" style="margin-top:12px">${[["Поставили ссылку в первые сутки",pc(F.with_link_24h,F.users),F.with_link_24h],["Проверили хотя бы одну ссылку",pc(F.checks?Math.min(F.checks,F.users):0,F.users),F.checks],["Получили живого человека",pc(F.with_person,F.users),F.with_person]].map(([l,p,n])=>`<div class="it"><span class="grow">${l}</span><span class="mut num">${fmt(n)}</span><b class="num" style="width:52px;text-align:right">${p}%</b></div>`).join("")}</div></section>
-    <section class="panel stuck"><div class="ph"><h3>Кому нужна помощь</h3><span class="mut">${A.stuck.length?fmt(A.stuck.length)+" "+plural(A.stuck.length,"ученик","ученика","учеников"):"все в деле"}</span></div>
-     <div class="list">${A.stuck.length?A.stuck.slice(0,12).map((s,i)=>`<div class="it"><span class="ava" style="width:30px;height:30px">${esc((s.nick[0]||"?").toUpperCase())}</span><span class="grow" style="white-space:normal"><b>${esc(s.nick)}</b><br><span class="mut small">${esc(s.label)}</span></span><button class="btn ghost sm" data-msg="${i}">Текст сообщения</button></div>`).join(""):`<div class="empty">Никто не застрял — красота</div>`}</div></section>
-   </div>
-   <div class="g2">
-    <section class="panel"><div class="ph"><h3>Ученики</h3><span class="mut">по очкам недели</span></div><div class="tw"><table class="t"><tr><th>Ник</th><th>Модели</th><th>Ссылки</th><th>Очки нед.</th><th>Клики</th><th>Был</th><th></th></tr>
-     ${A.users.map(u=>`<tr><td><b>${esc(u.nick)}</b>${u.blocked?' <span class="chip" style="color:var(--bad)">отключён</span>':""}<div class="dim small">${esc(u.invite)}</div></td><td class="num">${u.models}</td><td class="num">${u.links}</td><td class="num">${fmt(u.week_people)}</td><td class="num">${fmt(u.all_clicks)}</td><td class="mut small">${u.seen?ago(u.seen):"—"}</td>
-      <td style="white-space:nowrap"><button class="btn ghost sm" data-rp="${u.id}">Сброс пароля</button> <button class="btn sm ${u.blocked?"ghost":"danger"}" data-bl="${u.id}" data-v="${u.blocked?0:1}">${u.blocked?"Включить":"Отключить"}</button></td></tr>`).join("")||`<tr><td colspan="7" class="empty">Пока никого — создайте инвайт</td></tr>`}</table></div></section>
-    <div>
-     <section class="panel" style="margin:0 0 14px"><h3 style="margin:0 0 14px">Новые инвайты</h3>
-      <form id="fInv"><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><label class="f"><span>Сколько кодов</span><input class="in num" name="count" type="number" min="1" max="100" value="1"></label><label class="f"><span>Регистраций на код</span><input class="in num" name="max_uses" type="number" min="1" max="1000" value="1"></label></div>
-       <label class="f"><span>Заметка — кому</span><input class="in" name="note" placeholder="поток ноябрь"></label><button class="btn" style="width:100%">Создать</button></form><div id="newCodes" class="list" style="margin-top:10px"></div></section>
-     <section class="panel"><div class="ph"><h3>Все инвайты</h3><span class="mut">копия базы: ${A.backups.last?esc(A.backups.last):"ещё не делалась"}</span></div><div class="list" style="max-height:380px;overflow:auto">${A.invites.map(i=>`<div class="it"><span class="num" style="color:${i.uses>=i.max_uses?"var(--dim)":"var(--sig)"}">${esc(i.code)}</span><span class="grow mut small">${esc(i.note)}${i.used_by?", "+esc(i.used_by):""}</span><span class="mut num small">${i.uses}/${i.max_uses}</span>${i.uses<i.max_uses?`<button class="btn sm ghost" data-ci="${esc(i.url)}">Ссылка</button>`:""}</div>`).join("")||`<div class="empty">Инвайтов ещё нет</div>`}</div></section>
-    </div></div>`;
-  $$("[data-msg]").forEach(b=>b.onclick=()=>{const s=A.stuck[+b.dataset.msg];modal(`<div class="mx"><h2>Сообщение для ${esc(s.nick)}</h2>${X}</div><p class="mut small">${esc(s.label)}</p><textarea class="in" rows="6" id="msgT">${esc(s.message)}</textarea><button class="btn" style="width:100%;margin-top:12px" id="msgC">Скопировать</button>`);$("#msgC").onclick=()=>copy($("#msgT").value,"Текст скопирован — отправьте ученику")});
+  $("#adMain").innerHTML=`<div class="pgt"><div><h1>Кабинет куратора</h1><p>Неделя ${A.week.split("-W")[1]} · учеников ${fmt(t.users)} · моделей ${fmt(t.models)}</p></div><button class="btn gh s" id="adTg">${ic("i-bell")}${A.backups.admin_tg?"Telegram куратора подключён":"Подключить Telegram куратора"}</button></div>
+   <section class="pn strip">${[["Живые люди · неделя",fmt(t.week_people),`${fmt(t.week_clicks)} кликов`],["Активны на неделе",fmt(F.active_week),`из ${fmt(F.users)} учеников`],["Telegram у учеников",fmt(F.tg_linked),A.tg_enabled?`${fmt(F.notify_sent_week)} уведомлений за неделю`:"бот кабинета не подключён"],["Карточек · неделя",fmt(F.cards_week),`согласились на ник: ${fmt(A.consent)}`]].map(([l,v,s])=>`<div><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join("")}</section>
+   <div class="g2"><section class="pn"><div class="pn-h"><h3>Ворота роста: первый человек за 7 дней</h3><span class="meta">TARGET 60%</span></div><div class="pn-b">
+     <div style="display:flex;align-items:baseline;gap:10px"><b class="mono" style="font-size:40px;font-weight:600">${gate}%</b><span class="mu">${fmt(F.with_person_7d)} из ${fmt(F.users)}</span></div><div class="gate"><i style="width:${gate}%"></i><em></em></div>
+     <table class="tbl" style="margin-top:12px">${[["Ссылка в первые сутки",pc(F.with_link_24h,F.users),F.with_link_24h],["Проверили ссылку",pc(Math.min(F.checks,F.users),F.users),F.checks],["Получили живого человека",pc(F.with_person,F.users),F.with_person]].map(([l,p,n])=>`<tr><td>${l}</td><td class="r mono di">${fmt(n)}</td><td class="r mono" style="width:60px">${p}%</td></tr>`).join("")}</table></div></section>
+    <section class="pn"><div class="pn-h"><h3>Кому нужна помощь</h3><span class="meta">${A.stuck.length} STUCK</span></div><div class="pn-b" style="padding-top:4px"><table class="tbl">${A.stuck.length?A.stuck.slice(0,12).map((s,i)=>`<tr><td><b>${esc(s.nick)}</b><br><span class="mu sm">${esc(s.label)}</span></td><td class="r"><button class="btn gh s" data-msg="${i}">${ic("i-copy")}Текст</button></td></tr>`).join(""):`<tr><td class="empty">Никто не застрял</td></tr>`}</table></div></section></div>
+   <div class="g2"><section class="pn"><div class="pn-h"><h3>Ученики</h3><span class="meta">SORT: PEOPLE · WEEK</span></div><div class="pn-b tw" style="padding-top:4px"><table class="tbl"><tr><th>НИК</th><th class="r">МОД.</th><th class="r">ССЫЛ.</th><th class="r">НЕДЕЛЯ</th><th class="r">КЛИКИ</th><th style="padding-left:16px">БЫЛ</th><th></th></tr>
+     ${A.users.map(u=>`<tr><td><b>${esc(u.nick)}</b>${u.blocked?' <span class="tag" style="color:var(--neg)">OFF</span>':""}<div class="di xs mono">${esc(u.invite)}</div></td><td class="r mono">${u.models}</td><td class="r mono">${u.links}</td><td class="r mono">${fmt(u.week_people)}</td><td class="r mono">${fmt(u.all_clicks)}</td><td class="mu sm" style="padding-left:16px;white-space:nowrap">${u.seen?ago(u.seen):"—"}</td>
+      <td class="r" style="white-space:nowrap"><button class="btn gh s" data-rp="${u.id}">Сброс пароля</button> <button class="btn s ${u.blocked?"gh":"dg"}" data-bl="${u.id}" data-v="${u.blocked?0:1}">${u.blocked?"Включить":"Отключить"}</button></td></tr>`).join("")||`<tr><td class="empty">Пока никого — создайте инвайт</td></tr>`}</table></div></section>
+    <div><section class="pn" style="margin:0 0 12px"><div class="pn-h"><h3>Новые инвайты</h3></div><form id="fInv" class="pn-b"><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><label class="f"><span>Кодов</span><input class="in mono" name="count" type="number" min="1" max="100" value="1"></label><label class="f"><span>Регистраций на код</span><input class="in mono" name="max_uses" type="number" min="1" max="1000" value="1"></label></div>
+       <label class="f"><span>Заметка — кому</span><input class="in" name="note" placeholder="поток ноябрь"></label><button class="btn" style="width:100%">Создать</button><div id="newCodes" style="margin-top:10px"></div></form></section>
+     <section class="pn"><div class="pn-h"><h3>Все инвайты</h3><span class="meta">BACKUP: ${A.backups.last?esc(A.backups.last):"—"}</span></div><div class="pn-b" style="max-height:380px;overflow:auto;padding-top:4px"><table class="tbl">${A.invites.map(i=>`<tr><td class="mono" style="color:${i.uses>=i.max_uses?"var(--di)":"var(--ac)"}">${esc(i.code)}</td><td class="mu sm">${esc(i.note)}${i.used_by?" · "+esc(i.used_by):""}</td><td class="r mono di">${i.uses}/${i.max_uses}</td><td class="r">${i.uses<i.max_uses?`<button class="btn gh s ic" data-ci="${esc(i.url)}" aria-label="Скопировать ссылку">${ic("i-copy")}</button>`:""}</td></tr>`).join("")||`<tr><td class="empty">Инвайтов ещё нет</td></tr>`}</table></div></section></div></div>`;
+  $$("[data-msg]").forEach(b=>b.onclick=()=>{const s=A.stuck[+b.dataset.msg];modal(MH("Сообщение · "+esc(s.nick))+`<div class="pn-b"><p class="mu sm" style="margin:0 0 8px">${esc(s.label)}</p><textarea class="in" rows="6" id="msgT">${esc(s.message)}</textarea><button class="btn" style="width:100%;margin-top:10px" id="msgC">${ic("i-copy")}Скопировать</button></div>`);$("#msgC").onclick=()=>copy($("#msgT").value,"Текст скопирован")});
   $$("[data-ci]").forEach(b=>b.onclick=()=>copy(b.dataset.ci,"Ссылка-приглашение скопирована"));
   $$("[data-bl]").forEach(b=>b.onclick=async()=>{if(b.dataset.v==="1"&&!confirm("Отключить ученика? Его ссылки перестанут работать."))return;await api("/api/admin/users/"+b.dataset.bl,{method:"PATCH",body:{blocked:b.dataset.v==="1"}});renderAdmin()});
   $$("[data-rp]").forEach(b=>b.onclick=async()=>{if(!confirm("Сбросить пароль? Ученика выкинет из кабинета."))return;const r=await api("/api/admin/users/"+b.dataset.rp,{method:"PATCH",body:{reset_password:true}});
-    modal(`<div class="mx"><h2>Новый пароль</h2>${X}</div><p class="mut">Передайте ученику лично — он сменит его в меню кабинета.</p><div class="num" style="font-size:24px;margin:14px 0;color:var(--sig)">${esc(r.password)}</div><button class="btn" id="cpw">Скопировать</button>`);$("#cpw").onclick=()=>copy(r.password)});
-  $("#fInv").onsubmit=async e=>{e.preventDefault();const r=await api("/api/admin/invites",{method:"POST",body:Object.fromEntries(new FormData(e.target))});
-    if(r.codes.length>1)copy(r.codes.map(c=>c.url).join("\n"),"Все ссылки-приглашения скопированы");
-    $("#newCodes").innerHTML=r.codes.map(c=>`<div class="it"><span class="num" style="color:var(--sig)">${c.code}</span><span class="grow mut small">${esc(c.url)}</span><button class="btn sm" data-ci2="${esc(c.url)}">Копировать</button></div>`).join("");$$("[data-ci2]").forEach(b=>b.onclick=()=>copy(b.dataset.ci2,"Ссылка-приглашение скопирована"))};
-  $("#adTg").onclick=async()=>{try{const r=await api("/api/admin/tg/link",{method:"POST",body:{}});window.open(r.url,"_blank");toast("Нажмите «Старт» в боте")}catch(x){toast(x.message)}};
-}
+    modal(MH("Новый пароль")+`<div class="pn-b"><p class="mu sm" style="margin:0">Передайте ученику лично — он сменит его в меню кабинета.</p><div class="mono" style="font-size:22px;margin:14px 0;color:var(--ac)">${esc(r.password)}</div><button class="btn" id="cpw">${ic("i-copy")}Скопировать</button></div>`);$("#cpw").onclick=()=>copy(r.password)});
+  $("#fInv").onsubmit=async e=>{e.preventDefault();const r=await api("/api/admin/invites",{method:"POST",body:Object.fromEntries(new FormData(e.target))});if(r.codes.length>1)copy(r.codes.map(c=>c.url).join("\n"),"Все ссылки-приглашения скопированы");
+    $("#newCodes").innerHTML=`<table class="tbl">${r.codes.map(c=>`<tr><td class="mono pos">${c.code}</td><td class="r"><button type="button" class="btn s" data-ci2="${esc(c.url)}">${ic("i-copy")}Ссылка</button></td></tr>`).join("")}</table>`;$$("[data-ci2]").forEach(b=>b.onclick=()=>copy(b.dataset.ci2,"Ссылка-приглашение скопирована"))};
+  $("#adTg").onclick=async()=>{try{const r=await api("/api/admin/tg/link",{method:"POST",body:{}});window.open(r.url,"_blank");toast("Нажмите «Старт» в боте")}catch(x){toast(x.message)}}}
 if(location.pathname==="/admin"){
   $("#adOut").onclick=async()=>{await api("/api/admin/logout",{method:"POST",body:{}});location.reload()};
   $("#adBackup").onclick=()=>{location.href="/api/admin/backup"};
-  $("#adPost").onclick=async()=>{const r=await api("/api/admin/weekly_post");const r2=await api("/api/admin/weekly_post?wk=cur");
-    modal(`<div class="mx"><h2>Пост итогов для канала</h2>${X}</div><div class="seg" id="wpS" style="margin:10px 0"><button data-k="0" class="on">Прошлая неделя</button><button data-k="1">Эта неделя (пока идёт)</button></div>
-     <textarea class="in" rows="12" id="wpT">${esc(r.text)}</textarea><p class="mut small">Ник ученика попадает в пост только с его согласия (меню кабинета → Приватность).</p><button class="btn" style="width:100%" id="wpC">Скопировать пост</button>`,true);
+  $("#adPost").onclick=async()=>{const r=await api("/api/admin/weekly_post"),r2=await api("/api/admin/weekly_post?wk=cur");
+    modal(MH("Пост итогов для канала")+`<div class="pn-b"><div class="seg" id="wpS" style="margin:0 0 10px"><button data-k="0" class="on">Прошлая неделя</button><button data-k="1">Эта неделя (идёт)</button></div>
+     <textarea class="in" rows="12" id="wpT">${esc(r.text)}</textarea><p class="mu sm">Ник ученика попадает в пост только с его согласия (меню кабинета → Приватность).</p><button class="btn" style="width:100%" id="wpC">${ic("i-copy")}Скопировать пост</button></div>`,"wide");
     $$("#wpS button").forEach(b=>b.onclick=()=>{$$("#wpS button").forEach(x=>x.classList.toggle("on",x===b));$("#wpT").value=b.dataset.k==="1"?r2.text:r.text});$("#wpC").onclick=()=>copy($("#wpT").value,"Пост скопирован")};
   bootAdmin()}else boot();
 </script>
