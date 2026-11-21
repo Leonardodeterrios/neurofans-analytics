@@ -5,6 +5,7 @@
 config.local.*
 # local analytics db
 data/
+lab-data/
 *.db
 # python
 __pycache__/

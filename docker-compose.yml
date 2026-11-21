@@ -8,6 +8,18 @@ services:
     volumes:
       - ./data:/app/data    # база переходов хранится на диске сервера
 
+  lab:                      # кабинет учеников (lab./to.neurofans.ru) — своя база, трекер партнёров не трогает
+    build:
+      context: .
+      dockerfile: students/Dockerfile
+    restart: unless-stopped
+    environment:
+      ROOT_HOST: ${LAB_ROOT:-neurofans.ru}
+    expose:
+      - "8090"
+    volumes:
+      - ./lab-data:/app/data  # база кабинета, ключи и токен админки (admin_token.txt)
+
   caddy:                    # HTTPS-вход: 443 (домен) и 80 (http и старые ссылки на IP)
     image: caddy:2-alpine
     restart: unless-stopped

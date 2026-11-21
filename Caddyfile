@@ -13,6 +13,18 @@ http://{$DOMAIN} {
 	redir https://{host}{uri} 308
 }
 
+# Кабинет учеников NeuroFans Lab: lab.<домен> — кабинет, to.<домен>/<метка> — ссылки учеников,
+# сам <домен> и www → кабинет. Отдельный сервис lab, трекер партнёров не затрагивает.
+lab.{$LAB_ROOT:neurofans.ru}, to.{$LAB_ROOT:neurofans.ru}, {$LAB_ROOT:neurofans.ru}, www.{$LAB_ROOT:neurofans.ru} {
+	reverse_proxy lab:8090 {
+		header_up X-Real-IP {remote_host}
+	}
+}
+
+http://lab.{$LAB_ROOT:neurofans.ru}, http://to.{$LAB_ROOT:neurofans.ru}, http://{$LAB_ROOT:neurofans.ru}, http://www.{$LAB_ROOT:neurofans.ru} {
+	redir https://{host}{uri} 308
+}
+
 # Всё остальное по http (старые ссылки на голый IP, старый URL в PuzzleBot) продолжает работать.
 :80 {
 	reverse_proxy app:8080 {
