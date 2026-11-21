@@ -32,6 +32,20 @@ BADGES = {
 BADGE_ORDER = ["podium", "top10", "rush", "hundred_week", "streak3", "geo", "multichannel", "night", "first_fan"]
 
 
+# Дивизионы лиги — по людям ДО текущей недели, чтобы модель не прыгала между лигами посреди недели
+DIVS = [("start", "Старт", "до 50 людей"), ("pro", "Про", "50–999"), ("elite", "Элита", "1000+")]
+DIV_IDS = {d[0] for d in DIVS}
+
+
+def div_of(people_before):
+    return "elite" if people_before >= 1000 else "pro" if people_before >= 50 else "start"
+
+
+def divisions(c, wk):
+    return {r[0]: div_of(r[1] or 0) for r in c.execute(
+        "SELECT mid, SUM(scored) FROM clicks WHERE wk<? GROUP BY mid", (wk,))}
+
+
 def rank_of(people):
     people = int(people or 0)
     lvl = 0

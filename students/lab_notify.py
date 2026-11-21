@@ -20,7 +20,10 @@ import urllib.request
 
 from contextlib import closing
 
+import os
+
 import lab_game as game
+import lab_ops as ops
 
 log = logging.getLogger("lab.notify")
 
@@ -43,8 +46,10 @@ def plural(n, a, b, c):
 
 
 class Notifier:
-    def __init__(self, db, tz, week_key, token="", lab_host="lab.neurofans.ru", username="", http=None):
+    def __init__(self, db, tz, week_key, token="", lab_host="lab.neurofans.ru", username="", http=None,
+                 db_path=None, backup_dir=None):
         self.db, self.tz, self.week_key = db, tz, week_key
+        self.db_path, self.backup_dir = db_path, backup_dir
         self.token, self.lab_host = token or "", lab_host
         self._username = username or ""
         self.http = http or self._http
@@ -67,6 +72,52 @@ class Notifier:
             except Exception:
                 return {"ok": False, "error_code": e.code}
 
+    def _send_document(self, chat, path, caption):
+        """sendDocument через multipart (без сторонних библиотек)."""
+        b = "----nflab" + secrets.token_hex(8)
+        with open(path, "rb") as f:
+            data = f.read()
+        parts = []
+        for k, v in (("chat_id", str(chat)), ("caption", caption)):
+            parts.append(f"--{b}\r\nContent-Disposition: form-data; name=\"{k}\"\r\n\r\n{v}\r\n".encode())
+        parts.append(f"--{b}\r\nContent-Disposition: form-data; name=\"document\"; filename=\"{os.path.basename(path)}\"\r\n"
+                     f"Content-Type: application/gzip\r\n\r\n".encode() + data + b"\r\n")
+        parts.append(f"--{b}--\r\n".encode())
+        req = urllib.request.Request(f"https://api.telegram.org/bot{self.token}/sendDocument", data=b"".join(parts),
+                                     headers={"Content-Type": f"multipart/form-data; boundary={b}"})
+        try:
+            with urllib.request.urlopen(req, timeout=120) as r:
+                return json.loads(r.read())
+        except Exception as e:
+            return {"ok": False, "error": str(e)}
+
+    def maintenance(self, c, now):
+        """Резервная копия раз в сутки (после 04:00) и раз в неделю — админу в Telegram (пн после 05:00)."""
+        if not self.db_path or not self.backup_dir:
+            return
+        loc = now.astimezone(self.tz)
+        kv = lambda k: (c.execute("SELECT v FROM kv WHERE k=?", (k,)).fetchone() or [None])[0]
+        day = loc.date().isoformat()
+        if loc.hour >= 4 and kv("backup_day") != day:
+            path = ops.make_backup(self.db_path, self.backup_dir, day)
+            c.execute("INSERT OR REPLACE INTO kv(k,v) VALUES('backup_day',?)", (day,))
+            c.commit()
+            log.info("backup: %s", path)
+        wk = self.week_key(now)
+        chat = kv("admin_chat")
+        if self.enabled and chat and loc.weekday() == 0 and loc.hour >= 5 and kv("backup_sent_wk") != wk:
+            path = ops.latest_backup(self.backup_dir)
+            if path:
+                users = c.execute("SELECT COUNT(*) FROM users WHERE blocked=0").fetchone()[0]
+                active = c.execute("SELECT COUNT(DISTINCT uid) FROM clicks WHERE wk=? AND scored=1",
+                                   (self.week_key(now - dt.timedelta(days=7)),)).fetchone()[0]
+                r = self._send_document(chat, path, f"NeuroFans Lab — резервная копия базы ({os.path.basename(path)}).\n"
+                                                    f"Учеников: {users}, активны на прошлой неделе: {active}.\n"
+                                                    "Храни этот файл в надёжном месте: в нём ники и хэши паролей учеников.")
+                if r.get("ok"):
+                    c.execute("INSERT OR REPLACE INTO kv(k,v) VALUES('backup_sent_wk',?)", (wk,))
+                    c.commit()
+
     def username(self):
         if not self._username and self.enabled:
             r = self.http("getMe", {}, 10)
@@ -75,7 +126,7 @@ class Notifier:
 
     # ---------- привязка ----------
     def new_link_code(self, c, uid, now):
-        code = secrets.token_urlsafe(12).replace("-", "x").replace("_", "y")
+        code = "u" + secrets.token_urlsafe(12).replace("-", "x").replace("_", "y")   # не начинается с adm
         exp = (now + dt.timedelta(minutes=30)).isoformat(timespec="seconds")
         c.execute("UPDATE users SET tg_code=?, tg_code_exp=? WHERE id=?", (code, exp, uid))
         c.commit()
@@ -86,6 +137,17 @@ class Notifier:
         text = (msg.get("text") or "").strip()
         chat = (msg.get("chat") or {}).get("id")
         if not chat or (msg.get("chat") or {}).get("type") != "private":
+            return
+        if text.startswith("/start adm"):
+            code = text[10:].strip()
+            r = {k: v for k, v in c.execute("SELECT k, v FROM kv WHERE k IN ('admin_tg_code','admin_tg_exp')")}
+            if code and r.get("admin_tg_code") == code and r.get("admin_tg_exp", "") >= now.isoformat(timespec="seconds"):
+                c.execute("INSERT OR REPLACE INTO kv(k,v) VALUES('admin_chat',?)", (str(chat),))
+                c.execute("DELETE FROM kv WHERE k IN ('admin_tg_code','admin_tg_exp')")
+                c.commit()
+                self._send(chat, "✅ Этот чат подключён как админский: раз в неделю сюда придёт резервная копия базы кабинета.")
+            else:
+                self._send(chat, "Код админа не подошёл или устарел. Получи новый в админке кабинета.")
             return
         if text.startswith("/start"):
             code = text[6:].strip()
@@ -299,6 +361,10 @@ class Notifier:
                 time.sleep(20)
             if time.time() - self.last_scan >= SCAN_EVERY:
                 self.last_scan = time.time()
+                try:
+                    self.maintenance(c, now)
+                except Exception as e:
+                    log.warning("maintenance failed: %s", e)
                 self.scan(c, now)
                 if self.enabled:
                     self.flush(c, now)

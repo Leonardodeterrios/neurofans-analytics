@@ -209,4 +209,77 @@ N.handle_update(cn, {"update_id": 4, "message": {"text": "/stop", "chat": {"id":
 assert cn.execute("SELECT tg_mode FROM users WHERE id=?", (uid,)).fetchone()[0] == "off"
 print("уведомления: OK (привязка, дубли, тихие часы, лимит, дайджест, режимы)")
 
+
+# ---------- админка: пароль и сессия вместо токена в адресе ----------
+assert c.get("/api/admin/overview?token=" + lab.ADMIN_TOKEN, headers=LAB).status_code == 401   # токен в URL больше не пускает
+ad = lab.app.test_client()
+assert J(ad.get("/api/admin/state", headers=LAB))["has_password"] is False
+assert ad.post("/api/admin/setup", json={"token": "wrong", "password": "secretpass1"}, headers=LAB).status_code == 403
+assert ad.post("/api/admin/setup", json={"token": lab.ADMIN_TOKEN, "password": "short"}, headers=LAB).status_code == 400
+assert ad.post("/api/admin/setup", json={"token": lab.ADMIN_TOKEN, "password": "secretpass1"}, headers=LAB).status_code == 200
+assert ad.get("/api/admin/overview", headers=LAB).status_code == 200                    # сессия после настройки
+ad2 = lab.app.test_client()
+assert ad2.post("/api/admin/login", json={"password": "nope-nope-1"}, headers=LAB).status_code == 401
+assert ad2.post("/api/admin/login", json={"password": "secretpass1"}, headers=LAB).status_code == 200
+O = J(ad2.get("/api/admin/overview", headers=LAB))
+assert "stuck" in O and "backups" in O and "consent" in O
+ad2.post("/api/admin/logout", json={}, headers=LAB)
+assert ad2.get("/api/admin/overview", headers=LAB).status_code == 401
+assert c.get("/api/admin/overview", headers=LAB).status_code == 401                     # ученик — не админ
+print("админка: пароль, сессия, выход: OK")
+
+# ---------- резервные копии ----------
+import gzip as _gz
+r = ad.get("/api/admin/backup", headers=LAB)
+assert r.status_code == 200 and r.headers["Content-Type"] == "application/gzip"
+raw = _gz.decompress(r.data); assert raw[:15] == b"SQLite format 3"
+bk = sqlite3.connect(":memory:")
+tmpf = os.path.join(D, "restore.db"); open(tmpf, "wb").write(raw)
+assert sqlite3.connect(tmpf).execute("SELECT COUNT(*) FROM users").fetchone()[0] >= 2
+NB = lab_notify.Notifier(lab.db, lab.TZ, lab.week_key, "", "lab.neurofans.ru", db_path=lab.DB_PATH, backup_dir=lab.BACKUP_DIR)
+morning = lab.now_utc().astimezone(lab.TZ).replace(hour=5).astimezone(dt.timezone.utc)
+cb = lab.db(); NB.maintenance(cb, morning); NB.maintenance(cb, morning)
+assert len([f for f in os.listdir(lab.BACKUP_DIR) if f.endswith(".db.gz")]) >= 1
+for i in range(20):
+    lab.ops.make_backup(lab.DB_PATH, lab.BACKUP_DIR, f"2030-01-{i+1:02d}")
+assert len([f for f in os.listdir(lab.BACKUP_DIR) if f.endswith(".db.gz")]) == lab.ops.KEEP_BACKUPS    # храним 14
+# админский чат для еженедельной копии
+cb.execute("INSERT OR REPLACE INTO kv VALUES('admin_tg_code','abc123')"); cb.execute("INSERT OR REPLACE INTO kv VALUES('admin_tg_exp','2999-01-01')"); cb.commit()
+N.handle_update(cb, {"update_id": 9, "message": {"text": "/start admabc123", "chat": {"id": 999, "type": "private"}}}, lab.now_utc())
+assert cb.execute("SELECT v FROM kv WHERE k='admin_chat'").fetchone()[0] == "999"
+print("резервные копии: OK")
+
+# ---------- чек-лист первого дня, согласие, сравнение, конверсия, дивизионы, PWA ----------
+me = J(c.get("/api/me", headers=LAB))
+st = {x["id"]: x["done"] for x in me["onboarding"]["steps"]}
+assert st["model"] and st["link"] and st["check"] and st["person"], st
+c3 = lab.app.test_client()
+c3.post("/api/register", json={"invite": codes[2], "nick": "newbie", "password": "abcdefgh"}, headers=LAB)
+o3 = J(c3.get("/api/me", headers=LAB))["onboarding"]
+assert o3["done"] == 0 and not o3["hidden"]
+c3.post("/api/onboarding/hide", json={}, headers=LAB)
+assert J(c3.get("/api/me", headers=LAB))["onboarding"]["hidden"]
+assert J(c.post("/api/privacy", json={"public_ok": True}, headers=LAB))["public_ok"] is True
+lids = [l["id"] for l in me["models"][0]["links"]]
+CMP = J(c.get("/api/compare?ids=" + ",".join(map(str, lids)), headers=LAB))
+assert len(CMP["links"]) == len(lids) and len(CMP["links"][0]["days"]) == 14 and sum(x["week"] for x in CMP["links"]) >= 7
+assert J(c2.get("/api/compare?ids=" + ",".join(map(str, lids)), headers=LAB))["links"] == []     # чужие ссылки не видно
+CV = J(c.post("/api/conv", json={"mid": m["id"], "subs": 3}, headers=LAB))
+cur = [w for w in CV["weeks"] if w["wk"] == CV["week"]][0]
+assert cur["subs"] == 3 and cur["rate"] and len(CV["weeks"]) == 8
+assert c.post("/api/conv", json={"mid": m["id"], "subs": -1}, headers=LAB).status_code == 400
+assert c2.post("/api/conv", json={"mid": m["id"], "subs": 1}, headers=LAB).status_code == 404
+LG = J(c.get("/api/league?div=start", headers=LAB))
+assert LG["div"] == "start" and LG["my_div"] in ("start", "pro", "elite") and len(LG["divs"]) == 3
+assert all(r["div"] == "start" for r in LG["rows"])
+assert J(c.get("/api/league?div=elite", headers=LAB))["rows"] == []
+assert lab.game.div_of(0) == "start" and lab.game.div_of(50) == "pro" and lab.game.div_of(1000) == "elite"
+assert c.get("/manifest.webmanifest", headers=LAB).status_code == 200
+assert Image.open(io.BytesIO(c.get("/icon-512.png", headers=LAB).data)).size == (512, 512)
+assert b"caches" in c.get("/sw.js", headers=LAB).data
+WP = J(ad.get("/api/admin/weekly_post?wk=cur", headers=LAB))
+assert "Итоги недели" in WP["text"] and "@anna" in WP["text"]            # anna дала согласие — ник есть
+assert "fanvue" not in WP["text"].lower() and "to.neurofans" not in WP["text"]
+print("чек-лист, согласие, сравнение, конверсия, дивизионы, PWA, пост итогов: OK")
+
 print("ВСЕ ТЕСТЫ КАБИНЕТА ПРОШЛИ")
