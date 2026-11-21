@@ -66,7 +66,7 @@ def main():
             else:
                 print(f"Ключ не подходит или без прав ({st}): {res}")
             sys.exit(1)
-        ns_ok = st < 300
+        ns_ok = st < 300 or (st == 422 and "already used the same provider" in str(res))  # уже на Spaceship
         st2, lst = call("GET", f"/dns/records/{d}?take=500&skip=0", key, secret)
         old = []
         if st2 < 300 and isinstance(lst, dict):
