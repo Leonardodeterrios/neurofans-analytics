@@ -25,6 +25,67 @@ http://lab.{$LAB_ROOT:neurofans.ru}, http://to.{$LAB_ROOT:neurofans.ru}, http://
 	redir https://{host}{uri} 308
 }
 
+# Короткие домены партнёров (.shop, Spaceship, DNS у регистратора, A-запись @ → IP сервера).
+# Каждый домен = одна метка. Клик идёт сразу в трекер (тот же подсчёт, что /t/ и /v/),
+# без промежуточного редиректа на go.ai-creators.ru.
+#   домен/    → канал по умолчанию: «л…» — Threads (/t/), «к…» — видео (/v/)
+#   домен/t   → Threads,  домен/v → видео (Shorts/Reels/TikTok)
+# Новый домен: добавить строку в map и имя домена в обе строки со списком хостов.
+loradaily.shop, lyravibe.shop, linaflow.shop, loranotes.shop, lanavibe.shop, lizaweb.shop, lilynotes.shop, liananotes.shop, letavibe.shop, leomira.shop, lukaflow.shop, lubadaily.shop, lanaflow.shop, lenavibe.shop, lorablog.shop, lidastudio.shop, kseniadaily.shop, katyanotes.shop, kamiladaily.shop, kiranotes.shop, ksyushaflow.shop {
+	map {host} {nf_label} {nf_ch} {
+		loradaily.shop    leo02  t
+		lyravibe.shop     leo03  t
+		linaflow.shop     leo04  t
+		loranotes.shop    leo05  t
+		lanavibe.shop     leo06  t
+		lizaweb.shop      leo07  t
+		lilynotes.shop    leo08  t
+		liananotes.shop   leo09  t
+		letavibe.shop     leo10  t
+		leomira.shop      leo11  t
+		lukaflow.shop     leo12  t
+		lubadaily.shop    leo13  t
+		lanaflow.shop     leo14  t
+		lenavibe.shop     leo15  t
+		lorablog.shop     leo16  t
+		lidastudio.shop   leo17  t
+		kseniadaily.shop  kate01 v
+		katyanotes.shop   kate02 v
+		kamiladaily.shop  kate03 v
+		kiranotes.shop    kate04 v
+		ksyushaflow.shop  kate05 v
+	}
+	@threads path /t /t/
+	@video path /v /v/
+	@robots path /robots.txt /favicon.ico
+	handle @robots {
+		respond 404
+	}
+	handle @threads {
+		rewrite * /t/{nf_label}
+		reverse_proxy app:8080 {
+			header_up X-Real-IP {remote_host}
+		}
+	}
+	handle @video {
+		rewrite * /v/{nf_label}
+		reverse_proxy app:8080 {
+			header_up X-Real-IP {remote_host}
+		}
+	}
+	# всё остальное (корень и любой путь) — канал домена по умолчанию; дашборд/арена тут не открываются
+	handle {
+		rewrite * /{nf_ch}/{nf_label}
+		reverse_proxy app:8080 {
+			header_up X-Real-IP {remote_host}
+		}
+	}
+}
+
+http://loradaily.shop, http://lyravibe.shop, http://linaflow.shop, http://loranotes.shop, http://lanavibe.shop, http://lizaweb.shop, http://lilynotes.shop, http://liananotes.shop, http://letavibe.shop, http://leomira.shop, http://lukaflow.shop, http://lubadaily.shop, http://lanaflow.shop, http://lenavibe.shop, http://lorablog.shop, http://lidastudio.shop, http://kseniadaily.shop, http://katyanotes.shop, http://kamiladaily.shop, http://kiranotes.shop, http://ksyushaflow.shop {
+	redir https://{host}{uri} 302
+}
+
 # Всё остальное по http (старые ссылки на голый IP, старый URL в PuzzleBot) продолжает работать.
 :80 {
 	reverse_proxy app:8080 {
