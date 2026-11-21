@@ -1,0 +1,72 @@
+#!/usr/bin/env python3
+"""Переводит короткие домены партнёров (.shop) с Cloudflare на DNS Spaceship
+и ставит A-запись @ → IP сервера. Только стандартная библиотека Python.
+
+Запуск на сервере:  python3 tools/spaceship_dns.py
+Ключ и секрет из Spaceship → API Manager спрашиваются при запуске (ввод скрыт),
+никуда не сохраняются. Сначала показывает план, меняет только после «да».
+Права ключа: Domains (nameservers) — write, DNS records — read + write.
+"""
+import getpass, json, re, sys, urllib.error, urllib.request
+from pathlib import Path
+
+API = "https://spaceship.dev/api/v1"
+IP = "188.130.251.125"
+
+
+def domains_from_caddyfile():
+    text = (Path(__file__).resolve().parent.parent / "Caddyfile").read_text(encoding="utf-8")
+    return sorted(set(re.findall(r"^\t\t([a-z0-9-]+\.shop)\s", text, re.M)))
+
+
+def call(method, path, key, secret, body=None):
+    data = json.dumps(body).encode() if body is not None else None
+    req = urllib.request.Request(API + path, data=data, method=method, headers={
+        "X-API-Key": key, "X-API-Secret": secret, "Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            raw = r.read().decode() or "{}"
+            return r.status, json.loads(raw) if raw.strip().startswith(("{", "[")) else raw
+    except urllib.error.HTTPError as e:
+        return e.code, e.read().decode()[:300]
+
+
+def main():
+    doms = domains_from_caddyfile()
+    print(f"Доменов: {len(doms)}. Для каждого:")
+    print("  1) NS → Spaceship (basic)")
+    print("  2) удалить старые записи @ типа A / AAAA / CNAME (парковка)")
+    print(f"  3) A-запись @ → {IP}\n  " + ", ".join(doms))
+    key = getpass.getpass("\nAPI key (ввод скрыт): ").strip()
+    secret = getpass.getpass("API secret (ввод скрыт): ").strip()
+    if input("Применить? Напиши да: ").strip().lower() not in ("да", "yes", "y"):
+        print("Отменено, ничего не менял.")
+        return
+    bad = []
+    for d in doms:
+        st, res = call("PUT", f"/domains/{d}/nameservers", key, secret, {"provider": "basic"})
+        if st == 401 or st == 403:
+            print(f"Ключ не подходит или без прав ({st}): {res}")
+            sys.exit(1)
+        ns_ok = st < 300
+        st2, lst = call("GET", f"/dns/records/{d}?take=500&skip=0", key, secret)
+        old = []
+        if st2 < 300 and isinstance(lst, dict):
+            for r in lst.get("items", []):
+                if r.get("name") == "@" and r.get("type") in ("A", "AAAA", "CNAME") \
+                        and not (r.get("type") == "A" and r.get("address") == IP):
+                    old.append({k: v for k, v in r.items() if k != "ttl"})
+        if old:
+            call("DELETE", f"/dns/records/{d}", key, secret, old)
+        st3, res3 = call("PUT", f"/dns/records/{d}", key, secret, {
+            "force": True, "items": [{"type": "A", "name": "@", "address": IP, "ttl": 600}]})
+        ok = ns_ok and st3 < 300
+        print(f"{'✅' if ok else '❌'} {d:<20} NS:{st}  удалено старых:{len(old)}  A:{st3}"
+              + ("" if ok else f"  {res if not ns_ok else res3}"))
+        if not ok:
+            bad.append(d)
+    print("\nГотово." if not bad else f"\nНе получилось: {', '.join(bad)} — пришли вывод Claude.")
+
+
+if __name__ == "__main__":
+    main()
