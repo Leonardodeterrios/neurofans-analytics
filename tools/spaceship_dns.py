@@ -22,13 +22,19 @@ def domains_from_caddyfile():
 def call(method, path, key, secret, body=None):
     data = json.dumps(body).encode() if body is not None else None
     req = urllib.request.Request(API + path, data=data, method=method, headers={
-        "X-API-Key": key, "X-API-Secret": secret, "Content-Type": "application/json"})
+        "X-API-Key": key, "X-API-Secret": secret, "Content-Type": "application/json",
+        "Accept": "application/json", "User-Agent": "curl/8.5.0"})
     try:
         with urllib.request.urlopen(req, timeout=30) as r:
             raw = r.read().decode() or "{}"
             return r.status, json.loads(raw) if raw.strip().startswith(("{", "[")) else raw
     except urllib.error.HTTPError as e:
-        return e.code, e.read().decode()[:300]
+        txt = e.read().decode(errors="replace")
+        if "<html" in txt.lower():  # страница защиты, а не ответ API
+            t = re.search(r"<title>(.*?)</title>", txt, re.S | re.I)
+            ray = re.search(r"Ray ID:?\s*(?:<[^>]+>\s*)*([0-9a-f]+)", txt, re.I)
+            txt = "HTML: " + (t.group(1).strip() if t else "без заголовка") + (f" (Ray {ray.group(1)})" if ray else "")
+        return e.code, txt[:300]
 
 
 def main():
@@ -45,8 +51,12 @@ def main():
     bad = []
     for d in doms:
         st, res = call("PUT", f"/domains/{d}/nameservers", key, secret, {"provider": "basic"})
-        if st == 401 or st == 403:
-            print(f"Ключ не подходит или без прав ({st}): {res}")
+        if st in (401, 403):
+            if isinstance(res, str) and res.startswith("HTML"):
+                print(f"Spaceship не пускает запросы с этого компьютера ({st}): {res}")
+                print("Запусти скрипт на своём Mac — команда есть в чате у Claude.")
+            else:
+                print(f"Ключ не подходит или без прав ({st}): {res}")
             sys.exit(1)
         ns_ok = st < 300
         st2, lst = call("GET", f"/dns/records/{d}?take=500&skip=0", key, secret)
