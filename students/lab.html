@@ -49,6 +49,7 @@ h2{font-size:18px}h3{font-size:14px;font-weight:500;color:var(--mut);text-transf
 .btn.sm{padding:7px 11px;font-size:13px;border-radius:10px}
 .btn.danger{background:rgba(255,90,110,.12);color:var(--bad);border:1px solid rgba(255,90,110,.35);box-shadow:none}
 .btn[disabled]{opacity:.5;pointer-events:none}
+a.btn{text-decoration:none}
 label.f{display:block;margin:0 0 12px}
 label.f span{display:block;font-size:12px;color:var(--mut);margin:0 0 6px;font-weight:800;letter-spacing:.03em}
 .in{width:100%;background:rgba(5,4,12,.6);border:1px solid var(--line2);border-radius:12px;padding:12px 14px;outline:none;transition:border .15s,box-shadow .15s}
@@ -155,7 +156,9 @@ canvas{display:block;width:100%}
  .lk{grid-template-columns:1fr auto;gap:8px 10px}
  .lk .chipc,.lk .lu{grid-column:1/-1}
  .lk .st{grid-column:1/2;text-align:left}
- .lk .acts{grid-row:3;grid-column:2}
+ .lk .acts{grid-column:1/-1;flex-wrap:wrap}
+ .lk .acts .btn{flex:1}
+ .lk .acts .btn[data-lmenu]{flex:0 0 52px}
 }
 .addlk{padding:14px 18px;background:rgba(5,4,12,.35);display:grid;grid-template-columns:160px 1fr 1fr auto;gap:10px;align-items:end}
 .addlk label.f{margin:0}
@@ -213,6 +216,24 @@ table.t td{padding:9px 8px;border-bottom:1px solid var(--line)}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 @media (min-width:761px){.toast{bottom:28px}}
 .skel{opacity:.5}
+/* ранги, ачивки, статусы ссылок */
+.ach-row{display:grid;grid-template-columns:minmax(180px,260px) 1fr;gap:16px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.ach-row:last-child{border-bottom:0}
+.rk{display:flex;align-items:center;gap:12px}
+.rk .ico{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:22px;background:rgba(255,255,255,.05);border:1px solid var(--line2)}
+.rk b{display:block}
+.prog{height:7px;border-radius:99px;background:rgba(255,255,255,.06);overflow:hidden;margin-top:6px}
+.prog i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--a),var(--b))}
+.bdg{display:flex;flex-wrap:wrap;gap:6px}
+.bdg span{font-size:12px;font-weight:800;padding:5px 9px;border-radius:9px;border:1px solid var(--line2);background:rgba(255,255,255,.03);color:var(--dim);cursor:default}
+.bdg span.on{color:var(--tx);border-color:rgba(255,201,77,.55);background:rgba(255,201,77,.1)}
+@media (max-width:760px){.ach-row{grid-template-columns:1fr}}
+.lst{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;color:var(--dim);margin-top:3px}
+.lst.ok{color:var(--ok)}.lst.chk{color:var(--a)}
+.cardprev{display:block;width:100%;max-width:300px;margin:12px auto;border-radius:16px;border:1px solid var(--line2);aspect-ratio:9/16;background:#0d0b18;object-fit:cover}
+.seg{display:flex;gap:4px;padding:4px;background:rgba(5,4,12,.55);border:1px solid var(--line);border-radius:12px;margin:0 0 10px}
+.seg button{flex:1;border:0;background:none;padding:8px;border-radius:9px;font-weight:800;color:var(--mut);cursor:pointer;font-size:13px}
+.seg button.on{background:rgba(255,255,255,.08);color:var(--tx)}
 </style>
 </head>
 <body>
@@ -254,13 +275,13 @@ table.t td{padding:9px 8px;border-bottom:1px solid var(--line)}
    <button data-p="ov" class="on">📈 Обзор</button><button data-p="lk">🔗 Модели и ссылки</button><button data-p="lg">🏆 Лига</button>
   </nav>
   <div class="me"><button id="meBtn"><span class="ava" id="meAva">?</span><span class="nk" id="meNick"></span><span style="color:var(--mut)">▾</span></button>
-   <div class="menu card hide" id="menu"><button data-m="pw">🔑 Сменить пароль</button><button data-m="out">↩ Выйти</button></div></div>
+   <div class="menu card hide" id="menu"><button data-m="tg">🔔 Уведомления в Telegram</button><button data-m="card">🖼 Карточка недели</button><button data-m="pw">🔑 Сменить пароль</button><button data-m="out">↩ Выйти</button></div></div>
  </div></header>
 
  <main><div class="wrap">
   <!-- обзор -->
   <div id="pg-ov">
-   <div class="ph"><div><h1>Обзор</h1><div class="hint" id="ovSub">Последние 14 дней</div></div><span class="live">LIVE</span></div>
+   <div class="ph"><div><h1>Обзор</h1><div class="hint" id="ovSub">Последние 14 дней</div></div><div style="display:flex;gap:10px;align-items:center"><span class="live">LIVE</span><button class="btn sm" data-card>🖼 Карточка недели</button></div></div>
    <div class="mbar" id="mbar"></div>
    <div id="ovEmpty" class="hide"></div>
    <div id="ovBody">
@@ -274,6 +295,7 @@ table.t td{padding:9px 8px;border-bottom:1px solid var(--line)}
      <div class="card"><div class="ch-head"><h3>Клики по дням</h3><div class="legend"><span><i style="background:var(--v)"></i>клики</span><span><i style="background:var(--a)"></i>уникальные люди</span></div></div><canvas id="cvDays" height="230"></canvas></div>
      <div class="card"><div class="ch-head"><h3>Каналы</h3><span class="hint">люди / клики</span></div><div class="bars" id="chBars"></div></div>
     </div>
+    <div class="card" style="margin:0 0 12px"><div class="ch-head"><h3>Ранги и ачивки</h3><span class="hint">ранг — по людям за всё время</span></div><div id="ach"></div></div>
     <div class="grid3">
      <div class="card"><div class="ch-head"><h3>Время кликов</h3><span class="hint" id="tzHint"></span></div><canvas id="cvHours" height="150"></canvas><div class="hint" id="peak" style="margin-top:8px"></div></div>
      <div class="card"><div class="ch-head"><h3>Города</h3></div><div class="list" id="cities"></div></div>
@@ -324,6 +346,8 @@ table.t td{padding:9px 8px;border-bottom:1px solid var(--line)}
  <header class="top"><div class="wrap"><div class="logo"><i>⚡</i><span>NEURO<b>FANS</b></span><small>ADMIN</small></div></div></header>
  <main><div class="wrap">
   <div class="kpis" id="adK"></div>
+  <h3 style="margin:4px 0 10px">Воронка учеников</h3>
+  <div class="kpis" id="adF" style="grid-template-columns:repeat(3,1fr)"></div>
   <div class="grid2">
    <div class="card"><div class="ch-head"><h3>Ученики</h3><span class="hint" id="adWk"></span></div><div class="tw"><table class="t" id="adUsers"></table></div></div>
    <div>
@@ -398,7 +422,7 @@ $$("[data-p]").forEach(b=>b.onclick=()=>go(b.dataset.p));
 $("#meBtn").onclick=e=>{e.stopPropagation();$("#menu").classList.toggle("hide")};
 document.addEventListener("click",()=>$("#menu").classList.add("hide"));
 $("#menu").onclick=async e=>{const m=e.target.dataset.m;if(m==="out"){await api("/api/logout",{method:"POST",body:{}});location.href="/"}
-  if(m==="pw")openPw()};
+  if(m==="pw")openPw();if(m==="tg")openTg();if(m==="card")openCard()};
 
 async function boot(){
   try{S.me=await api("/api/me")}catch(e){return}
@@ -412,6 +436,8 @@ async function boot(){
   clearInterval(S.poll);S.poll=setInterval(()=>{if(document.hidden)return;if(S.page==="ov")loadStats(true);if(S.page==="lg")loadLeague(true)},15000);
 }
 
+$$("[data-card]").forEach(b=>b.onclick=()=>openCard());
+async function refreshMe(){try{const r=await api("/api/me");S.me.models=r.models;if(S.page==="lk")renderModels()}catch(e){}}
 function activeModels(){return S.me.models.filter(m=>!m.archived)}
 function renderMbar(){
   const ms=activeModels();
@@ -426,6 +452,7 @@ async function loadStats(quiet){
   $("#ovBody").classList.remove("hide");$("#ovEmpty").classList.add("hide");
   try{S.stats=await api("/api/stats?mid="+S.mid)}catch(e){return}
   if(!S.league||!quiet){try{S.league=await api("/api/league")}catch(e){}}
+  if(!S.ach||!quiet){try{S.ach=await api("/api/achievements");renderAch()}catch(e){}}
   renderStats();
 }
 function renderStats(){
@@ -502,13 +529,18 @@ function renderModels(){
    <div class="mh"><span class="ava">${esc((m.name[0]||"?").toUpperCase())}</span>
     <div class="t"><b>${esc(m.name)}</b>${m.hidden?' <span class="pill">скрыта из лиги</span>':""}${m.archived?' <span class="pill">в архиве</span>':""}
      <div>→ <a href="${esc(m.target)}" target="_blank" rel="noopener noreferrer">${esc(m.target)}</a></div></div>
+    ${m.rank?`<span class="chip" title="ранг модели: ${fmt(m.rank.people)} людей за всё время">${m.rank.icon} ${esc(m.rank.name)}</span>`:""}
+    ${m.links.length?`<button class="btn ghost sm" data-copyall="${m.id}">📋 Все ссылки</button>`:""}
     <button class="btn ghost sm" data-edit="${m.id}">✏️ Настроить</button></div>
    ${m.links.map(l=>{const s=ls[l.id]||{};return `<div class="lk ${l.archived?"arch":""}">
      <div class="chipc"><span class="chip">${CH_ICON[l.ch]||"🔗"} ${esc(l.ch_name)}</span></div>
      <div class="lu" style="min-width:0"><div class="url">${esc(l.url.replace("https://",""))}</div>
-      <div class="sub">${l.note?esc(l.note)+" · ":""}${l.target?"→ "+esc(l.target):"→ ссылка модели"}</div></div>
+      <div class="sub">${l.note?esc(l.note)+" · ":""}${l.target?"→ "+esc(l.target):"→ ссылка модели"}</div>
+      ${l.first_at?`<span class="lst ok">● работает · первый человек ${new Date(l.first_at).toLocaleDateString("ru-RU",{day:"numeric",month:"short"})}</span>`
+        :l.checked_at?`<span class="lst chk">✓ проверена ${ago(l.checked_at)}${l.checked_app?" · "+esc(l.checked_app):""} · ждёт первого человека</span>`
+        :`<span class="lst">○ не проверена — нажми «Проверить»</span>`}</div>
      <div class="st"><div><b>${fmt(s.people||0)}</b>людей</div><div><b>${fmt(s.today||0)}</b>сегодня</div></div>
-     <div class="acts"><button class="btn sm" data-copy="${esc(l.url)}">Копировать</button><button class="btn ghost sm" data-lmenu="${l.id}" title="Ещё">⋯</button></div></div>`}).join("")}
+     <div class="acts"><button class="btn sm" data-copy="${esc(l.url)}">Копировать</button><a class="btn ghost sm" href="${esc(l.url)}?check=1" target="_blank" rel="noopener" data-check title="Открыть как подписчик — в статистику не попадёт">Проверить</a><button class="btn ghost sm" data-lmenu="${l.id}" title="Ещё">⋯</button></div></div>`}).join("")}
    ${m.archived?"":`<form class="addlk" data-mid="${m.id}">
      <label class="f"><span>Канал</span><select class="in" name="ch">${chOpts}</select></label>
      <label class="f"><span>Своя метка (необязательно)</span><input class="in" name="slug" placeholder="например, ${esc(m.slug)}-reels" pattern="[a-z0-9][a-z0-9\\-]{1,39}"></label>
@@ -516,6 +548,9 @@ function renderModels(){
      <button class="btn ghost">＋ Ссылка</button></form>`}
   </div>`).join("")+`<p class="hint" style="text-align:center">Ссылка продолжает вести на модель, даже если её архивировать — в био ничего не сломается.</p>`;
   $$("[data-copy]").forEach(b=>b.onclick=()=>copy(b.dataset.copy));
+  $$("[data-check]").forEach(b=>b.addEventListener("click",()=>{toast("Открываю как подписчик — тест не попадёт в статистику");setTimeout(refreshMe,4000)}));
+  $$("[data-copyall]").forEach(b=>b.onclick=()=>{const m=S.me.models.find(x=>x.id==b.dataset.copyall);
+    copy(m.links.filter(l=>!l.archived).map(l=>`${l.ch_name} — ${l.url}${l.note?" ("+l.note+")":""}`).join("\n"))});
   $$("[data-edit]").forEach(b=>b.onclick=()=>openModel(S.me.models.find(m=>m.id==b.dataset.edit)));
   $$("[data-lmenu]").forEach(b=>b.onclick=()=>openLink(b.dataset.lmenu));
   $$(".addlk").forEach(f=>f.onsubmit=async e=>{e.preventDefault();const d=Object.fromEntries(new FormData(f));d.mid=+f.dataset.mid;
@@ -576,7 +611,7 @@ async function loadLeague(quiet){
   $("#lgFilters").innerHTML=[`<button data-c="">Все каналы</button>`,...L.channels.map(c=>`<button data-c="${c.id}">${CH_ICON[c.id]||""} ${esc(c.name)}</button>`)].join("");
   $$("#lgFilters button").forEach(b=>{b.classList.toggle("on",b.dataset.c===S.lgCh);b.onclick=()=>{S.lgCh=b.dataset.c;loadLeague()}});
   const row=(r,extra)=>`<div class="r ${r.mine?"mine":""} ${r.place<=3?"g"+r.place:""}"><div class="pl">${r.place<=3?["","🥇","🥈","🥉"][r.place]:r.place}</div>
-    <div class="nm"><b>${esc(r.model)}${r.mine?" · ты":""}</b><span>@${esc(r.nick)}</span></div><div class="pt num">${fmt(r.pts)}${extra||""}</div></div>`;
+    <div class="nm"><b>${r.rank?`<span title="ранг">${r.rank}</span> `:""}${esc(r.model)}${r.mine?" · ты":""}</b><span>@${esc(r.nick)}</span></div><div class="pt num">${fmt(r.pts)}${extra||""}</div></div>`;
   $("#board").innerHTML=L.rows.length?L.rows.map(r=>row(r,`<small>${r.prev?"прошлая "+fmt(r.prev):"новичок недели"}</small>`)).join("")
     :`<div class="empty">На этой неделе ещё никто не набрал очков.<br>Стань первым — поставь ссылку в био 🔥</div>`;
   $("#rush").innerHTML=L.rush.length?L.rush.slice(0,5).map((r,i)=>row({...r,place:i+1},`<small>×${String(r.x).replace(".",",")} · было ${fmt(r.prev)}</small>`)).join("")
@@ -586,8 +621,9 @@ async function loadLeague(quiet){
     :`<div class="empty" style="width:100%">Первая неделя лиги — победители появятся в понедельник</div>`;
   const mine=L.mine;
   $("#myplace").innerHTML=mine.length?`<div class="myplace"><div class="big">#${mine[0].place}</div><div><b>${esc(mine[0].model)}</b><div class="hint">${fmt(mine[0].pts)} ${plural(mine[0].pts,"очко","очка","очков")}${mine[0].place>1?` · до #${mine[0].place-1}: ${fmt(L.rows[mine[0].place-2].pts-mine[0].pts+1)}`:" · ты лидер 👑"}</div>
-    ${mine.slice(1,4).map(x=>`<div class="hint">${esc(x.model)} — #${x.place}</div>`).join("")}</div></div>`
+    ${mine.slice(1,4).map(x=>`<div class="hint">${esc(x.model)} — #${x.place}</div>`).join("")}<button class="btn sm" data-card style="margin-top:10px">🖼 Карточка для сторис</button></div></div>`
     :`<div class="hint">Пока без очков. Первый человек по твоей ссылке — и ты в таблице.</div>`;
+  $$("#myplace [data-card]").forEach(b=>b.onclick=()=>openCard());
   tick();clearInterval(S.timerT);S.timerT=setInterval(tick,1000);
 }
 function tick(){
@@ -596,12 +632,69 @@ function tick(){
   $("#timer").innerHTML=[[d,"дн"],[h,"ч"],[m,"мин"],[sec,"сек"]].map(([v,l])=>`<div><b>${String(v).padStart(2,"0")}</b><span>${l}</span></div>`).join("");
 }
 
+/* ---------- ранги и ачивки ---------- */
+function renderAch(){
+  const A=S.ach;if(!A)return;
+  let ms=A.models;if(S.mid!=="all")ms=ms.filter(m=>String(m.mid)===String(S.mid));
+  $("#ach").innerHTML=ms.length?ms.map(m=>{const rk=m.rank,got=new Set(m.badges.map(b=>b.id));
+    return `<div class="ach-row"><div class="rk"><span class="ico">${rk.icon}</span><div style="flex:1;min-width:0"><b>${esc(m.name)} · ${esc(rk.name)}</b>
+      <div class="hint">${rk.next_at?`до «${esc(rk.next_name)}»: ${fmt(rk.next_at-rk.people)} ${plural(rk.next_at-rk.people,"человек","человека","человек")}`:"максимальный ранг 👑"}</div>
+      <div class="prog"><i style="width:${Math.max(3,rk.progress*100)}%"></i></div></div></div>
+      <div class="bdg">${A.defs.map(d=>`<span class="${got.has(d.id)?"on":""}" title="${esc(d.desc)}">${d.icon} ${esc(d.name)}</span>`).join("")}</div></div>`}).join("")
+    :`<div class="empty">Добавь модель — и здесь появятся ранг и ачивки</div>`;
+}
+
+/* ---------- карточка недели ---------- */
+function openCard(mid){
+  const ms=activeModels();if(!ms.length){toast("Сначала добавь модель");return}
+  const st={mid:mid||(S.mid!=="all"?S.mid:ms[0].id),kind:"week",nick:false};
+  modal(`<h2>Карточка для сторис</h2><p class="hint" style="margin:6px 0 12px">Только имя модели, очки, место и ачивки — без ссылок и городов.</p>
+    ${ms.length>1?`<select class="in" id="cdM" style="margin-bottom:10px">${ms.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join("")}</select>`:""}
+    <div class="seg" id="cdK"><button data-k="week" class="on">Эта неделя</button><button data-k="last">Итог прошлой</button></div>
+    <label style="display:flex;gap:8px;align-items:center;font-size:13px;color:var(--mut)"><input type="checkbox" id="cdN" style="width:18px;height:18px"> показать мой ник</label>
+    <img class="cardprev" id="cdImg" alt="Карточка недели">
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" style="flex:1" id="cdShare">Поделиться</button><a class="btn ghost" id="cdDl" download>Скачать</a><button class="btn ghost" data-close>Готово</button></div>`);
+  const url=()=>`/api/card.png?mid=${st.mid}&kind=${st.kind}&nick=${st.nick?1:0}`;
+  const upd=()=>{$("#cdImg").src=url()+"&t="+Date.now();$("#cdDl").href=url();$("#cdDl").download=`neurofans-week.png`};
+  if($("#cdM")){$("#cdM").value=st.mid;$("#cdM").onchange=e=>{st.mid=e.target.value;upd()}}
+  $$("#cdK button").forEach(b=>b.onclick=()=>{st.kind=b.dataset.k;$$("#cdK button").forEach(x=>x.classList.toggle("on",x===b));upd()});
+  $("#cdN").onchange=e=>{st.nick=e.target.checked;upd()};
+  $("#cdShare").onclick=async()=>{try{const blob=await (await fetch(url(),{credentials:"same-origin"})).blob();
+    const file=new File([blob],"neurofans-week.png",{type:"image/png"});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:"Моя неделя в NeuroFans Lab"})}
+    else{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="neurofans-week.png";a.click();toast("Сохранено — выложи в сторис")}}catch(e){}};
+  upd();
+}
+
+/* ---------- Telegram-уведомления ---------- */
+async function openTg(){
+  let t;try{t=await api("/api/tg")}catch(e){return}
+  if(!t.enabled){modal(`<h2>🔔 Уведомления в Telegram</h2><p class="hint" style="margin:10px 0 16px">Скоро здесь можно будет подключить бота: первый человек по ссылке, места в лиге, ачивки и итоги недели — прямо в Telegram.</p><button class="btn ghost" data-close>Понятно</button>`);return}
+  const modes=[["all","Все события","первый человек, вехи, места, ачивки, итоги"],["digest","Только итоги недели","воскресный дайджест и итоги в понедельник"],["off","Выключены",""]];
+  modal(`<h2>🔔 Уведомления в Telegram</h2>
+    ${t.linked?`<p class="hint" style="margin:8px 0 12px"><span class="up">● Подключено.</span> Не больше 4 сообщений в день, с 23:00 до 9:00 — тишина.</p>
+      <div class="seg" id="tgM" style="flex-direction:column">${modes.map(([k,n,d])=>`<button data-k="${k}" class="${t.mode===k?"on":""}" style="text-align:left"><b>${n}</b>${d?`<br><span class="hint" style="font-weight:500">${d}</span>`:""}</button>`).join("")}</div>
+      <div style="display:flex;gap:8px"><button class="btn ghost" id="tgUn">Отвязать</button><button class="btn" data-close style="flex:1">Готово</button></div>`
+    :`<p class="hint" style="margin:8px 0 14px">Бот пришлёт: первого человека по новой ссылке, вехи (10, 50, 100… людей), вход в топ лиги, новые ачивки, воскресный дайджест и итоги недели. Без спама — максимум 4 сообщения в день.</p>
+      <button class="btn" id="tgGo" style="width:100%">Подключить Telegram</button><p class="hint" id="tgWait" style="text-align:center;margin:10px 0 0"></p>`}`);
+  $$("#tgM button").forEach(b=>b.onclick=async()=>{await api("/api/tg/mode",{method:"POST",body:{mode:b.dataset.k}});$$("#tgM button").forEach(x=>x.classList.toggle("on",x===b));toast("Сохранено ✓")});
+  if($("#tgUn"))$("#tgUn").onclick=async()=>{await api("/api/tg/unlink",{method:"POST",body:{}});closeModal();toast("Telegram отвязан")};
+  if($("#tgGo"))$("#tgGo").onclick=async()=>{try{const r=await api("/api/tg/link",{method:"POST",body:{}});window.open(r.url,"_blank");
+      $("#tgWait").textContent="Нажми «Старт» в боте — я подожду…";let n=0;const iv=setInterval(async()=>{n++;
+        try{const s=await api("/api/tg");if(s.linked){clearInterval(iv);closeModal();toast("Telegram подключён ✓")}}catch(e){}if(n>60)clearInterval(iv)},3000)}
+    catch(x){$("#tgWait").textContent=x.message}};
+}
+
 /* ---------- админка ---------- */
 async function bootAdmin(){
   try{S.adm=qs.get("token")||sessionStorage.getItem("nf_adm")||"";if(S.adm)sessionStorage.setItem("nf_adm",S.adm)}catch(e){S.adm=qs.get("token")||""}$("#admin").classList.remove("hide");
   if(S.adm)history.replaceState(null,"","/admin");
   let A;try{A=await api("/api/admin/overview")}catch(e){$("#admin main .wrap").innerHTML=`<div class="card empty">Нужен токен админки: /admin?token=…</div>`;return}
   const t=A.totals;
+  const F=A.funnel||{},pc=(a,b)=>b?Math.round(a/b*100)+"%":"—";
+  $("#adF").innerHTML=[["🔗 Ссылка за 24 ч",pc(F.with_link_24h,F.users),`${fmt(F.with_link_24h)} из ${fmt(F.users)}`],["👤 Первый человек за 7 дней",pc(F.with_person_7d,F.users),`${fmt(F.with_person_7d)} из ${fmt(F.users)}`],
+    ["🔥 Активны на неделе",fmt(F.active_week),"есть очки"],["🔔 Telegram",fmt(F.tg_linked),A.tg_enabled?`отправлено ${fmt(F.notify_sent_week)} за неделю`:"бот не подключён"],["🖼 Карточек за неделю",fmt(F.cards_week),""],["✓ Проверенных ссылок",fmt(F.checks),""]]
+    .map(([l,v,s])=>`<div class="card kpi"><div class="l">${l}</div><div class="v num" style="font-size:26px">${v}</div><div class="s">${s}</div></div>`).join("");
   $("#adK").innerHTML=[["👥 Ученики",t.users],["🧑‍🎤 Модели",t.models],["🏆 Очки недели",t.week_people],["🖱 Клики недели",t.week_clicks]]
     .map(([l,v])=>`<div class="card kpi"><div class="l">${l}</div><div class="v num">${fmt(v)}</div></div>`).join("");
   $("#adWk").textContent="неделя "+A.week;

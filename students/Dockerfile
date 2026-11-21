@@ -2,8 +2,8 @@
 # Собирается из корня репозитория (нужны общие шрифты из static/fonts).
 FROM python:3.12-slim
 WORKDIR /app
-RUN pip install --no-cache-dir "flask>=3.0" "maxminddb>=2.4"
-COPY students/lab.py students/lab.html ./
+RUN pip install --no-cache-dir "flask>=3.0" "maxminddb>=2.4" "pillow>=10"
+COPY students/lab.py students/lab_game.py students/lab_card.py students/lab_notify.py students/lab.html ./
 COPY static/fonts ./static/fonts
 ENV LAB_DATA=/app/data LAB_PORT=8090
 CMD ["python", "lab.py"]

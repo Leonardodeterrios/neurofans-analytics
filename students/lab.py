@@ -15,6 +15,8 @@ from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo
 
 from flask import Flask, request, jsonify, redirect, abort, Response, send_from_directory
+
+import lab_game as game
 from werkzeug.security import generate_password_hash, check_password_hash
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -36,6 +38,8 @@ PORT      = int(_env("LAB_PORT", "8090"))
 GEO_ENABLE         = _env("GEO_ENABLE", "1") == "1"
 MAX_MODELS_PER_VIS = int(_env("MAX_MODELS_PER_VISITOR", "3"))   # один человек — максимум 3 моделям за неделю
 MAX_HITS_PER_IP    = int(_env("MAX_HITS_PER_IP", "100"))        # и не больше 100 очков с одного IP за неделю
+LAB_BOT_TOKEN = _env("LAB_BOT_TOKEN")              # отдельный бот кабинета (не PuzzleBot); пусто — уведомления выключены
+LAB_BOT_USERNAME = _env("LAB_BOT_USERNAME")
 MAX_MODELS_PER_USER = 10
 MAX_LINKS_PER_MODEL = 20
 STATIC_DIR = next((p for p in (os.path.join(HERE, "static"), os.path.join(HERE, "..", "static"))
@@ -116,6 +120,14 @@ CREATE TABLE IF NOT EXISTS clicks(id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT,
   lid INTEGER, mid INTEGER, uid INTEGER, ch TEXT, vid TEXT, iph TEXT, dev TEXT, app TEXT,
   city TEXT, cc TEXT, lat REAL, lon REAL, scored INTEGER, why TEXT);
 CREATE TABLE IF NOT EXISTS own_vids(vid TEXT PRIMARY KEY, uid INTEGER, seen TEXT);
+CREATE TABLE IF NOT EXISTS link_checks(id INTEGER PRIMARY KEY AUTOINCREMENT, lid INTEGER, uid INTEGER, ts TEXT,
+  dev TEXT, app TEXT);
+CREATE TABLE IF NOT EXISTS badge_log(mid INTEGER, badge TEXT, earned TEXT, PRIMARY KEY(mid, badge));
+CREATE TABLE IF NOT EXISTS notify(id INTEGER PRIMARY KEY AUTOINCREMENT, uid INTEGER, key TEXT, kind TEXT, text TEXT,
+  created TEXT, sent_at TEXT, status TEXT, UNIQUE(uid, key));
+CREATE TABLE IF NOT EXISTS kv(k TEXT PRIMARY KEY, v TEXT);
+CREATE INDEX IF NOT EXISTS ix_notify_status ON notify(status, id);
+CREATE INDEX IF NOT EXISTS ix_checks_lid ON link_checks(lid);
 CREATE INDEX IF NOT EXISTS ix_clicks_mid_wk ON clicks(mid, wk);
 CREATE INDEX IF NOT EXISTS ix_clicks_uid_ts ON clicks(uid, ts);
 CREATE INDEX IF NOT EXISTS ix_clicks_wk_vid ON clicks(wk, vid);
@@ -136,6 +148,11 @@ def db():
 def init_db():
     with closing(db()) as c:
         c.executescript(SCHEMA)
+        cols = {r[1] for r in c.execute("PRAGMA table_info(users)")}
+        for col, ddl in (("tg_chat_id", "INTEGER"), ("tg_mode", "TEXT DEFAULT 'all'"),
+                         ("tg_code", "TEXT"), ("tg_code_exp", "TEXT")):
+            if col not in cols:
+                c.execute(f"ALTER TABLE users ADD COLUMN {col} {ddl}")
         c.commit()
 
 def iso(t=None):
@@ -383,6 +400,13 @@ def follow(slug):
     resp.headers["Referrer-Policy"] = "no-referrer-when-downgrade"
     if not ua.strip() or BOT_UA.search(ua) or request.method == "HEAD":
         return resp                       # не человек: не считаем, но ведём туда же
+    if request.args.get("check") and is_owner_browser(link["uid"]):
+        dev, ap = parse_ua(ua)                # тест-клик владельца: в клики и очки не попадает
+        with _wlock, closing(db()) as c:
+            c.execute("INSERT INTO link_checks(lid,uid,ts,dev,app) VALUES(?,?,?,?,?)",
+                      (link["id"], link["uid"], iso(), dev, ap))
+            c.commit()
+        return resp
     ip = client_ip()
     vid = request.cookies.get("nfv", "")
     set_cookie = not re.fullmatch(r"[a-f0-9]{20}", vid or "")
@@ -392,6 +416,14 @@ def follow(slug):
     if set_cookie:
         resp.set_cookie("nfv", vid, max_age=365 * 86400, httponly=True, secure=is_https(), samesite="Lax", path="/")
     return resp
+
+def is_owner_browser(uid):
+    ov = request.cookies.get("nfo", "")
+    if not ov:
+        return False
+    with closing(db()) as c:
+        r = c.execute("SELECT uid FROM own_vids WHERE vid=?", (ov,)).fetchone()
+    return bool(r) and r[0] == uid
 
 def link_host_request():
     return request.host.split(":")[0].lower() == LINK_HOST
@@ -522,12 +554,20 @@ def link_url(slug):
 
 def models_of(c, uid):
     out = []
+    checks = {r[0]: (r[1], r[2]) for r in c.execute(
+        "SELECT lid, MAX(ts), app FROM link_checks WHERE uid=? GROUP BY lid", (uid,))}
+    firsts = {r[0]: r[1] for r in c.execute(
+        "SELECT lid, MIN(ts) FROM clicks WHERE uid=? AND scored=1 GROUP BY lid", (uid,))}
+    ppl = {r[0]: r[1] or 0 for r in c.execute("SELECT mid, SUM(scored) FROM clicks WHERE uid=? GROUP BY mid", (uid,))}
     for m in c.execute("SELECT * FROM models WHERE uid=? ORDER BY archived, id", (uid,)):
         links = [{"id": l["id"], "ch": l["ch"], "ch_name": CHANNELS.get(l["ch"], ("?",))[0], "slug": l["slug"],
-                  "url": link_url(l["slug"]), "target": l["target"], "note": l["note"], "archived": l["archived"]}
+                  "url": link_url(l["slug"]), "target": l["target"], "note": l["note"], "archived": l["archived"],
+                  "checked_at": checks.get(l["id"], (None, None))[0], "checked_app": checks.get(l["id"], (None, None))[1],
+                  "first_at": firsts.get(l["id"])}
                  for l in c.execute("SELECT * FROM links WHERE mid=? ORDER BY archived, id", (m["id"],))]
         out.append({"id": m["id"], "name": m["name"], "slug": m["slug"], "target": m["target"],
-                    "archived": m["archived"], "hidden": m["hidden"], "links": links})
+                    "archived": m["archived"], "hidden": m["hidden"], "links": links,
+                    "rank": game.rank_of(ppl.get(m["id"], 0))})
     return out
 
 def unique_slug(c, table, base):
@@ -724,15 +764,7 @@ def api_stats():
 
 
 # ---------- лига недели ----------
-def board(c, wk, ch=None):
-    sql = ("SELECT k.mid, m.name, m.uid, u.nick, SUM(k.scored) pts, COUNT(DISTINCT k.ch) chs "
-           "FROM clicks k JOIN models m ON m.id=k.mid JOIN users u ON u.id=m.uid "
-           "WHERE k.wk=? AND k.scored=1 AND m.hidden=0 AND m.archived=0 AND u.blocked=0")
-    a = [wk]
-    if ch:
-        sql += " AND k.ch=?"; a.append(ch)
-    sql += " GROUP BY k.mid ORDER BY pts DESC, MIN(k.id) ASC"
-    return [dict(r) for r in c.execute(sql, a)]
+board = game.board
 
 @app.route("/api/league")
 def api_league():
@@ -744,18 +776,16 @@ def api_league():
         cur = board(c, wk, ch)
         prev = board(c, pwk, ch)
         prevmap = {r["mid"]: r["pts"] for r in prev}
+        allp = game.people_all(c)
+        rk = lambda mid: game.rank_of(allp.get(mid, 0))["icon"]
         rows = []
         for i, r in enumerate(cur):
             rows.append({"place": i + 1, "mid": r["mid"], "model": r["name"], "nick": r["nick"], "pts": r["pts"],
-                         "prev": prevmap.get(r["mid"], 0), "mine": r["uid"] == u["id"]})
+                         "prev": prevmap.get(r["mid"], 0), "mine": r["uid"] == u["id"], "rank": rk(r["mid"])})
         # «Рывок недели»: рост к прошлой неделе (сглажено +5, чтобы новички с 1→3 не улетали в ×3)
-        rush = []
-        for r in cur:
-            p0 = prevmap.get(r["mid"], 0)
-            if r["pts"] >= 10 and r["pts"] > p0:
-                rush.append({"mid": r["mid"], "model": r["name"], "nick": r["nick"], "pts": r["pts"], "prev": p0,
-                             "x": round((r["pts"] + 5) / (p0 + 5), 2), "mine": r["uid"] == u["id"]})
-        rush.sort(key=lambda x: (-x["x"], -x["pts"]))
+        rush = [{"mid": r["mid"], "model": r["name"], "nick": r["nick"], "pts": r["pts"], "prev": r["prev"],
+                 "x": r["x"], "mine": r["uid"] == u["id"], "rank": rk(r["mid"])}
+                for r in game.rush_rows(cur, prev)]
         winners = [{"place": i + 1, "model": r["name"], "nick": r["nick"], "pts": r["pts"]}
                    for i, r in enumerate(prev[:3])]
         n_models = c.execute("SELECT COUNT(*) FROM models m JOIN users u ON u.id=m.uid "
@@ -764,6 +794,129 @@ def api_league():
                     "ch": ch or "", "rows": rows[:100], "mine": [x for x in rows if x["mine"]],
                     "rush": rush[:10], "winners": winners, "models_total": n_models,
                     "channels": [{"id": k, "name": v[0]} for k, v in CHANNELS.items()]})
+
+
+# ---------- ранги и ачивки ----------
+@app.route("/api/achievements")
+def api_achievements():
+    u = need_user()
+    wk, pwk = week_key(), prev_week_key()
+    with _wlock, closing(db()) as c:
+        game.sync_badges(c, pwk, week_key(now_utc() - dt.timedelta(days=14)), iso())
+        allp = game.people_all(c)
+        out = []
+        for m in c.execute("SELECT id, name FROM models WHERE uid=? AND archived=0 ORDER BY id", (u["id"],)).fetchall():
+            out.append({"mid": m["id"], "name": m["name"], "rank": game.rank_of(allp.get(m["id"], 0)),
+                        "badges": game.badges_of(c, m["id"]), "week": game.model_week(c, m["id"], wk, pwk)})
+    return jsonify({"ok": True, "models": out, "defs": game.badge_defs(),
+                    "ranks": [{"at": a, "name": n, "icon": i} for a, n, i in game.RANKS]})
+
+
+# ---------- карточка «Моя неделя» ----------
+@app.route("/api/card.png")
+def api_card():
+    u = need_user()
+    try:
+        mid = int(request.args.get("mid", "0"))
+    except ValueError:
+        abort(404)
+    final = request.args.get("kind") == "last"
+    t = now_utc() - dt.timedelta(days=7) if final else now_utc()
+    wk, pwk = week_key(t), week_key(t - dt.timedelta(days=7))
+    with _wlock, closing(db()) as c:
+        m = own_model(c, u["id"], mid)
+        s = game.model_week(c, mid, wk, pwk)
+        allp = game.people_all(c, [mid])
+        badges = game.badges_of(c, mid)
+        k = "cards:" + week_key()
+        c.execute("INSERT INTO kv(k,v) VALUES(?, '1') ON CONFLICT(k) DO UPDATE SET v=CAST(v AS INTEGER)+1", (k,))
+        c.commit()
+    import lab_card
+    png = lab_card.card({
+        "model": m["name"], "nick": u["nick"] if request.args.get("nick") == "1" else None,
+        "week_no": int(wk.split("-W")[1]), "final": final, "pts": s["pts"],
+        "place": s["place"] if not m["hidden"] else None, "total": s["total"], "rush_x": s["rush_x"],
+        "top_ch_name": CHANNELS.get(s["top_ch"], (None,))[0] if s["top_ch"] else None,
+        "rank": game.rank_of(allp.get(mid, 0)), "badges": badges,
+    }, os.path.join(STATIC_DIR, "fonts"))
+    name = f"neurofans-{m['slug']}-{wk}.png"
+    return Response(png, headers={"Content-Type": "image/png", "Cache-Control": "no-store",
+                                  "Content-Disposition": f'inline; filename="{name}"'})
+
+
+# ---------- Telegram-уведомления ----------
+NOTIFIER = None
+
+def notifier():
+    global NOTIFIER
+    if NOTIFIER is None:
+        import lab_notify
+        NOTIFIER = lab_notify.Notifier(db, TZ, week_key, LAB_BOT_TOKEN, LAB_HOST, LAB_BOT_USERNAME)
+    return NOTIFIER
+
+@app.route("/api/tg")
+def api_tg():
+    u = need_user()
+    return jsonify({"ok": True, "enabled": notifier().enabled, "linked": bool(u["tg_chat_id"]),
+                    "mode": u["tg_mode"] or "all"})
+
+@app.route("/api/tg/link", methods=["POST"])
+def api_tg_link():
+    u = need_user(); need_json()
+    n = notifier()
+    if not n.enabled:
+        return err("Уведомления пока не включены — бот кабинета ещё не подключён.")
+    name = n.username()
+    if not name:
+        return err("Бот кабинета не отвечает. Попробуй позже.", 503)
+    with closing(db()) as c:
+        code = n.new_link_code(c, u["id"], now_utc())
+    return jsonify({"ok": True, "url": f"https://t.me/{name}?start={code}"})
+
+@app.route("/api/tg/mode", methods=["POST"])
+def api_tg_mode():
+    u = need_user(); d = need_json()
+    mode = d.get("mode") if d.get("mode") in ("all", "digest", "off") else None
+    if not mode:
+        return err("Неизвестный режим.")
+    with closing(db()) as c:
+        c.execute("UPDATE users SET tg_mode=? WHERE id=?", (mode, u["id"])); c.commit()
+    return jsonify({"ok": True, "mode": mode})
+
+@app.route("/api/tg/unlink", methods=["POST"])
+def api_tg_unlink():
+    u = need_user(); need_json()
+    with closing(db()) as c:
+        c.execute("UPDATE users SET tg_chat_id=NULL WHERE id=?", (u["id"],)); c.commit()
+    return jsonify({"ok": True})
+
+
+# ---------- «Пульс лиги»: только агрегаты, для сайта курса и продающего бота ----------
+_pulse = {"t": 0.0, "v": None}
+
+@app.route("/api/public/pulse")
+def api_pulse():
+    if time.time() - _pulse["t"] > 300 or _pulse["v"] is None:
+        wk = week_key()
+        with closing(db()) as c:
+            one = lambda sql, a=(): c.execute(sql, a).fetchone()[0] or 0
+            models_active = one("SELECT COUNT(DISTINCT mid) FROM clicks WHERE wk=? AND scored=1", (wk,))
+            v = {"ok": True, "week": int(wk.split("-W")[1]), "ready": models_active >= 3}
+            if v["ready"]:                      # меньше 3 моделей — по сумме можно вычислить чужие цифры
+                v.update({
+                    "people_week": one("SELECT SUM(scored) FROM clicks WHERE wk=?", (wk,)),
+                    "people_all": one("SELECT SUM(scored) FROM clicks"),
+                    "models_active": models_active,
+                    "students": one("SELECT COUNT(*) FROM users WHERE blocked=0"),
+                    "countries_week": one("SELECT COUNT(DISTINCT cc) FROM clicks WHERE wk=? AND scored=1 AND cc<>''", (wk,)),
+                    "bots_filtered_note": "боты и превью соцсетей не считаются",
+                })
+            v["updated"] = iso()
+        _pulse.update(t=time.time(), v=v)
+    resp = jsonify(_pulse["v"])
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Cache-Control"] = "public, max-age=300"
+    return resp
 
 
 # ---------- админка ----------
@@ -788,9 +941,26 @@ def api_admin_overview():
         tot = {"users": len(users), "week_people": sum(x["week_people"] for x in users),
                "week_clicks": c.execute("SELECT COUNT(*) FROM clicks WHERE wk=?", (wk,)).fetchone()[0],
                "models": c.execute("SELECT COUNT(*) FROM models WHERE archived=0").fetchone()[0]}
+        one = lambda sql, a=(): c.execute(sql, a).fetchone()[0] or 0
+        funnel = {
+            "users": len(users),
+            "with_link": one("SELECT COUNT(DISTINCT uid) FROM links"),
+            "with_link_24h": one("SELECT COUNT(*) FROM users u WHERE EXISTS (SELECT 1 FROM links l WHERE l.uid=u.id "
+                                 "AND datetime(l.created)<=datetime(u.created,'+1 day'))"),
+            "with_person": one("SELECT COUNT(DISTINCT uid) FROM clicks WHERE scored=1"),
+            "with_person_7d": one("SELECT COUNT(*) FROM users u WHERE EXISTS (SELECT 1 FROM clicks k WHERE k.uid=u.id "
+                                  "AND k.scored=1 AND datetime(k.ts)<=datetime(u.created,'+7 day'))"),
+            "active_week": one("SELECT COUNT(DISTINCT uid) FROM clicks WHERE wk=? AND scored=1", (wk,)),
+            "tg_linked": one("SELECT COUNT(*) FROM users WHERE tg_chat_id IS NOT NULL"),
+            "cards_week": int((c.execute("SELECT v FROM kv WHERE k=?", ("cards:" + wk,)).fetchone() or ["0"])[0]),
+            "notify_sent_week": one("SELECT COUNT(*) FROM notify WHERE status='sent' AND sent_at>=?",
+                                    (week_bounds()[0].astimezone(dt.timezone.utc).isoformat(timespec="seconds"),)),
+            "checks": one("SELECT COUNT(DISTINCT lid) FROM link_checks"),
+        }
     for i in invites:
         i["url"] = f"https://{LAB_HOST}/?invite={i['code']}"
-    return jsonify({"ok": True, "users": users, "invites": invites, "totals": tot, "week": wk})
+    return jsonify({"ok": True, "users": users, "invites": invites, "totals": tot, "week": wk, "funnel": funnel,
+                    "tg_enabled": bool(LAB_BOT_TOKEN)})
 
 @app.route("/api/admin/invites", methods=["POST"])
 def api_admin_invites():
@@ -853,4 +1023,5 @@ if __name__ == "__main__":
     log.info("NeuroFans Lab: кабинет https://%s, ссылки https://%s/<метка>", LAB_HOST, LINK_HOST)
     log.info("Админка: https://%s/admin?token=<ADMIN_TOKEN из %s>", LAB_HOST, os.path.join(DATA, "admin_token.txt"))
     threading.Thread(target=geo_updater, daemon=True).start()
+    threading.Thread(target=notifier().run, args=(now_utc,), daemon=True).start()
     app.run(host="0.0.0.0", port=PORT, threaded=True)

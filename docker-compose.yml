@@ -15,6 +15,7 @@ services:
     restart: unless-stopped
     environment:
       ROOT_HOST: ${LAB_ROOT:-neurofans.ru}
+      LAB_BOT_TOKEN: ${LAB_BOT_TOKEN:-}     # отдельный бот кабинета для уведомлений; пусто — выключены
     expose:
       - "8090"
     volumes:
