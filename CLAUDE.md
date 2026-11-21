@@ -55,7 +55,7 @@
   `ssh -o ServerAliveInterval=30 root@188.130.251.125` (keepalive нужен, иначе сессия рвётся).
 - Выкатка изменений: закоммитить и запушить в `main`, затем владелец запускает:
   `cd /opt/neurofans-analytics && git pull && docker compose up -d --build`
-  (если менялся `Caddyfile` — ещё `docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile`, без простоя)
+  (если менялся `Caddyfile` — ещё `docker compose up -d --force-recreate caddy`, простой 2–3 с. `caddy reload` НЕ подходит: Caddyfile примонтирован одним файлом, после `git pull` контейнер видит старую версию)
 - Логи: `docker compose logs --tail=50 app`. Правка `.env`: `sed -i 's/^КЛЮЧ=.*/КЛЮЧ=значение/' .env` и `docker compose up -d --force-recreate`.
 - Ссылки (`https://go.ai-creators.ru`): дашборд `/?token=<DASHBOARD_TOKEN>`, арена `/arena?token=<…>` (партнёрам — `PUBLIC_TOKEN`, без доступа к CSV/IP). Safari без `http://` пытается https и висит — давать полные ссылки.
 
