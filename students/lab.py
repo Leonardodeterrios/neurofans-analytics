@@ -18,6 +18,7 @@ from flask import Flask, request, jsonify, redirect, abort, Response, send_from_
 
 import lab_game as game
 import lab_ops as ops
+import lab_core
 from werkzeug.security import generate_password_hash, check_password_hash
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -912,6 +913,30 @@ def api_stats():
                     "devices": devs, "apps": apps, "recent": recent, "points": points, "totals": tot})
 
 
+@app.route("/api/core")
+def api_core():
+    """NF Core: пульс за час, всплески/провалы по ссылкам и каналам, прогноз недели, гео за сутки."""
+    u = need_user()
+    with closing(db()) as c:
+        where, args = _scope(c, u["id"], request.args.get("mid", "all"))
+        s, e = week_bounds()
+        mids = [(r["id"], r["name"]) for r in c.execute(
+            "SELECT id, name FROM models WHERE uid=? AND archived=0 ORDER BY id", (u["id"],))]
+        if request.args.get("mid", "all") != "all":
+            mids = [m for m in mids if str(m[0]) == request.args.get("mid")]
+        out = lab_core.core(c, where, args, now_utc(), week_key(), s, e, game.divisions(c, week_key()),
+                            game.rank_of, game.RANKS, mids)
+        names = {r["id"]: (r["slug"], r["ch"], r["mname"]) for r in c.execute(
+            "SELECT l.id, l.slug, l.ch, m.name mname FROM links l JOIN models m ON m.id=l.mid WHERE l.uid=?",
+            (u["id"],))}
+    for sgl in out["sig_links"]:
+        sl, ch, mn = names.get(sgl["key"], ("?", "other", ""))
+        sgl.update(slug=sl, ch=ch, model=mn, name=CHANNELS.get(ch, ("?",))[0])
+    for sgc in out["sig_ch"]:
+        sgc.update(ch=sgc["key"], name=CHANNELS.get(sgc["key"], ("?",))[0])
+    return jsonify({"ok": True, **out})
+
+
 # ---------- лига недели ----------
 board = game.board
 
@@ -948,11 +973,13 @@ def api_league():
                 for r in game.rush_rows(cur, prev)]
         winners = [{"place": i + 1, "model": r["name"], "nick": r["nick"], "pts": r["pts"]}
                    for i, r in enumerate(prev[:3])]
-        n_models = c.execute("SELECT COUNT(*) FROM models m JOIN users u ON u.id=m.uid "
-                             "WHERE m.archived=0 AND m.hidden=0 AND u.blocked=0").fetchone()[0]
+        vis = [r[0] for r in c.execute("SELECT m.id FROM models m JOIN users u ON u.id=m.uid "
+                                       "WHERE m.archived=0 AND m.hidden=0 AND u.blocked=0")]
+        n_models = len(vis)
+        div_total = sum(1 for m in vis if divs.get(m, "start") == div) if div else n_models
     return jsonify({"ok": True, "week": wk, "week_start": s.isoformat(), "week_end": e.isoformat(),
                     "ch": ch or "", "rows": rows[:100], "mine": [x for x in rows if x["mine"]],
-                    "rush": rush[:10], "winners": winners, "models_total": n_models,
+                    "rush": rush[:10], "winners": winners, "models_total": n_models, "div_total": div_total,
                     "div": div or "", "my_div": mine_div,
                     "divs": [{"id": d[0], "name": d[1], "range": d[2]} for d in game.DIVS],
                     "channels": [{"id": k, "name": v[0]} for k, v in CHANNELS.items()]})

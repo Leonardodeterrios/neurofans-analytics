@@ -282,4 +282,18 @@ assert "Итоги недели" in WP["text"] and "@anna" in WP["text"]        
 assert "fanvue" not in WP["text"].lower() and "to.neurofans" not in WP["text"]
 print("чек-лист, согласие, сравнение, конверсия, дивизионы, PWA, пост итогов: OK")
 
+# NF Core: пульс, детектор, прогноз
+CO = J(c.get("/api/core", headers=LAB))
+assert len(CO["minutes"]) == 60 and CO["has_data"] and CO["forecast"] and CO["forecast"][0]["proj"] >= CO["forecast"][0]["pts"]
+assert sum(x[0] for x in CO["minutes"]) >= 1                                   # клики теста только что — видны в пульсе
+assert c2.get("/api/core?mid=" + str(m["id"]), headers=LAB).status_code == 404
+assert J(c3.get("/api/core", headers=LAB))["has_data"] is False                # у новичка — пусто, фронт покажет DEMO
+import lab_core
+sp = lab_core.signals({1: 14, 2: 0}, {1: 4 * 55, 2: 30 * 55}, 165)              # норма 4 → 14 = всплеск; норма 30 → 0 = провал
+assert [x["kind"] for x in sp] == ["drop", "spike"] or {x["kind"] for x in sp} == {"spike", "drop"}
+assert lab_core.signals({1: 5}, {1: 5 * 55}, 165) == []                         # как обычно — тишина
+assert lab_core.project(100, 2, 10) == (120, 4)
+assert "div_total" in LG
+print("NF Core: пульс, всплески, прогноз: OK")
+
 print("ВСЕ ТЕСТЫ КАБИНЕТА ПРОШЛИ")
