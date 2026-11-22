@@ -18,7 +18,7 @@ PuzzleBot на /start шлёт GET /bot/start?p=<start-параметр>&uid=<te
 Сила = засчитанные удары + START_POWER × новые люди, дошедшие до бота («апперкот»).
 polling не запускаем: токен бота нужен только для уведомлений (sendMessage), с PuzzleBot не конфликтует.
 """
-import os, io, csv, re, json, gzip, hmac, ipaddress, hashlib, sqlite3, threading, time, logging, datetime as dt
+import os, io, csv, re, json, gzip, zlib, hmac, ipaddress, hashlib, sqlite3, threading, time, logging, datetime as dt
 from urllib.parse import quote
 from zoneinfo import ZoneInfo
 import httpx
@@ -698,7 +698,7 @@ def _download_mmdb(kind, path):
         with httpx.stream("GET", url, timeout=120, follow_redirects=True) as resp:
             if resp.status_code != 200:
                 continue
-            d = gzip.decompressobj(16 + 15)
+            d = zlib.decompressobj(16 + zlib.MAX_WBITS)  # gzip-поток
             with open(tmp, "wb") as f:
                 for chunk in resp.iter_bytes():
                     f.write(d.decompress(chunk))
