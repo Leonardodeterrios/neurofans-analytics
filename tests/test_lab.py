@@ -314,7 +314,7 @@ def fake(url, secret, payload):
         return json.dumps({"replies": [{"text": "привет", "translation": ""}] * 3})
     raise AssertionError(name)
 lab.AI.transport = fake; lab.AI.url, lab.AI.secret = "https://relay.test/api/chat", "s3cret"
-lab.AI_URL, lab.AI_SECRET = lab.AI.url, lab.AI.secret
+lab.AI_URL, lab.AI_SECRET, lab.AI_READY = lab.AI.url, lab.AI.secret, True
 mid = J(c.get("/api/me", headers=LAB))["models"][0]["id"]
 ST = J(c.get(f"/api/studio?mid={mid}", headers=LAB))
 assert ST["tariff"]["plan"] == "trial" and ST["persona"]["archetype"] == "siren" and ST["plan"] is None
@@ -370,5 +370,22 @@ assert J(c.post("/api/tribute/webhook", data=body, headers={**LAB, "trbt-signatu
 T = J(c.get("/api/tariff", headers=LAB)); assert T["plan"] == "pro" and T["pro_until"].startswith("2099"), T
 assert lab_ai.parse_products("12:30, 7:90,x:1") == {12: 30, 7: 90}
 print("Студия: паспорт, план недели, чаттер, лимиты, Tribute: OK")
+# прямой OpenAI-совместимый API (OpenRouter): Bearer-ключ вместо секрета ретранслятора
+import threading as _th
+from http.server import BaseHTTPRequestHandler as _B, HTTPServer as _S
+seen = {}
+class _H(_B):
+    def log_message(self, *a): pass
+    def do_POST(self):
+        seen["auth"] = self.headers.get("Authorization"); seen["sec"] = self.headers.get("x-relay-secret")
+        seen["body"] = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+        d = json.dumps({"choices": [{"message": {"content": "{\"ok\": true}"}}]}).encode()
+        self.send_response(200); self.send_header("Content-Length", str(len(d))); self.end_headers(); self.wfile.write(d)
+_srv = _S(("127.0.0.1", 0), _H); _th.Thread(target=_srv.serve_forever, daemon=True).start()
+lab_ai.API_KEY = "or-key"
+assert lab_ai.call_relay(f"http://127.0.0.1:{_srv.server_port}/api/v1/chat/completions", "", {"messages": [1], "max_tokens": 9}) == '{"ok": true}'
+assert seen["auth"] == "Bearer or-key" and seen["sec"] is None and seen["body"]["max_completion_tokens"] == 9 and "max_tokens" not in seen["body"]
+lab_ai.API_KEY = ""; _srv.shutdown()
+print("OpenRouter-режим: OK")
 
 print("ВСЕ ТЕСТЫ КАБИНЕТА ПРОШЛИ")

@@ -1264,7 +1264,7 @@ def api_admin_overview():
     for i in invites:
         i["url"] = f"https://{LAB_HOST}/?invite={i['code']}"
     return jsonify({"ok": True, "users": users, "invites": invites, "totals": tot, "week": wk, "funnel": funnel,
-                    "tg_enabled": bool(LAB_BOT_TOKEN), "ai_ready": bool(AI_URL and AI_SECRET), "pay_ready": bool(TRIBUTE_KEY), "stuck": stuck, "backups": backups, "consent": consent})
+                    "tg_enabled": bool(LAB_BOT_TOKEN), "ai_ready": AI_READY, "pay_ready": bool(TRIBUTE_KEY), "stuck": stuck, "backups": backups, "consent": consent})
 
 @app.route("/api/admin/invites", methods=["POST"])
 def api_admin_invites():
@@ -1317,6 +1317,8 @@ def api_admin_user(uid):
 # ---------- Студия: ИИ-инструменты, тарифы, оплата ----------
 AI = ai.Client(AI_URL, AI_SECRET, AI_MODEL)
 ai.RESOLVE = [x.strip() for x in _env("LAB_AI_RESOLVE").split(",") if x.strip()]
+ai.API_KEY = _env("LAB_AI_KEY")
+AI_READY = bool(AI_URL and (AI_SECRET or ai.API_KEY))
 _jobs_lock = threading.Lock()
 
 def pro_until(c, u):
@@ -1379,7 +1381,7 @@ def tariff_info(c, u):
     return {"plan": p, "name": ai.PLANS[p]["name"], "plans": ai.PLANS, "used": usage(c, u["id"]),
             "trial_end": trial_end(c, u), "pro_until": pro_until(c, u), "trial_days": ai.TRIAL_DAYS,
             "pro_url": TRIBUTE_PRO_URL, "price": PRO_PRICE, "tg_linked": bool(u["tg_chat_id"]),
-            "bot": bool(LAB_BOT_TOKEN), "ai_ready": bool(AI_URL and AI_SECRET)}
+            "bot": bool(LAB_BOT_TOKEN), "ai_ready": AI_READY}
 
 @app.route("/api/tariff")
 def api_tariff():
@@ -1455,7 +1457,7 @@ def api_ai_plan():
         if run:
             return jsonify({"ok": True, "job": run[0]})
         need_quota(c, u, "plan")
-        if not (AI_URL and AI_SECRET):
+        if not AI_READY:
             return err("ИИ ещё не подключён: куратор не задал адрес ретранслятора.", 503)
         jid = secrets.token_urlsafe(9)
         c.execute("INSERT INTO ai_jobs(id,uid,mid,kind,status,created,updated) VALUES(?,?,?,?,?,?,?)",

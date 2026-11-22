@@ -54,12 +54,21 @@ def _post_via_ip(url, ip, body, headers, timeout):
     return r.status, r.read().decode() or "{}"
 
 
+API_KEY = ""         # LAB_AI_KEY: если задан — LAB_AI_URL это OpenAI-совместимый API (напр. OpenRouter), без ретранслятора
+
+
 def call_relay(url, secret, payload, timeout=58):
-    """POST в ретранслятор. Возвращает текст ответа модели (content)."""
-    if not url or not secret:
-        raise AIError("ИИ ещё не подключён: куратор не задал LAB_AI_URL / LAB_AI_SECRET.", 503)
+    """POST в ретранслятор (или прямо в OpenAI-совместимый API при LAB_AI_KEY). Возвращает текст ответа модели."""
+    if not url or not (secret or API_KEY):
+        raise AIError("ИИ ещё не подключён: куратор не задал LAB_AI_URL и ключ.", 503)
+    if API_KEY:
+        payload = dict(payload)
+        payload["max_completion_tokens"] = payload.pop("max_tokens", 2000)
+        headers = {"Content-Type": "application/json", "Authorization": f"Bearer {API_KEY}",
+                   "HTTP-Referer": "https://lab.neurofans.ru", "X-Title": "NeuroFans Lab"}
+    else:
+        headers = {"Content-Type": "application/json", "x-relay-secret": secret}
     body = json.dumps(payload).encode()
-    headers = {"Content-Type": "application/json", "x-relay-secret": secret}
     status, text = None, ""
     for ip in RESOLVE:
         try:
