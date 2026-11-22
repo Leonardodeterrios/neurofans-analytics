@@ -209,10 +209,7 @@ loradaily.shop, lyravibe.shop, linaflow.shop, loranotes.shop, lanavibe.shop, liz
 	}
 	@threads path /t /t/
 	@video path /v /v/
-	@robots path /robots.txt /favicon.ico
-	handle @robots {
-		respond 404
-	}
+	@root path /
 	handle @threads {
 		rewrite * /t/{nf_label}
 		reverse_proxy app:8080 {
@@ -225,12 +222,16 @@ loradaily.shop, lyravibe.shop, linaflow.shop, loranotes.shop, lanavibe.shop, liz
 			header_up X-Real-IP {remote_host}
 		}
 	}
-	# всё остальное (корень и любой путь) — канал домена по умолчанию; дашборд/арена тут не открываются
-	handle {
+	# корень — канал домена по умолчанию
+	handle @root {
 		rewrite * {nf_default}
 		reverse_proxy app:8080 {
 			header_up X-Real-IP {remote_host}
 		}
+	}
+	# любой другой путь (/wp-login.php, /.env… — так ходят сканеры) — 404, в клики не попадает
+	handle {
+		respond 404
 	}
 }
 
