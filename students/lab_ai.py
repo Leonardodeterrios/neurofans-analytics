@@ -13,6 +13,7 @@ import json
 import time
 import urllib.request
 import urllib.error
+import urllib.parse
 
 # ---------- тарифы ----------
 TRIAL_DAYS = 14
@@ -33,26 +34,58 @@ class AIError(Exception):
 
 
 # ---------- вызов ретранслятора ----------
+RESOLVE = []          # LAB_AI_RESOLVE: IP-адреса ретранслятора через запятую (обход блокировки DNS-адресов Vercel)
+CAFILE = None        # только для тестов
+
+
+def _post_via_ip(url, ip, body, headers, timeout):
+    """HTTPS-запрос на конкретный IP, но с настоящим именем хоста (SNI, сертификат, Host) —
+    как curl --resolve. Нужен, когда основной адрес Vercel недоступен из сети сервера."""
+    import socket, ssl, http.client
+    u = urllib.parse.urlsplit(url)
+    host, port = u.hostname, u.port or 443
+    ctx = ssl.create_default_context(cafile=CAFILE)
+    sock = socket.create_connection((ip, port), timeout=min(8, timeout))
+    sock.settimeout(timeout)
+    conn = http.client.HTTPSConnection(host, port, timeout=timeout, context=ctx)
+    conn.sock = ctx.wrap_socket(sock, server_hostname=host)
+    conn.request("POST", (u.path or "/") + (("?" + u.query) if u.query else ""), body=body, headers=headers)
+    r = conn.getresponse()
+    return r.status, r.read().decode() or "{}"
+
+
 def call_relay(url, secret, payload, timeout=58):
     """POST в ретранслятор. Возвращает текст ответа модели (content)."""
     if not url or not secret:
         raise AIError("ИИ ещё не подключён: куратор не задал LAB_AI_URL / LAB_AI_SECRET.", 503)
-    req = urllib.request.Request(url, data=json.dumps(payload).encode(), method="POST",
-                                 headers={"Content-Type": "application/json", "x-relay-secret": secret})
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as r:
-            data = json.loads(r.read().decode() or "{}")
-    except urllib.error.HTTPError as e:
+    body = json.dumps(payload).encode()
+    headers = {"Content-Type": "application/json", "x-relay-secret": secret}
+    status, text = None, ""
+    for ip in RESOLVE:
         try:
-            msg = json.loads(e.read().decode()).get("error")
-            msg = msg.get("message") if isinstance(msg, dict) else msg
+            status, text = _post_via_ip(url, ip, body, headers, timeout)
+            break
         except Exception:
-            msg = ""
-        if e.code == 429:
+            continue
+    if status is None:
+        try:
+            with urllib.request.urlopen(urllib.request.Request(url, data=body, method="POST", headers=headers),
+                                        timeout=timeout) as r:
+                status, text = r.status, r.read().decode() or "{}"
+        except urllib.error.HTTPError as e:
+            status, text = e.code, e.read().decode() or "{}"
+        except Exception:
+            raise AIError("Нет связи с ИИ. Попробуй ещё раз через минуту.", 502)
+    try:
+        data = json.loads(text)
+    except ValueError:
+        raise AIError(f"ИИ ответил не по формату ({status}).", 502)
+    if status != 200:
+        msg = data.get("error")
+        msg = msg.get("message") if isinstance(msg, dict) else msg
+        if status == 429:
             raise AIError("ИИ сейчас перегружен. Попробуй через минуту.", 429)
-        raise AIError(f"ИИ не ответил ({e.code}). {msg or ''}".strip(), 502)
-    except Exception:
-        raise AIError("Нет связи с ИИ. Попробуй ещё раз через минуту.", 502)
+        raise AIError(f"ИИ не ответил ({status}). {msg or ''}".strip(), 502)
     msg = ((data.get("choices") or [{}])[0].get("message") or {})
     if msg.get("refusal"):
         raise AIError("ИИ отказался писать это. Попробуй смягчить формулировки.", 422)

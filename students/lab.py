@@ -1316,6 +1316,7 @@ def api_admin_user(uid):
 
 # ---------- Студия: ИИ-инструменты, тарифы, оплата ----------
 AI = ai.Client(AI_URL, AI_SECRET, AI_MODEL)
+ai.RESOLVE = [x.strip() for x in _env("LAB_AI_RESOLVE").split(",") if x.strip()]
 _jobs_lock = threading.Lock()
 
 def pro_until(c, u):

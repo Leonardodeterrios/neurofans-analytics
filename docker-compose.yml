@@ -20,6 +20,7 @@ services:
       LAB_AI_URL: ${LAB_AI_URL:-}           # ретранслятор ИИ на Vercel (ai-relay), напр. https://<проект>.vercel.app/api/chat
       LAB_AI_SECRET: ${LAB_AI_SECRET:-}     # тот же секрет, что в переменных Vercel-проекта
       LAB_AI_MODEL: ${LAB_AI_MODEL:-gpt-4o-mini}
+      LAB_AI_RESOLVE: ${LAB_AI_RESOLVE:-}   # IP Vercel через запятую, если основной адрес не открывается из РФ (напр. 216.198.79.1)
       TRIBUTE_API_KEY: ${TRIBUTE_API_KEY:-} # API-ключ Tribute (им подписаны вебхуки)
       TRIBUTE_PRO_URL: ${TRIBUTE_PRO_URL:-} # ссылка на подписку Pro в Tribute
       TRIBUTE_PRODUCTS: ${TRIBUTE_PRODUCTS:-}
