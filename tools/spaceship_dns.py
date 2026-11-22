@@ -21,7 +21,8 @@ def hosts_from_caddyfile():
     for h in re.findall(r"^\t\t([a-z0-9.-]+\.shop)\s", text, re.M):
         parts = h.split(".")
         root, name = ".".join(parts[-2:]), (".".join(parts[:-2]) or "@")
-        out.setdefault(root, []).append(name)
+        if name not in out.setdefault(root, []):
+            out[root].append(name)
     return dict(sorted(out.items()))
 
 
@@ -76,11 +77,28 @@ def main():
                     old.append({k: v for k, v in r.items() if k != "ttl"})
         if old:
             call("DELETE", f"/dns/records/{d}", key, secret, old)
-        st3, res3 = call("PUT", f"/dns/records/{d}", key, secret, {
-            "force": True, "items": [{"type": "A", "name": "@", "address": IP, "ttl": 600}]})
-        ok = ns_ok and st3 < 300
-        print(f"{'✅' if ok else '❌'} {d:<20} NS:{st}  удалено старых:{len(old)}  A({len(hosts[d])}):{st3}"
-              + ("" if ok else f"  {res if not ns_ok else res3}"))
+        want = [{"type": "A", "name": n, "address": IP, "ttl": 600} for n in hosts[d]]
+        st3, res3 = call("PUT", f"/dns/records/{d}", key, secret, {"force": True, "items": want})
+        # проверка: что реально лежит в зоне; недостающие — по одной, с ответом API
+        def have():
+            s4, l4 = call("GET", f"/dns/records/{d}?take=500&skip=0", key, secret)
+            return {r.get("name") for r in (l4.get("items", []) if isinstance(l4, dict) else [])
+                    if r.get("type") == "A" and r.get("address") == IP}
+        missing = [n for n in hosts[d] if n not in have()]
+        errs = []
+        for n in missing:
+            s5, r5 = call("PUT", f"/dns/records/{d}", key, secret,
+                          {"force": True, "items": [{"type": "A", "name": n, "address": IP, "ttl": 600}]})
+            if s5 >= 300:
+                errs.append(f"{n}:{s5} {r5}")
+        if missing:
+            missing = [n for n in hosts[d] if n not in have()]
+        ok = ns_ok and not missing
+        print(f"{'✅' if ok else '❌'} {d:<20} NS:{st}  удалено старых:{len(old)}  "
+              f"A-записей есть:{len(hosts[d]) - len(missing)}/{len(hosts[d])}"
+              + (f"  нет: {', '.join(missing)} (в зоне A→IP: {', '.join(sorted(have())) or 'пусто'})" if missing else "")
+              + (f"  {' | '.join(errs)}" if errs else "")
+              + ("" if ns_ok else f"  NS: {res}"))
         if not ok:
             bad.append(d)
     print("\nГотово." if not bad else f"\nНе получилось: {', '.join(bad)} — пришли вывод Claude.")

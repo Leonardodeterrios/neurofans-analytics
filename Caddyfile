@@ -33,91 +33,179 @@ http://lab.{$LAB_ROOT:neurofans.ru}, http://to.{$LAB_ROOT:neurofans.ru}, http://
 # Таблица ниже сгенерирована, порядок доменов — как в чеке Spaceship.
 # Новый хост: строка в map + имя в обоих списках хостов (https и http) + A-запись (tools/spaceship_dns.py).
 loradaily.shop, lyravibe.shop, linaflow.shop, loranotes.shop, lanavibe.shop, lizaweb.shop, lilynotes.shop, liananotes.shop, letavibe.shop, leomira.shop, lukaflow.shop, lubadaily.shop, lanaflow.shop, lenavibe.shop, lorablog.shop, lidastudio.shop, kseniadaily.shop, katyanotes.shop, kamiladaily.shop, kiranotes.shop, ksyushaflow.shop, go.loradaily.shop, my.loradaily.shop, hi.loradaily.shop, go.lyravibe.shop, my.lyravibe.shop, hi.lyravibe.shop, go.linaflow.shop, my.linaflow.shop, hi.linaflow.shop, go.loranotes.shop, my.loranotes.shop, hi.loranotes.shop, go.lanavibe.shop, my.lanavibe.shop, hi.lanavibe.shop, go.lizaweb.shop, my.lizaweb.shop, hi.lizaweb.shop, go.lilynotes.shop, my.lilynotes.shop, hi.lilynotes.shop, go.liananotes.shop, my.liananotes.shop, hi.liananotes.shop, go.letavibe.shop, my.letavibe.shop, hi.letavibe.shop, go.leomira.shop, my.leomira.shop, hi.leomira.shop, go.lukaflow.shop, my.lukaflow.shop, hi.lukaflow.shop, go.lubadaily.shop, my.lubadaily.shop, hi.lubadaily.shop, go.lanaflow.shop, my.lanaflow.shop, hi.lanaflow.shop, go.lenavibe.shop, my.lenavibe.shop, hi.lenavibe.shop, go.lorablog.shop, my.lorablog.shop, hi.lorablog.shop, go.lidastudio.shop, my.lidastudio.shop, hi.lidastudio.shop, go.kseniadaily.shop, my.kseniadaily.shop, hi.kseniadaily.shop, go.katyanotes.shop, my.katyanotes.shop, hi.katyanotes.shop, go.kamiladaily.shop, my.kamiladaily.shop, hi.kamiladaily.shop, go.kiranotes.shop, my.kiranotes.shop, hi.kiranotes.shop, go.ksyushaflow.shop, my.ksyushaflow.shop, hi.ksyushaflow.shop {
-	map {host} {nf_label} {nf_ch} {
-		loradaily.shop       leo02  t
-		lyravibe.shop        leo03  t
-		linaflow.shop        leo04  t
-		loranotes.shop       leo05  t
-		lanavibe.shop        leo06  t
-		lizaweb.shop         leo07  t
-		lilynotes.shop       leo08  t
-		liananotes.shop      leo09  t
-		letavibe.shop        leo10  t
-		leomira.shop         leo11  t
-		lukaflow.shop        leo12  t
-		lubadaily.shop       leo13  t
-		lanaflow.shop        leo14  t
-		lenavibe.shop        leo15  t
-		lorablog.shop        leo16  t
-		lidastudio.shop      leo17  t
-		kseniadaily.shop     kate01 v
-		katyanotes.shop      kate02 v
-		kamiladaily.shop     kate03 v
-		kiranotes.shop       kate04 v
-		ksyushaflow.shop     kate05 v
-		go.loradaily.shop    leo18  t
-		my.loradaily.shop    leo19  t
-		hi.loradaily.shop    leo20  t
-		go.lyravibe.shop     leo21  t
-		my.lyravibe.shop     leo22  t
-		hi.lyravibe.shop     leo23  t
-		go.linaflow.shop     leo24  t
-		my.linaflow.shop     leo25  t
-		hi.linaflow.shop     leo26  t
-		go.loranotes.shop    leo27  t
-		my.loranotes.shop    leo28  t
-		hi.loranotes.shop    leo29  t
-		go.lanavibe.shop     leo30  t
-		my.lanavibe.shop     leo31  t
-		hi.lanavibe.shop     leo32  t
-		go.lizaweb.shop      leo33  t
-		my.lizaweb.shop      leo34  t
-		hi.lizaweb.shop      leo35  t
-		go.lilynotes.shop    leo36  t
-		my.lilynotes.shop    leo37  t
-		hi.lilynotes.shop    leo38  t
-		go.liananotes.shop   leo39  t
-		my.liananotes.shop   leo40  t
-		hi.liananotes.shop   leo41  t
-		go.letavibe.shop     leo42  t
-		my.letavibe.shop     leo43  t
-		hi.letavibe.shop     leo44  t
-		go.leomira.shop      leo45  t
-		my.leomira.shop      leo46  t
-		hi.leomira.shop      leo47  t
-		go.lukaflow.shop     leo48  t
-		my.lukaflow.shop     leo49  t
-		hi.lukaflow.shop     leo50  t
-		go.lubadaily.shop    leo51  t
-		my.lubadaily.shop    leo52  t
-		hi.lubadaily.shop    leo53  t
-		go.lanaflow.shop     leo54  t
-		my.lanaflow.shop     leo55  t
-		hi.lanaflow.shop     leo56  t
-		go.lenavibe.shop     leo57  t
-		my.lenavibe.shop     leo58  t
-		hi.lenavibe.shop     leo59  t
-		go.lorablog.shop     leo60  t
-		my.lorablog.shop     leo61  t
-		hi.lorablog.shop     leo62  t
-		go.lidastudio.shop   leo63  t
-		my.lidastudio.shop   leo64  t
-		hi.lidastudio.shop   leo65  t
-		go.kseniadaily.shop  kate06 v
-		my.kseniadaily.shop  kate07 v
-		hi.kseniadaily.shop  kate08 v
-		go.katyanotes.shop   kate09 v
-		my.katyanotes.shop   kate10 v
-		hi.katyanotes.shop   kate11 v
-		go.kamiladaily.shop  kate12 v
-		my.kamiladaily.shop  kate13 v
-		hi.kamiladaily.shop  kate14 v
-		go.kiranotes.shop    kate15 v
-		my.kiranotes.shop    kate16 v
-		hi.kiranotes.shop    kate17 v
-		go.ksyushaflow.shop  kate18 v
-		my.ksyushaflow.shop  kate19 v
-		hi.ksyushaflow.shop  kate20 v
+	# метка хоста
+	map {host} {nf_label} {
+		loradaily.shop       leo02
+		lyravibe.shop        leo03
+		linaflow.shop        leo04
+		loranotes.shop       leo05
+		lanavibe.shop        leo06
+		lizaweb.shop         leo07
+		lilynotes.shop       leo08
+		liananotes.shop      leo09
+		letavibe.shop        leo10
+		leomira.shop         leo11
+		lukaflow.shop        leo12
+		lubadaily.shop       leo13
+		lanaflow.shop        leo14
+		lenavibe.shop        leo15
+		lorablog.shop        leo16
+		lidastudio.shop      leo17
+		kseniadaily.shop     kate01
+		katyanotes.shop      kate02
+		kamiladaily.shop     kate03
+		kiranotes.shop       kate04
+		ksyushaflow.shop     kate05
+		go.loradaily.shop    leo18
+		my.loradaily.shop    leo19
+		hi.loradaily.shop    leo20
+		go.lyravibe.shop     leo21
+		my.lyravibe.shop     leo22
+		hi.lyravibe.shop     leo23
+		go.linaflow.shop     leo24
+		my.linaflow.shop     leo25
+		hi.linaflow.shop     leo26
+		go.loranotes.shop    leo27
+		my.loranotes.shop    leo28
+		hi.loranotes.shop    leo29
+		go.lanavibe.shop     leo30
+		my.lanavibe.shop     leo31
+		hi.lanavibe.shop     leo32
+		go.lizaweb.shop      leo33
+		my.lizaweb.shop      leo34
+		hi.lizaweb.shop      leo35
+		go.lilynotes.shop    leo36
+		my.lilynotes.shop    leo37
+		hi.lilynotes.shop    leo38
+		go.liananotes.shop   leo39
+		my.liananotes.shop   leo40
+		hi.liananotes.shop   leo41
+		go.letavibe.shop     leo42
+		my.letavibe.shop     leo43
+		hi.letavibe.shop     leo44
+		go.leomira.shop      leo45
+		my.leomira.shop      leo46
+		hi.leomira.shop      leo47
+		go.lukaflow.shop     leo48
+		my.lukaflow.shop     leo49
+		hi.lukaflow.shop     leo50
+		go.lubadaily.shop    leo51
+		my.lubadaily.shop    leo52
+		hi.lubadaily.shop    leo53
+		go.lanaflow.shop     leo54
+		my.lanaflow.shop     leo55
+		hi.lanaflow.shop     leo56
+		go.lenavibe.shop     leo57
+		my.lenavibe.shop     leo58
+		hi.lenavibe.shop     leo59
+		go.lorablog.shop     leo60
+		my.lorablog.shop     leo61
+		hi.lorablog.shop     leo62
+		go.lidastudio.shop   leo63
+		my.lidastudio.shop   leo64
+		hi.lidastudio.shop   leo65
+		go.kseniadaily.shop  kate06
+		my.kseniadaily.shop  kate07
+		hi.kseniadaily.shop  kate08
+		go.katyanotes.shop   kate09
+		my.katyanotes.shop   kate10
+		hi.katyanotes.shop   kate11
+		go.kamiladaily.shop  kate12
+		my.kamiladaily.shop  kate13
+		hi.kamiladaily.shop  kate14
+		go.kiranotes.shop    kate15
+		my.kiranotes.shop    kate16
+		hi.kiranotes.shop    kate17
+		go.ksyushaflow.shop  kate18
+		my.ksyushaflow.shop  kate19
+		hi.ksyushaflow.shop  kate20
+	}
+	# путь по умолчанию (канал домена + метка); отдельная map — в одной map второй столбец не подставлялся
+	map {host} {nf_default} {
+		loradaily.shop       /t/leo02
+		lyravibe.shop        /t/leo03
+		linaflow.shop        /t/leo04
+		loranotes.shop       /t/leo05
+		lanavibe.shop        /t/leo06
+		lizaweb.shop         /t/leo07
+		lilynotes.shop       /t/leo08
+		liananotes.shop      /t/leo09
+		letavibe.shop        /t/leo10
+		leomira.shop         /t/leo11
+		lukaflow.shop        /t/leo12
+		lubadaily.shop       /t/leo13
+		lanaflow.shop        /t/leo14
+		lenavibe.shop        /t/leo15
+		lorablog.shop        /t/leo16
+		lidastudio.shop      /t/leo17
+		kseniadaily.shop     /v/kate01
+		katyanotes.shop      /v/kate02
+		kamiladaily.shop     /v/kate03
+		kiranotes.shop       /v/kate04
+		ksyushaflow.shop     /v/kate05
+		go.loradaily.shop    /t/leo18
+		my.loradaily.shop    /t/leo19
+		hi.loradaily.shop    /t/leo20
+		go.lyravibe.shop     /t/leo21
+		my.lyravibe.shop     /t/leo22
+		hi.lyravibe.shop     /t/leo23
+		go.linaflow.shop     /t/leo24
+		my.linaflow.shop     /t/leo25
+		hi.linaflow.shop     /t/leo26
+		go.loranotes.shop    /t/leo27
+		my.loranotes.shop    /t/leo28
+		hi.loranotes.shop    /t/leo29
+		go.lanavibe.shop     /t/leo30
+		my.lanavibe.shop     /t/leo31
+		hi.lanavibe.shop     /t/leo32
+		go.lizaweb.shop      /t/leo33
+		my.lizaweb.shop      /t/leo34
+		hi.lizaweb.shop      /t/leo35
+		go.lilynotes.shop    /t/leo36
+		my.lilynotes.shop    /t/leo37
+		hi.lilynotes.shop    /t/leo38
+		go.liananotes.shop   /t/leo39
+		my.liananotes.shop   /t/leo40
+		hi.liananotes.shop   /t/leo41
+		go.letavibe.shop     /t/leo42
+		my.letavibe.shop     /t/leo43
+		hi.letavibe.shop     /t/leo44
+		go.leomira.shop      /t/leo45
+		my.leomira.shop      /t/leo46
+		hi.leomira.shop      /t/leo47
+		go.lukaflow.shop     /t/leo48
+		my.lukaflow.shop     /t/leo49
+		hi.lukaflow.shop     /t/leo50
+		go.lubadaily.shop    /t/leo51
+		my.lubadaily.shop    /t/leo52
+		hi.lubadaily.shop    /t/leo53
+		go.lanaflow.shop     /t/leo54
+		my.lanaflow.shop     /t/leo55
+		hi.lanaflow.shop     /t/leo56
+		go.lenavibe.shop     /t/leo57
+		my.lenavibe.shop     /t/leo58
+		hi.lenavibe.shop     /t/leo59
+		go.lorablog.shop     /t/leo60
+		my.lorablog.shop     /t/leo61
+		hi.lorablog.shop     /t/leo62
+		go.lidastudio.shop   /t/leo63
+		my.lidastudio.shop   /t/leo64
+		hi.lidastudio.shop   /t/leo65
+		go.kseniadaily.shop  /v/kate06
+		my.kseniadaily.shop  /v/kate07
+		hi.kseniadaily.shop  /v/kate08
+		go.katyanotes.shop   /v/kate09
+		my.katyanotes.shop   /v/kate10
+		hi.katyanotes.shop   /v/kate11
+		go.kamiladaily.shop  /v/kate12
+		my.kamiladaily.shop  /v/kate13
+		hi.kamiladaily.shop  /v/kate14
+		go.kiranotes.shop    /v/kate15
+		my.kiranotes.shop    /v/kate16
+		hi.kiranotes.shop    /v/kate17
+		go.ksyushaflow.shop  /v/kate18
+		my.ksyushaflow.shop  /v/kate19
+		hi.ksyushaflow.shop  /v/kate20
 	}
 	@threads path /t /t/
 	@video path /v /v/
@@ -139,7 +227,7 @@ loradaily.shop, lyravibe.shop, linaflow.shop, loranotes.shop, lanavibe.shop, liz
 	}
 	# всё остальное (корень и любой путь) — канал домена по умолчанию; дашборд/арена тут не открываются
 	handle {
-		rewrite * /{nf_ch}/{nf_label}
+		rewrite * {nf_default}
 		reverse_proxy app:8080 {
 			header_up X-Real-IP {remote_host}
 		}
