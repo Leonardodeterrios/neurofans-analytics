@@ -845,9 +845,36 @@ def round_card_png(which="last", label=None):
     return cards.story(summ, round_no=idx - first + 1, live=(which != "last"), me=me,
                        start_power=START_POWER, fonts=os.path.join(HERE, "static", "fonts"))
 
-def notify_all(text):
+# Отправка в Telegram/таблицу — только в фоне. Сервер в РФ, api.telegram.org оттуда отвечает медленно
+# (до таймаута 10 с на каждого админа), и раньше человек ждал редирект в бота ~30 секунд.
+import queue as _queue
+_bg_q = _queue.Queue(maxsize=2000)
+_bg_started = threading.Event()
+
+def _bg_worker():
+    while True:
+        fn, args = _bg_q.get()
+        try:
+            fn(*args)
+        except Exception as e:
+            log.error("background task %s failed: %s", getattr(fn, "__name__", fn), e)
+
+def bg(fn, *args):
+    """Выполнить fn(*args) в фоновом потоке, не задерживая ответ. Очередь переполнена — пропускаем."""
+    if not _bg_started.is_set():
+        _bg_started.set()
+        threading.Thread(target=_bg_worker, daemon=True, name="bg-notify").start()
+    try:
+        _bg_q.put_nowait((fn, args))
+    except _queue.Full:
+        log.warning("background queue full, dropped %s", getattr(fn, "__name__", fn))
+
+def _notify_all_now(text):
     for cid in ADMIN_IDS:
         tg_send(text, cid)
+
+def notify_all(text):
+    bg(_notify_all_now, text)
 
 def _team_label(source):
     tk = team_of(source)
@@ -872,13 +899,16 @@ def notify_action(label, act, pts):
         return
     notify_all(f"⚡ {label}: человек {ACTIONS[act][1]} (+{pts})\nКоманда: {_team_label(label)}")
 
-def push_sheet(payload):
-    if not SHEET_WEBHOOK_URL:
-        return
+def _push_sheet_now(payload):
     try:
         httpx.post(SHEET_WEBHOOK_URL, json=payload, timeout=10)
     except Exception as e:
         log.error("sheet push failed: %s", e)
+
+def push_sheet(payload):
+    if not SHEET_WEBHOOK_URL:
+        return
+    bg(_push_sheet_now, payload)
 
 
 # ---------- алерты «тишина по партнёру» ----------

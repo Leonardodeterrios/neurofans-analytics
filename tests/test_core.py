@@ -283,4 +283,19 @@ r4=json.loads(act("site",u="555000").content); assert not r4["ok"]             #
 r5=json.loads(act("site",init=init_for(888,token="999:x"),u="").content); assert not r5["ok"]  # поддельная подпись
 after=app.get_stats()["action_points"]; assert after==before+8+3, (before,after)
 print("переходник кнопок /a/: подпись Telegram проверяется, подделки и чужие id не проходят, редиректа на чужие адреса нет ✅")
+
+# 12) уведомления в Telegram не задерживают редирект (раньше человек ждал ~30 с: сервер в РФ, Telegram тормозит)
+import time as _tm
+sent=[]
+def slow_send(text, cid): _tm.sleep(1.0); sent.append(cid)
+_old=(app.tg_send, app.ADMIN_IDS, app.NOTIFY_CLICKS)
+app.tg_send=slow_send; app.ADMIN_IDS=[1,2,3]; app.NOTIFY_CLICKS=True
+t0=_tm.time(); rr=click(app.go_threads,"leo40","87.1.1.1"); dt_=_tm.time()-t0
+assert rr.headers["Location"].startswith("https://t.me/") and dt_<0.5, dt_
+for _ in range(50):
+    if len(sent)==3: break
+    _tm.sleep(0.1)
+assert sent==[1,2,3], sent                                     # уведомления всё равно ушли — в фоне
+app.tg_send, app.ADMIN_IDS, app.NOTIFY_CLICKS=_old
+print(f"редирект при медленном Telegram: {dt_*1000:.0f} мс, уведомления ушли в фоне ✅")
 print("\nВСЕ ПРОВЕРКИ ПРОШЛИ ✅")
