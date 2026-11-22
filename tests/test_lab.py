@@ -296,4 +296,79 @@ assert lab_core.project(100, 2, 10) == (120, 4)
 assert "div_total" in LG
 print("NF Core: пульс, всплески, прогноз: OK")
 
+# ---------- Студия: паспорт, план недели, чаттер, лимиты, Tribute ----------
+import time as _t, hmac as _h, hashlib as _hl, lab_ai
+calls = []
+def fake(url, secret, payload):
+    calls.append(payload)
+    name = payload["response_format"]["json_schema"]["name"]
+    sch = payload["response_format"]["json_schema"]["schema"]
+    if name == "week_outline":
+        return json.dumps({"storyline": "неделя у моря", "days": [{"day": d, "beat": "тема " + d, "goal": "Прогрев"} for d in lab_ai.DAYS]})
+    if name in ("day_posts", "one_post"):
+        ch = sch["properties"]["posts"]["items"]["properties"]["ch"]["enum"][0] if name == "day_posts" else sch["properties"]["post"]["properties"]["ch"]["enum"][0]
+        post = {"ch": ch, "time": "19:40", "format": "Личное", "goal": "Прогрев", "hook": "", "draft": "d", "problems": "p",
+                "text": "вчера — дождь", "hashtags": "", "needsMedia": False, "imagePrompt": "", "sound": ""}
+        return json.dumps({"posts": [post, dict(post, ch="tiktok")]} if name == "day_posts" else {"post": post})
+    if name == "chatter_replies":
+        return json.dumps({"replies": [{"text": "привет", "translation": ""}] * 3})
+    raise AssertionError(name)
+lab.AI.transport = fake; lab.AI.url, lab.AI.secret = "https://relay.test/api/chat", "s3cret"
+lab.AI_URL, lab.AI_SECRET = lab.AI.url, lab.AI.secret
+mid = J(c.get("/api/me", headers=LAB))["models"][0]["id"]
+ST = J(c.get(f"/api/studio?mid={mid}", headers=LAB))
+assert ST["tariff"]["plan"] == "trial" and ST["persona"]["archetype"] == "siren" and ST["plan"] is None
+assert c2.get(f"/api/studio?mid={mid}", headers=LAB).status_code == 404                     # чужая модель
+r = J(c.post("/api/studio/persona", json={"mid": mid, "character": "дерзкая", "voice": "ну привет", "archetype": "rebel", "lang": "xx"}, headers=LAB))
+assert r["persona"]["archetype"] == "rebel" and r["persona"]["lang"] == "ru"
+jid = J(c.post("/api/ai/plan", json={"mid": mid, "scenario": "поездка"}, headers=LAB))["job"]
+for _ in range(50):
+    jb = J(c.get(f"/api/ai/job/{jid}", headers=LAB))
+    if jb["status"] != "run": break
+    _t.sleep(0.05)
+assert jb["status"] == "done", jb
+PL = jb["plan"]; assert len(PL["days"]) == 7 and PL["days"][0]["posts"][0]["text"] == "вчера - дождь"     # длинное тире убрано
+assert "draft" not in PL["days"][0]["posts"][0]                                                           # черновик не храним
+sys_prompt = calls[0]["messages"][0]["content"]
+assert "вымышленная ИИ-модель" in sys_prompt and "дерзкая" in sys_prompt and "поездка" in sys_prompt
+assert "relay" not in json.dumps(calls[0]) and calls[0]["model"] == lab.AI_MODEL
+r = J(c.post("/api/ai/post", json={"mid": mid, "day": 2, "post": 0}, headers=LAB)); assert r["ok"] and r["tariff"]["used"]["post"] == 1
+r = J(c.post("/api/ai/post", json={"mid": mid, "day": 2, "idea": "про кофе", "light": True}, headers=LAB)); assert len(r["plan"]["days"][2]["posts"]) == 3
+assert "про кофе" in calls[-1]["messages"][1]["content"]
+r = J(c.post("/api/studio/plan", json={"mid": mid, "day": 2, "post": 2, "done": True}, headers=LAB)); assert r["plan"]["days"][2]["posts"][2]["done"]
+# чаттер: собеседник, сообщение, 3 варианта; промпт честный
+f = J(c.post("/api/fans", json={"mid": mid, "name": "Mike", "stage": 3}, headers=LAB))["fan"]
+assert c.post("/api/ai/chatter", json={"fid": f["id"]}, headers=LAB).status_code == 400                  # нет его сообщения
+c.patch(f"/api/fans/{f['id']}", json={"add": {"role": "fan", "text": "ты настоящая?"}}, headers=LAB)
+r = J(c.post("/api/ai/chatter", json={"fid": f["id"]}, headers=LAB)); assert len(r["replies"]) == 3
+sp = calls[-1]["messages"][0]["content"]; assert "ИИ-модель" in sp and "живая девушка" not in sp and "ЭТАП 3" in sp
+assert c2.post("/api/ai/chatter", json={"fid": f["id"]}, headers=LAB).status_code == 404
+# лимиты: тест — 2 плана в неделю, потом 402; Pro от куратора снимает
+jid = J(c.post("/api/ai/plan", json={"mid": mid}, headers=LAB))["job"]
+for _ in range(50):
+    if J(c.get(f"/api/ai/job/{jid}", headers=LAB))["status"] != "run": break
+    _t.sleep(0.05)
+r = c.post("/api/ai/plan", json={"mid": mid}, headers=LAB); assert r.status_code == 402 and J(r)["limit"] == "plan", r.data
+anna = [x for x in J(c.get("/api/admin/overview", headers={**LAB, **ADM}))["users"] if x["nick"] == "anna"][0]
+assert anna["plan"] == "trial" and anna["ai_week"] >= 3
+c.patch(f"/api/admin/users/{anna['id']}", json={"pro_days": 30}, headers={**LAB, **ADM})
+assert J(c.get("/api/tariff", headers=LAB))["plan"] == "pro"
+c.patch(f"/api/admin/users/{anna['id']}", json={"pro_off": True}, headers={**LAB, **ADM})
+# после 14 дней теста — Базовый
+q = sqlite3.connect(os.path.join(D, "lab.db")); q.execute("UPDATE kv SET v='2020-01-01T00:00:00+00:00' WHERE k='ai_launch'")
+q.execute("UPDATE users SET created='2020-01-01T00:00:00+00:00' WHERE id=?", (anna["id"],)); q.commit()
+assert J(c.get("/api/tariff", headers=LAB))["plan"] == "base"
+# Tribute: подпись, подписка по Telegram ID, повтор не дублирует
+lab.TRIBUTE_KEY = "trbkey"
+q.execute("UPDATE users SET tg_chat_id=777 WHERE id=?", (anna["id"],)); q.commit()
+body = json.dumps({"name": "new_subscription", "created_at": "x", "sent_at": "x", "payload": {"subscription_id": 5, "telegram_user_id": 777,
+                   "expires_at": "2099-01-01T00:00:00Z", "period": "monthly", "price": 149000, "amount": 140000, "currency": "rub"}}).encode()
+sig = _h.new(b"trbkey", body, _hl.sha256).hexdigest()
+assert c.post("/api/tribute/webhook", data=body, headers={**LAB, "trbt-signature": "bad", "Content-Type": "application/json"}).status_code == 401
+assert c.post("/api/tribute/webhook", data=body, headers={**LAB, "trbt-signature": sig, "Content-Type": "application/json"}).status_code == 200
+assert J(c.post("/api/tribute/webhook", data=body, headers={**LAB, "trbt-signature": sig, "Content-Type": "application/json"}))["dup"]
+T = J(c.get("/api/tariff", headers=LAB)); assert T["plan"] == "pro" and T["pro_until"].startswith("2099"), T
+assert lab_ai.parse_products("12:30, 7:90,x:1") == {12: 30, 7: 90}
+print("Студия: паспорт, план недели, чаттер, лимиты, Tribute: OK")
+
 print("ВСЕ ТЕСТЫ КАБИНЕТА ПРОШЛИ")

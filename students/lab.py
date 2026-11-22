@@ -19,6 +19,8 @@ from flask import Flask, request, jsonify, redirect, abort, Response, send_from_
 import lab_game as game
 import lab_ops as ops
 import lab_core
+import lab_ai as ai
+from concurrent.futures import ThreadPoolExecutor
 from werkzeug.security import generate_password_hash, check_password_hash
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -44,6 +46,13 @@ MAX_HITS_PER_IP    = int(_env("MAX_HITS_PER_IP", "100"))        # и не бол
 LAB_BOT_TOKEN = _env("LAB_BOT_TOKEN")              # отдельный бот кабинета (не PuzzleBot); пусто — уведомления выключены
 LAB_BOT_USERNAME = _env("LAB_BOT_USERNAME")
 MAX_MODELS_PER_USER = 10
+AI_URL = _env("LAB_AI_URL")                         # ретранслятор на Vercel (ai-relay), напр. https://nf-relay.vercel.app/api/chat
+AI_SECRET = _env("LAB_AI_SECRET")                   # общий секрет кабинета и ретранслятора
+AI_MODEL = _env("LAB_AI_MODEL", "gpt-4o-mini")
+TRIBUTE_KEY = _env("TRIBUTE_API_KEY")               # API-ключ Tribute: им подписаны вебхуки (trbt-signature)
+TRIBUTE_PRO_URL = _env("TRIBUTE_PRO_URL")           # ссылка на подписку/товар Pro в Tribute
+TRIBUTE_PRODUCTS = ai.parse_products(_env("TRIBUTE_PRODUCTS"))   # "id:дней,…" для разовых товаров
+PRO_PRICE = _env("PRO_PRICE", "")
 MAX_LINKS_PER_MODEL = 20
 STATIC_DIR = next((p for p in (os.path.join(HERE, "static"), os.path.join(HERE, "..", "static"))
                    if os.path.isdir(p)), os.path.join(HERE, "static"))
@@ -130,6 +139,18 @@ CREATE TABLE IF NOT EXISTS notify(id INTEGER PRIMARY KEY AUTOINCREMENT, uid INTE
   created TEXT, sent_at TEXT, status TEXT, UNIQUE(uid, key));
 CREATE TABLE IF NOT EXISTS kv(k TEXT PRIMARY KEY, v TEXT);
 CREATE TABLE IF NOT EXISTS conv(mid INTEGER, wk TEXT, subs INTEGER, updated TEXT, PRIMARY KEY(mid, wk));
+CREATE TABLE IF NOT EXISTS personas(mid INTEGER PRIMARY KEY, data TEXT, updated TEXT);
+CREATE TABLE IF NOT EXISTS plans(mid INTEGER, wk TEXT, data TEXT, updated TEXT, PRIMARY KEY(mid, wk));
+CREATE TABLE IF NOT EXISTS fans(id INTEGER PRIMARY KEY AUTOINCREMENT, mid INTEGER, uid INTEGER, name TEXT,
+  notes TEXT DEFAULT '', stage INTEGER DEFAULT 1, history TEXT DEFAULT '[]', updated TEXT);
+CREATE TABLE IF NOT EXISTS ai_usage(id INTEGER PRIMARY KEY AUTOINCREMENT, uid INTEGER, kind TEXT, ts TEXT, day TEXT, wk TEXT);
+CREATE TABLE IF NOT EXISTS ai_jobs(id TEXT PRIMARY KEY, uid INTEGER, mid INTEGER, kind TEXT, status TEXT,
+  step INTEGER DEFAULT 0, total INTEGER DEFAULT 8, error TEXT, created TEXT, updated TEXT);
+CREATE TABLE IF NOT EXISTS pro(id INTEGER PRIMARY KEY AUTOINCREMENT, uid INTEGER, tg_id INTEGER, until TEXT,
+  source TEXT, ref TEXT, created TEXT);
+CREATE TABLE IF NOT EXISTS pay_events(key TEXT PRIMARY KEY, name TEXT, tg_id INTEGER, body TEXT, created TEXT);
+CREATE INDEX IF NOT EXISTS ix_usage ON ai_usage(uid, kind, day);
+CREATE INDEX IF NOT EXISTS ix_fans_mid ON fans(mid);
 CREATE INDEX IF NOT EXISTS ix_notify_status ON notify(status, id);
 CREATE INDEX IF NOT EXISTS ix_checks_lid ON link_checks(lid);
 CREATE INDEX IF NOT EXISTS ix_clicks_mid_wk ON clicks(mid, wk);
@@ -157,6 +178,8 @@ def init_db():
                          ("tg_code", "TEXT"), ("tg_code_exp", "TEXT"), ("public_ok", "INTEGER DEFAULT 0")):
             if col not in cols:
                 c.execute(f"ALTER TABLE users ADD COLUMN {col} {ddl}")
+        if not kv_get(c, "ai_launch"):          # с этого момента у уже зарегистрированных начинается Тест
+            kv_set(c, "ai_launch", iso())
         c.commit()
 
 def iso(t=None):
@@ -1210,6 +1233,10 @@ def api_admin_overview():
             "(SELECT COUNT(*) FROM clicks k WHERE k.uid=u.id) all_clicks, "
             "(SELECT MAX(seen) FROM sessions s WHERE s.uid=u.id) seen "
             "FROM users u ORDER BY week_people DESC, u.id", (wk,))]
+        for x in users:
+            ur = c.execute("SELECT * FROM users WHERE id=?", (x["id"],)).fetchone()
+            x["plan"] = plan_of(c, ur); x["pro_until"] = pro_until(c, ur)
+            x["ai_week"] = c.execute("SELECT COUNT(*) FROM ai_usage WHERE uid=? AND wk=?", (x["id"], wk)).fetchone()[0]
         invites = [dict(r) for r in c.execute("SELECT * FROM invites ORDER BY created DESC LIMIT 300")]
         tot = {"users": len(users), "week_people": sum(x["week_people"] for x in users),
                "week_clicks": c.execute("SELECT COUNT(*) FROM clicks WHERE wk=?", (wk,)).fetchone()[0],
@@ -1237,7 +1264,7 @@ def api_admin_overview():
     for i in invites:
         i["url"] = f"https://{LAB_HOST}/?invite={i['code']}"
     return jsonify({"ok": True, "users": users, "invites": invites, "totals": tot, "week": wk, "funnel": funnel,
-                    "tg_enabled": bool(LAB_BOT_TOKEN), "stuck": stuck, "backups": backups, "consent": consent})
+                    "tg_enabled": bool(LAB_BOT_TOKEN), "ai_ready": bool(AI_URL and AI_SECRET), "pay_ready": bool(TRIBUTE_KEY), "stuck": stuck, "backups": backups, "consent": consent})
 
 @app.route("/api/admin/invites", methods=["POST"])
 def api_admin_invites():
@@ -1269,12 +1296,346 @@ def api_admin_user(uid):
             c.execute("UPDATE users SET blocked=? WHERE id=?", (1 if d["blocked"] else 0, uid))
             if d["blocked"]:
                 c.execute("DELETE FROM sessions WHERE uid=?", (uid,))
+        if d.get("pro_days"):
+            n = max(1, min(366, int(d["pro_days"])))
+            cur = c.execute("SELECT MAX(until) FROM pro WHERE uid=?", (uid,)).fetchone()[0]
+            base = max(now_utc(), dt.datetime.fromisoformat(cur)) if cur else now_utc()
+            c.execute("INSERT INTO pro(uid,until,source,ref,created) VALUES(?,?,?,?,?)",
+                      (uid, iso(base + dt.timedelta(days=n)), "admin", "", iso()))
+        if d.get("pro_off"):
+            c.execute("DELETE FROM pro WHERE uid=? AND source='admin'", (uid,))
         if d.get("reset_password"):
             pw = secrets.token_urlsafe(9)
             c.execute("UPDATE users SET pw=? WHERE id=?", (generate_password_hash(pw), uid))
             c.execute("DELETE FROM sessions WHERE uid=?", (uid,))
             c.commit()
             return jsonify({"ok": True, "password": pw})
+        c.commit()
+    return jsonify({"ok": True})
+
+
+# ---------- Студия: ИИ-инструменты, тарифы, оплата ----------
+AI = ai.Client(AI_URL, AI_SECRET, AI_MODEL)
+_jobs_lock = threading.Lock()
+
+def pro_until(c, u):
+    r = c.execute("SELECT MAX(until) FROM pro WHERE uid=? OR (tg_id IS NOT NULL AND tg_id=?)",
+                  (u["id"], u["tg_chat_id"] or -1)).fetchone()[0]
+    return r if r and r > iso() else None
+
+def trial_end(c, u):
+    start = max(u["created"] or iso(), kv_get(c, "ai_launch") or iso())
+    return iso(dt.datetime.fromisoformat(start) + dt.timedelta(days=ai.TRIAL_DAYS))
+
+def plan_of(c, u):
+    if pro_until(c, u):
+        return "pro"
+    return "trial" if trial_end(c, u) > iso() else "base"
+
+def usage(c, uid):
+    day, wk = local().date().isoformat(), week_key()
+    used = {}
+    for k, win in ai.KIND_WINDOW.items():
+        col, val = ("wk", wk) if win == "week" else ("day", day)
+        used[k] = c.execute(f"SELECT COUNT(*) FROM ai_usage WHERE uid=? AND kind=? AND {col}=?", (uid, k, val)).fetchone()[0]
+    return used
+
+def quota_left(c, u, kind):
+    lim = ai.PLANS[plan_of(c, u)][kind]
+    return lim - usage(c, u["id"])[kind]
+
+def charge(c, uid, kind):
+    c.execute("INSERT INTO ai_usage(uid,kind,ts,day,wk) VALUES(?,?,?,?,?)",
+              (uid, kind, iso(), local().date().isoformat(), week_key()))
+
+def need_quota(c, u, kind):
+    if quota_left(c, u, kind) <= 0:
+        p = plan_of(c, u)
+        when = "на этой неделе" if ai.KIND_WINDOW[kind] == "week" else "сегодня"
+        abort(Response(json.dumps({"ok": False, "error": f"Лимит тарифа «{ai.PLANS[p]['name']}» на {ai.KIND_LABEL[kind]} {when} исчерпан.",
+                                   "limit": kind, "plan": p}, ensure_ascii=False), 402, mimetype="application/json"))
+
+def ai_err(e):
+    return err(str(e), e.code if isinstance(e, ai.AIError) else 502)
+
+def persona_of(c, mid):
+    r = c.execute("SELECT data FROM personas WHERE mid=?", (mid,)).fetchone()
+    return ai.clean_persona(json.loads(r[0])) if r else dict(ai.EMPTY_PERSONA)
+
+def model_channels(c, mid):
+    have = {r[0] for r in c.execute("SELECT ch FROM links WHERE mid=? AND archived=0", (mid,))}
+    return [k for k in CHANNELS if k in have and k != "other"] or ["threads", "instagram", "telegram"]
+
+def plan_load(c, mid, wk=None):
+    r = c.execute("SELECT data FROM plans WHERE mid=? AND wk=?", (mid, wk or week_key())).fetchone()
+    return json.loads(r[0]) if r else None
+
+def plan_save(c, mid, data, wk=None):
+    c.execute("INSERT OR REPLACE INTO plans VALUES(?,?,?,?)", (mid, wk or week_key(), json.dumps(data, ensure_ascii=False), iso()))
+
+def tariff_info(c, u):
+    p = plan_of(c, u)
+    return {"plan": p, "name": ai.PLANS[p]["name"], "plans": ai.PLANS, "used": usage(c, u["id"]),
+            "trial_end": trial_end(c, u), "pro_until": pro_until(c, u), "trial_days": ai.TRIAL_DAYS,
+            "pro_url": TRIBUTE_PRO_URL, "price": PRO_PRICE, "tg_linked": bool(u["tg_chat_id"]),
+            "bot": bool(LAB_BOT_TOKEN), "ai_ready": bool(AI_URL and AI_SECRET)}
+
+@app.route("/api/tariff")
+def api_tariff():
+    u = need_user()
+    with closing(db()) as c:
+        return jsonify({"ok": True, **tariff_info(c, u)})
+
+@app.route("/api/studio")
+def api_studio():
+    u = need_user()
+    mid = request.args.get("mid", type=int)
+    with closing(db()) as c:
+        m = own_model(c, u["id"], mid)
+        p = persona_of(c, mid)
+        job = c.execute("SELECT id, status, step, total, error FROM ai_jobs WHERE mid=? AND kind='plan' "
+                        "ORDER BY created DESC LIMIT 1", (mid,)).fetchone()
+        links = {}
+        for r in c.execute("SELECT ch, slug FROM links WHERE mid=? AND archived=0 ORDER BY id", (mid,)):
+            links.setdefault(r["ch"], link_url(r["slug"]))
+        filled = ai.persona_filled(p)
+        return jsonify({"ok": True, "model": {"id": m["id"], "name": m["name"]}, "persona": p,
+                        "persona_filled": filled, "archetypes": {k: v[:2] for k, v in ai.ARCHETYPES.items()},
+                        "langs": ai.LANGS, "plan": plan_load(c, mid), "channels": model_channels(c, mid), "links": links,
+                        "job": dict(job) if job and job["status"] in ("run", "error") else None,
+                        "stages": {k: v[0] for k, v in ai.STAGES.items()}, "today": local().weekday(),
+                        "tariff": tariff_info(c, u)})
+
+@app.route("/api/studio/persona", methods=["POST"])
+def api_persona():
+    u = need_user(); d = need_json()
+    mid = int(d.get("mid") or 0)
+    with closing(db()) as c:
+        own_model(c, u["id"], mid)
+        p = ai.clean_persona(d)
+        c.execute("INSERT OR REPLACE INTO personas VALUES(?,?,?)", (mid, json.dumps(p, ensure_ascii=False), iso()))
+        c.commit()
+    return jsonify({"ok": True, "persona": p, "persona_filled": ai.persona_filled(p)})
+
+def _run_plan_job(jid, uid, mid, name, p, chs, scenario, storyline):
+    def upd(**kw):
+        with closing(db()) as c:
+            c.execute("UPDATE ai_jobs SET " + ", ".join(f"{k}=?" for k in kw) + ", updated=? WHERE id=?",
+                      (*kw.values(), iso(), jid)); c.commit()
+    try:
+        outline = ai.make_outline(AI, name, p, chs, scenario, storyline)
+        upd(step=1)
+        done = [0]
+        def day(i):
+            posts = ai.make_day(AI, name, p, chs, outline, i, scenario)
+            done[0] += 1
+            upd(step=1 + done[0])
+            return posts
+        with ThreadPoolExecutor(max_workers=7) as ex:
+            days = list(ex.map(day, range(7)))
+        data = {"storyline": outline["storyline"], "scenario": scenario, "created": iso(),
+                "days": [dict(outline["days"][i], posts=days[i]) for i in range(7)]}
+        with closing(db()) as c:
+            plan_save(c, mid, data)
+            charge(c, uid, "plan")
+            c.execute("UPDATE ai_jobs SET status='done', step=8, updated=? WHERE id=?", (iso(), jid)); c.commit()
+    except Exception as e:  # noqa: BLE001 — любую ошибку показываем ученику, лимит не списываем
+        log.warning("plan job %s failed: %s", jid, e)
+        upd(status="error", error=str(e)[:300] if isinstance(e, ai.AIError) else "Не получилось. Попробуй ещё раз.")
+
+@app.route("/api/ai/plan", methods=["POST"])
+def api_ai_plan():
+    u = need_user(); d = need_json()
+    mid = int(d.get("mid") or 0)
+    with _jobs_lock, closing(db()) as c:
+        m = own_model(c, u["id"], mid)
+        run = c.execute("SELECT id FROM ai_jobs WHERE mid=? AND status='run' AND created>?",
+                        (mid, iso(now_utc() - dt.timedelta(minutes=4)))).fetchone()
+        if run:
+            return jsonify({"ok": True, "job": run[0]})
+        need_quota(c, u, "plan")
+        if not (AI_URL and AI_SECRET):
+            return err("ИИ ещё не подключён: куратор не задал адрес ретранслятора.", 503)
+        jid = secrets.token_urlsafe(9)
+        c.execute("INSERT INTO ai_jobs(id,uid,mid,kind,status,created,updated) VALUES(?,?,?,?,?,?,?)",
+                  (jid, u["id"], mid, "plan", "run", iso(), iso())); c.commit()
+        args = (jid, u["id"], mid, m["name"], persona_of(c, mid), model_channels(c, mid),
+                (d.get("scenario") or "").strip()[:1500], (d.get("storyline") or "").strip()[:200])
+    threading.Thread(target=_run_plan_job, args=args, daemon=True).start()
+    return jsonify({"ok": True, "job": jid})
+
+@app.route("/api/ai/job/<jid>")
+def api_ai_job(jid):
+    u = need_user()
+    with closing(db()) as c:
+        j = c.execute("SELECT * FROM ai_jobs WHERE id=? AND uid=?", (jid, u["id"])).fetchone()
+        if not j:
+            abort(404)
+        out = {k: j[k] for k in ("id", "status", "step", "total", "error")}
+        if j["status"] == "done":
+            out["plan"] = plan_load(c, j["mid"])
+            out["tariff"] = tariff_info(c, u)
+    return jsonify({"ok": True, **out})
+
+@app.route("/api/ai/post", methods=["POST"])
+def api_ai_post():
+    u = need_user(); d = need_json()
+    mid, di = int(d.get("mid") or 0), int(d.get("day") or 0)
+    pi = d.get("post")
+    with closing(db()) as c:
+        m = own_model(c, u["id"], mid)
+        plan = plan_load(c, mid)
+        if not plan or not (0 <= di < 7):
+            return err("Сначала сгенерируй план недели.")
+        need_quota(c, u, "post")
+        posts = plan["days"][di]["posts"]
+        cur = posts[int(pi)] if pi is not None and 0 <= int(pi) < len(posts) else None
+        chs = model_channels(c, mid)
+        ch = (d.get("ch") or (cur or {}).get("ch") or "")
+        ch = ch if ch in chs else ""
+        p = persona_of(c, mid)
+    try:
+        post = ai.make_post(AI, m["name"], p, chs, plan, di, current=(cur or {}).get("text", "") if not d.get("idea") else "",
+                            idea=(d.get("idea") or "").strip()[:3000], light=bool(d.get("light")), ch=ch)
+    except ai.AIError as e:
+        return ai_err(e)
+    if ch:
+        post["ch"] = ch
+    with _wlock, closing(db()) as c:
+        plan = plan_load(c, mid)
+        posts = plan["days"][di]["posts"]
+        if cur is not None and int(pi) < len(posts):
+            posts[int(pi)] = post
+        else:
+            posts.append(post)
+        plan_save(c, mid, plan); charge(c, u["id"], "post"); c.commit()
+        return jsonify({"ok": True, "plan": plan, "tariff": tariff_info(c, u)})
+
+@app.route("/api/studio/plan", methods=["POST"])
+def api_plan_edit():
+    """Ручные правки плана: текст поста, удаление поста, отметка «опубликовано»."""
+    u = need_user(); d = need_json()
+    mid, di, pi = int(d.get("mid") or 0), int(d.get("day") or 0), int(d.get("post") or 0)
+    with _wlock, closing(db()) as c:
+        own_model(c, u["id"], mid)
+        plan = plan_load(c, mid)
+        if not plan or not (0 <= di < 7) or not (0 <= pi < len(plan["days"][di]["posts"])):
+            return err("Пост не найден.", 404)
+        post = plan["days"][di]["posts"][pi]
+        if d.get("delete"):
+            plan["days"][di]["posts"].pop(pi)
+        else:
+            if "text" in d:
+                post["text"] = str(d["text"])[:4000]
+            if "done" in d:
+                post["done"] = bool(d["done"])
+        plan_save(c, mid, plan); c.commit()
+    return jsonify({"ok": True, "plan": plan})
+
+def _fan_row(r):
+    return {"id": r["id"], "name": r["name"], "notes": r["notes"], "stage": r["stage"],
+            "history": json.loads(r["history"] or "[]"), "updated": r["updated"]}
+
+@app.route("/api/fans", methods=["GET", "POST"])
+def api_fans():
+    u = need_user()
+    if request.method == "GET":
+        mid = request.args.get("mid", type=int)
+        with closing(db()) as c:
+            own_model(c, u["id"], mid)
+            return jsonify({"ok": True, "fans": [_fan_row(r) for r in c.execute(
+                "SELECT * FROM fans WHERE mid=? AND uid=? ORDER BY updated DESC LIMIT 300", (mid, u["id"]))]})
+    d = need_json(); mid = int(d.get("mid") or 0)
+    with closing(db()) as c:
+        own_model(c, u["id"], mid)
+        if c.execute("SELECT COUNT(*) FROM fans WHERE mid=?", (mid,)).fetchone()[0] >= 300:
+            return err("Максимум 300 собеседников на модель.")
+        cur = c.execute("INSERT INTO fans(mid,uid,name,notes,stage,updated) VALUES(?,?,?,?,?,?)",
+                        (mid, u["id"], (d.get("name") or "Без имени").strip()[:40], (d.get("notes") or "").strip()[:1000],
+                         max(1, min(5, int(d.get("stage") or 1))), iso()))
+        c.commit()
+        return jsonify({"ok": True, "fan": _fan_row(c.execute("SELECT * FROM fans WHERE id=?", (cur.lastrowid,)).fetchone())})
+
+@app.route("/api/fans/<int:fid>", methods=["PATCH", "DELETE"])
+def api_fan(fid):
+    u = need_user(); d = need_json()
+    with closing(db()) as c:
+        f = c.execute("SELECT * FROM fans WHERE id=? AND uid=?", (fid, u["id"])).fetchone()
+        if not f:
+            abort(404)
+        if request.method == "DELETE":
+            c.execute("DELETE FROM fans WHERE id=?", (fid,)); c.commit()
+            return jsonify({"ok": True})
+        name = (d.get("name") or f["name"]).strip()[:40]
+        notes = str(d.get("notes", f["notes"]))[:1000]
+        stage = max(1, min(5, int(d.get("stage") or f["stage"])))
+        hist = json.loads(f["history"] or "[]")
+        if isinstance(d.get("history"), list):
+            hist = [{"role": "fan" if m.get("role") == "fan" else "me", "text": str(m.get("text", ""))[:1500]}
+                    for m in d["history"] if isinstance(m, dict) and str(m.get("text", "")).strip()]
+        if d.get("add"):
+            a = d["add"]
+            hist.append({"role": "fan" if a.get("role") == "fan" else "me", "text": str(a.get("text", ""))[:1500]})
+        hist = hist[-80:]
+        c.execute("UPDATE fans SET name=?, notes=?, stage=?, history=?, updated=? WHERE id=?",
+                  (name, notes, stage, json.dumps(hist, ensure_ascii=False), iso(), fid)); c.commit()
+        return jsonify({"ok": True, "fan": _fan_row(c.execute("SELECT * FROM fans WHERE id=?", (fid,)).fetchone())})
+
+@app.route("/api/ai/chatter", methods=["POST"])
+def api_ai_chatter():
+    u = need_user(); d = need_json()
+    fid = int(d.get("fid") or 0)
+    with closing(db()) as c:
+        f = c.execute("SELECT * FROM fans WHERE id=? AND uid=?", (fid, u["id"])).fetchone()
+        if not f:
+            abort(404)
+        need_quota(c, u, "chat")
+        m = own_model(c, u["id"], f["mid"])
+        p = persona_of(c, f["mid"])
+        plan = plan_load(c, f["mid"])
+        today = local().weekday()
+        recent = [x["text"] for dd in (plan or {}).get("days", [])[:today + 1] for x in dd.get("posts", [])][-6:]
+    try:
+        replies = ai.make_replies(AI, m["name"], p, _fan_row(f), recent)
+    except ai.AIError as e:
+        return ai_err(e)
+    with closing(db()) as c:
+        charge(c, u["id"], "chat"); c.commit()
+        return jsonify({"ok": True, "replies": replies, "tariff": tariff_info(c, u)})
+
+@app.route("/api/tribute/webhook", methods=["POST"])
+def api_tribute():
+    """Оплата Pro через Tribute: подписка (new/renewed_subscription → до expires_at) или разовый товар
+    из TRIBUTE_PRODUCTS (+N дней). Ученика узнаём по Telegram ID (тот же, что привязан в кабинете)."""
+    raw = request.get_data()
+    if not TRIBUTE_KEY:
+        return err("Оплата не настроена.", 503)
+    if not ai.tribute_check(raw, request.headers.get("trbt-signature", ""), TRIBUTE_KEY):
+        return err("Неверная подпись.", 401)
+    try:
+        ev = json.loads(raw or b"{}")
+    except ValueError:
+        return err("Не JSON.")
+    name, p = ev.get("name", ""), ev.get("payload") or {}
+    tg = p.get("telegram_user_id")
+    ref = str(p.get("purchase_id") or f"{p.get('subscription_id')}:{p.get('expires_at')}")
+    key = f"{name}:{ref}"
+    with _wlock, closing(db()) as c:
+        if c.execute("SELECT 1 FROM pay_events WHERE key=?", (key,)).fetchone():
+            return jsonify({"ok": True, "dup": True})
+        c.execute("INSERT INTO pay_events VALUES(?,?,?,?,?)", (key, name, tg, raw.decode("utf-8", "replace")[:4000], iso()))
+        if tg and name in ("new_subscription", "renewed_subscription") and p.get("expires_at"):
+            until = dt.datetime.fromisoformat(str(p["expires_at"]).replace("Z", "+00:00")).astimezone(dt.timezone.utc)
+            c.execute("INSERT INTO pro(tg_id,until,source,ref,created) VALUES(?,?,?,?,?)",
+                      (int(tg), iso(until), "tribute_sub", ref, iso()))
+        elif tg and name == "new_digital_product" and int(p.get("product_id") or 0) in TRIBUTE_PRODUCTS:
+            days = TRIBUTE_PRODUCTS[int(p["product_id"])]
+            cur = c.execute("SELECT MAX(until) FROM pro WHERE tg_id=?", (int(tg),)).fetchone()[0]
+            base = max(now_utc(), dt.datetime.fromisoformat(cur)) if cur else now_utc()
+            c.execute("INSERT INTO pro(tg_id,until,source,ref,created) VALUES(?,?,?,?,?)",
+                      (int(tg), iso(base + dt.timedelta(days=days)), "tribute_product", ref, iso()))
+        elif "refund" in name.lower() and p.get("purchase_id"):
+            c.execute("DELETE FROM pro WHERE ref=?", (str(p["purchase_id"]),))
         c.commit()
     return jsonify({"ok": True})
 

@@ -16,6 +16,14 @@ services:
     environment:
       ROOT_HOST: ${LAB_ROOT:-neurofans.ru}
       LAB_BOT_TOKEN: ${LAB_BOT_TOKEN:-}     # отдельный бот кабинета для уведомлений; пусто — выключены
+      LAB_BOT_USERNAME: ${LAB_BOT_USERNAME:-}
+      LAB_AI_URL: ${LAB_AI_URL:-}           # ретранслятор ИИ на Vercel (ai-relay), напр. https://<проект>.vercel.app/api/chat
+      LAB_AI_SECRET: ${LAB_AI_SECRET:-}     # тот же секрет, что в переменных Vercel-проекта
+      LAB_AI_MODEL: ${LAB_AI_MODEL:-gpt-4o-mini}
+      TRIBUTE_API_KEY: ${TRIBUTE_API_KEY:-} # API-ключ Tribute (им подписаны вебхуки)
+      TRIBUTE_PRO_URL: ${TRIBUTE_PRO_URL:-} # ссылка на подписку Pro в Tribute
+      TRIBUTE_PRODUCTS: ${TRIBUTE_PRODUCTS:-}
+      PRO_PRICE: ${PRO_PRICE:-}
     expose:
       - "8090"
     volumes:

@@ -360,6 +360,68 @@ details.rules summary::-webkit-details-marker{display:none}
 details.rules ul{padding:0 16px 14px 32px;margin:0;color:var(--mu);font-size:12px}
 details.rules li{margin:0 0 6px}
 
+/* студия */
+.st-top{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin:0 0 14px}
+.st-top p{margin:4px 0 0;color:var(--mu);max-width:620px}
+.tchip{display:flex;align-items:center;gap:10px;border:1px solid var(--ln2);background:rgba(10,13,28,.6);border-radius:8px;padding:6px 10px;cursor:pointer;color:var(--mu);font-size:12px}
+.tchip:hover{border-color:var(--ln3)}
+.qm{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:12px}.qm b{color:var(--tx);font-weight:600}
+.st-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 var(--g)}
+.st-bar .mbar{margin:0}
+.gen{display:flex;flex-direction:column;gap:12px}.gen-t{display:flex;align-items:center;gap:10px}
+.segbar{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}.segbar i{height:4px;border-radius:2px;background:var(--s3)}.segbar i.on{background:linear-gradient(90deg,var(--ac),var(--mg));box-shadow:0 0 10px rgba(46,230,214,.4)}
+.empty-st{max-width:680px}.empty-st p{margin:8px 0 0}
+.plan-h{margin:0 0 var(--g)}
+.plan-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin:0 0 14px}
+.plan-top h2{font-size:22px;margin-top:4px}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.days button{border:1px solid var(--ln2);background:rgba(4,5,12,.5);border-radius:8px;padding:8px 4px;cursor:pointer;color:var(--mu);display:flex;flex-direction:column;align-items:center;gap:2px}
+.days button b{font-size:13px;color:var(--tx)}.days button span{font-family:var(--mono);font-size:10px}
+.days button.td{border-color:rgba(46,230,214,.35)}.days button.td b:after{content:"·";color:var(--ac);margin-left:3px}
+.days button.on{background:var(--s3);border-color:var(--ac);box-shadow:0 0 18px -8px rgba(46,230,214,.7)}
+.beat{display:flex;gap:10px;align-items:center;margin-top:12px;font-size:13px}
+.posts{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:var(--g)}
+.post{background:linear-gradient(180deg,rgba(19,24,50,.74),rgba(10,13,28,.8));border:1px solid var(--ln);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.post.done{opacity:.55}
+.post-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.post-h .ico{width:26px;height:26px;border-radius:6px;display:grid;place-items:center;background:var(--s2)}
+.pdel{margin-left:auto}.post-t hr.part{border:0;border-top:1px dashed var(--ln2);margin:8px 0}
+.post-a .pdone{margin-left:auto}
+.pdone{display:flex;gap:6px;align-items:center;font-size:11px;color:var(--mu);cursor:pointer}.pdone input{accent-color:var(--ac)}
+.post-hook{font-size:13px;font-weight:800}
+.post-t{white-space:pre-wrap;font-size:14px;line-height:1.55}
+.post-m summary{cursor:pointer;color:var(--mu);font-size:12px;display:flex;gap:6px;align-items:center}.post-m p{font-size:11px;margin:8px 0 0;color:var(--mu);line-height:1.5}
+.post-l{display:flex;align-items:center;gap:8px;justify-content:space-between;padding:8px 10px;border:1px dashed var(--ln2);border-radius:7px;font-size:12px;flex-wrap:wrap}
+.post-a{display:flex;gap:6px;flex-wrap:wrap}
+.chat{display:grid;grid-template-columns:300px 1fr;gap:var(--g);align-items:start}
+.fans{max-height:640px;overflow:auto;padding:6px}
+.fan{display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;text-align:left;border:0;background:none;padding:8px;border-radius:7px;cursor:pointer}
+.fan:hover{background:var(--s2)}.fan.on{background:var(--s3);box-shadow:inset 2px 0 0 var(--ac)}
+.fan .ava{width:32px;height:32px}.fn-m{min-width:0}.fn-m b{display:block;font-size:13px}.fn-m span{display:block;font-size:11px;color:var(--mu);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stg{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:0 0 12px}
+.stg button{border:1px solid var(--ln2);background:rgba(4,5,12,.5);border-radius:7px;padding:6px 4px;font-size:11px;color:var(--mu);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px}
+.stg button b{font-family:var(--mono);font-size:13px;color:var(--tx)}
+.stg button.on{border-color:var(--ac);background:var(--ac2);color:var(--tx)}.stg button.m.on{border-color:var(--mg);background:var(--mg2)}
+.notes{margin:0 0 12px}.notes summary{cursor:pointer;font-size:12px;color:var(--mu);margin:0 0 6px}
+.hist{display:flex;flex-direction:column;gap:6px;max-height:340px;overflow:auto;padding:10px;border:1px solid var(--ln);border-radius:8px;background:rgba(4,5,12,.4);margin:0 0 10px}
+.msg{max-width:80%;padding:8px 11px;border-radius:12px;font-size:13px;white-space:pre-wrap}
+.msg.f{align-self:flex-start;background:var(--s3);border-bottom-left-radius:4px}
+.msg.m{align-self:flex-end;background:rgba(46,230,214,.16);border:1px solid rgba(46,230,214,.25);border-bottom-right-radius:4px}
+.cin{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end}
+.reps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.rep{border:1px solid var(--ln2);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;background:rgba(4,5,12,.4)}
+.rep p{margin:0;font-size:13px;white-space:pre-wrap}.rep>div{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}
+.arch{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.arch label{cursor:pointer}.arch input{position:absolute;opacity:0;pointer-events:none}
+.arch span{display:block;border:1px solid var(--ln2);border-radius:8px;padding:10px 12px;height:100%}
+.arch b{display:block;font-size:13px}.arch em{display:block;font-style:normal;font-size:11px;color:var(--mu);margin-top:2px}
+.arch input:checked+span{border-color:var(--ac);background:var(--ac2);box-shadow:0 0 18px -8px rgba(46,230,214,.7)}
+.arch input:focus-visible+span{outline:1.5px solid var(--ac);outline-offset:2px}
+label.f em.fn{display:block;margin-top:4px}
+.trf th{text-align:right}.trf th:first-child{text-align:left}.trf .cur{color:var(--ac)}.trf th em{display:block;font-style:normal;font-size:9px;letter-spacing:.06em}
+.cur-all{color:var(--mu);font-size:12px}
+@media (max-width:1000px){.chat{grid-template-columns:1fr}.reps{grid-template-columns:1fr}.arch{grid-template-columns:1fr 1fr}.posts{grid-template-columns:1fr}}
+@media (max-width:600px){.st-bar .seg{max-width:100%;overflow-x:auto}.st-bar .seg button{padding:6px 8px}.days{grid-template-columns:repeat(7,minmax(40px,1fr));overflow-x:auto}.stg button{font-size:9px}.cin{grid-template-columns:1fr}}
+
 /* админка */
 .gate{height:6px;border-radius:3px;background:var(--s3);position:relative;margin:22px 0 6px}
 .gate i{display:block;height:100%;border-radius:3px;background:var(--ac)}
@@ -438,6 +500,9 @@ details.rules li{margin:0 0 6px}
  <symbol id="i-cast" viewBox="0 0 24 24"><path d="M3 20h18M4 16l5-5 3 3 4-5"/><path d="M16 9l5-4" stroke-dasharray="2 2"/></symbol>
  <symbol id="i-auto" viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><path d="M18 3v4h-4M6 21v-4h4"/></symbol>
  <symbol id="i-fs" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+ <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></symbol>
+ <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+ <symbol id="i-studio" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></symbol>
  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
 </defs></svg>
 
@@ -471,12 +536,12 @@ details.rules li{margin:0 0 6px}
 <section id="app" class="hide">
  <header class="top"><div class="wrap">
   <div class="brand"><svg><use href="#logo"/></svg><b>NEUROFANS</b><span>LAB</span></div>
-  <nav class="main"><button data-p="ov" class="on"><svg class="i"><use href="#i-ov"/></svg>Эфир</button><button data-p="lk"><svg class="i"><use href="#i-lk"/></svg>Модели и ссылки</button><button data-p="lg"><svg class="i"><use href="#i-lg"/></svg>Лига</button></nav>
+  <nav class="main"><button data-p="ov" class="on"><svg class="i"><use href="#i-ov"/></svg>Эфир</button><button data-p="st"><svg class="i"><use href="#i-studio"/></svg>Студия</button><button data-p="lk"><svg class="i"><use href="#i-lk"/></svg>Модели и ссылки</button><button data-p="lg"><svg class="i"><use href="#i-lg"/></svg>Лига</button></nav>
   <div class="sp"></div>
   <button class="cmdk" id="cmdk"><svg class="i"><use href="#i-search"/></svg><span>Найти или сделать…</span><kbd id="kbdK">⌘K</kbd></button>
   <div class="me"><button id="meBtn" aria-haspopup="true"><span class="ava" id="meAva">?</span><span class="nk" id="meNick"></span></button>
    <div class="menu hide" id="menu">
-    <button data-m="card"><svg class="i"><use href="#i-img"/></svg>Карточка недели</button><button data-m="tg"><svg class="i"><use href="#i-bell"/></svg>Уведомления в Telegram</button>
+    <button data-m="tariff"><svg class="i"><use href="#i-spark"/></svg>Тариф и лимиты</button><button data-m="card"><svg class="i"><use href="#i-img"/></svg>Карточка недели</button><button data-m="tg"><svg class="i"><use href="#i-bell"/></svg>Уведомления в Telegram</button>
     <button data-m="priv"><svg class="i"><use href="#i-shield"/></svg>Приватность</button><button data-m="app"><svg class="i"><use href="#i-phone"/></svg>Установить приложение</button>
     <hr><button data-m="pw"><svg class="i"><use href="#i-key"/></svg>Сменить пароль</button><button data-m="out"><svg class="i"><use href="#i-out"/></svg>Выйти</button></div></div>
  </div></header>
@@ -537,6 +602,12 @@ details.rules li{margin:0 0 6px}
    </div>
   </div>
 
+  <div id="pg-st" class="hide">
+   <div class="st-top"><div><h1>Студия</h1><p>План постов на неделю, ответы фанатам и паспорт модели. ИИ пишет её голосом, а к каждому посту даёт ссылку кабинета — так видно, какой пост привёл людей.</p></div><button class="tchip" id="stTariff" title="Тариф и лимиты"></button></div>
+   <div class="st-bar"><div class="mbar" id="stModels"></div><div class="seg" id="stTabs"><button data-t="plan"><svg class="i"><use href="#i-cast"/></svg>План недели</button><button data-t="chat"><svg class="i"><use href="#i-chat"/></svg>Чаттер</button><button data-t="pass"><svg class="i"><use href="#i-user"/></svg>Паспорт модели</button></div></div>
+   <div id="stBody"></div>
+  </div>
+
   <div id="pg-lk" class="hide">
    <div class="pgt"><div><h1>Модели и ссылки</h1><p>Ставьте ссылку в био, описание или закреп — переходы появятся в эфире.</p></div><button class="btn" id="addModel"><svg class="i"><use href="#i-plus"/></svg>Добавить модель</button></div>
    <div id="models"></div>
@@ -565,7 +636,7 @@ details.rules li{margin:0 0 6px}
    </div>
   </div>
  </div></main>
- <nav class="bottom"><button data-p="ov" class="on"><svg class="i lg"><use href="#i-ov"/></svg>Эфир</button><button data-p="lk"><svg class="i lg"><use href="#i-lk"/></svg>Ссылки</button><button data-p="lg"><svg class="i lg"><use href="#i-lg"/></svg>Лига</button></nav>
+ <nav class="bottom"><button data-p="ov" class="on"><svg class="i lg"><use href="#i-ov"/></svg>Эфир</button><button data-p="st"><svg class="i lg"><use href="#i-studio"/></svg>Студия</button><button data-p="lk"><svg class="i lg"><use href="#i-lk"/></svg>Ссылки</button><button data-p="lg"><svg class="i lg"><use href="#i-lg"/></svg>Лига</button></nav>
 </section>
 
 <section id="admin" class="hide">
@@ -632,15 +703,15 @@ function authChart(){const cv=$("#auCv");if(!cv||cv._on)return;cv._on=1;const N=
     const L1=pts[N-1];x.fillStyle="#2ee6d6";x.beginPath();x.arc(L1[0],L1[1],3,0,7);x.fill();x.strokeStyle="rgba(46,230,214,.35)";x.beginPath();x.arc(L1[0],L1[1],6+(t%40)/4,0,7);x.stroke();
     x.textAlign="left";x.fillStyle="#646b8c";x.fillText("DEMO · LIVE PEOPLE / MIN",L,h-3);t++;if(!REDUCED)requestAnimationFrame(draw)};draw()}
 
-function go(p){S.page=p;$$("[data-p]").forEach(b=>b.classList.toggle("on",b.dataset.p===p));["ov","lk","lg"].forEach(x=>$("#pg-"+x).classList.toggle("hide",x!==p));
-  if(p==="ov")loadStats();if(p==="lg")loadLeague();if(p==="lk")renderModels();LS.set("nf_page",p);scrollTo({top:0})}
+function go(p){S.page=p;$$("[data-p]").forEach(b=>b.classList.toggle("on",b.dataset.p===p));["ov","st","lk","lg"].forEach(x=>$("#pg-"+x).classList.toggle("hide",x!==p));
+  if(p==="ov")loadStats();if(p==="st")loadStudio();if(p==="lg")loadLeague();if(p==="lk")renderModels();LS.set("nf_page",p);scrollTo({top:0})}
 $$("[data-p]").forEach(b=>b.onclick=()=>go(b.dataset.p));
 document.addEventListener("click",e=>{const g=e.target.closest("[data-go]");if(g)go(g.dataset.go);const c=e.target.closest("[data-card]");if(c)openCard(c.dataset.card||undefined)});
 $("#meBtn").onclick=e=>{e.stopPropagation();$("#menu").classList.toggle("hide")};
 document.addEventListener("click",()=>$("#menu").classList.add("hide"));
-const MENU={out:async()=>{await api("/api/logout",{method:"POST",body:{}});location.href="/"},pw:()=>openPw(),tg:()=>openTg(),card:()=>openCard(),priv:()=>openPrivacy(),app:()=>installApp()};
+const MENU={tariff:()=>openTariff(),out:async()=>{await api("/api/logout",{method:"POST",body:{}});location.href="/"},pw:()=>openPw(),tg:()=>openTg(),card:()=>openCard(),priv:()=>openPrivacy(),app:()=>installApp()};
 $("#menu").onclick=e=>{const m=e.target.closest("button")?.dataset.m;if(m)MENU[m]()};
-$("#addModel").onclick=()=>openModel();
+$("#addModel").onclick=()=>openModel();$("#stTariff").onclick=()=>openTariff();
 $("#kbdK").textContent=IS_MAC?"⌘K":"Ctrl K";$("#cmdk").onclick=()=>openPalette();
 addEventListener("keydown",e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k"&&S.me){e.preventDefault();openPalette()}if(e.key==="Escape")closeModal()});
 
@@ -843,7 +914,7 @@ async function openTg(){let t;try{t=await api("/api/tg")}catch(e){return}
   if($("#tgGo"))$("#tgGo").onclick=async()=>{try{const r=await api("/api/tg/link",{method:"POST",body:{}});window.open(r.url,"_blank");$("#tgWait").textContent="Нажмите «Старт» в боте — я подожду…";let n=0;
     const iv=setInterval(async()=>{n++;try{const s=await api("/api/tg");if(s.linked){clearInterval(iv);closeModal();celebrate("Telegram подключён");refreshMe()}}catch(e){}if(n>60)clearInterval(iv)},3000)}catch(x){$("#tgWait").textContent=x.message}}}
 
-function palItems(){const it=[["Навигация","Эфир","i-ov",()=>go("ov")],["Навигация","Модели и ссылки","i-lk",()=>go("lk")],["Навигация","Лига недели","i-lg",()=>go("lg")],
+function palItems(){const it=[["Навигация","Эфир","i-ov",()=>go("ov")],["Навигация","Студия","i-studio",()=>go("st")],["Навигация","Модели и ссылки","i-lk",()=>go("lk")],["Студия","Написать план недели","i-cast",()=>{ST.tab="plan";go("st")}],["Студия","Чаттер: ответить фанату","i-chat",()=>{ST.tab="chat";go("st")}],["Студия","Паспорт модели","i-user",()=>{ST.tab="pass";go("st")}],["Студия","Тариф и лимиты","i-spark",()=>openTariff()],["Навигация","Лига недели","i-lg",()=>go("lg")],
   ["Действия","Добавить модель","i-plus",()=>openModel()],["Действия","Карточка недели","i-img",()=>openCard()],["Действия","Уведомления в Telegram","i-bell",()=>openTg()],["Действия","Приватность","i-shield",()=>openPrivacy()],["NF Core","Сцена: пульс","i-ov",()=>{go("ov");setScene("pulse",true)}],["NF Core","Сцена: орбиты","i-orbit",()=>{go("ov");setScene("orbit",true)}],["NF Core","Сцена: прогноз","i-cast",()=>{go("ov");setScene("cast",true)}],["NF Core","Автопоказ сцен","i-auto",()=>{go("ov");CORE.auto=true;CORE.autoT=performance.now();coreChrome()}],["NF Core","На весь экран","i-fs",()=>{go("ov");setTimeout(()=>$("#coreFs").click(),80)}]];
   activeModels().forEach(m=>{if(m.links.length>1)it.push(["Действия","Сравнить ссылки · "+m.name,"i-cmp",()=>openCompare(m.id)])});
   activeModels().forEach(m=>m.links.filter(l=>!l.archived).forEach(l=>it.push(["Скопировать ссылку",`${m.name} · ${l.ch_name}${l.note?" · "+l.note:""}`,"ch-"+(["threads","instagram","tiktok","youtube","telegram","x","reddit"].includes(l.ch)?l.ch:"other"),()=>copy(l.url,"Ссылка скопирована"),l.slug])));return it}
@@ -1092,6 +1163,140 @@ function drawCast(x,w,h,t){const fc=cForecast(),s=fsum(fc),cs=castSeries(),mob=w
   if(tgt)line(tgt,`ЦЕЛЬ #${f0.place_proj-1} · ≈${fmt(tgt)}`,"w");
   if(rk)line(rk,`РАНГ «${f0.rank.next_name.toUpperCase()}»`,"w")}
 
+
+/* ================= Студия: план недели, чаттер, паспорт модели, тариф ================= */
+const ST={mid:null,tab:LS.get("nf_st_tab")||"plan",d:null,day:null,fans:[],fan:null,replies:null,busy:false,poll:0};
+const CHN=id=>((S.me&&S.me.channels.find(c=>c.id===id))||{name:id}).name;
+function quotaHit(e){if(/Лимит тарифа/.test(e.message)){toast(e.message);setTimeout(openTariff,500);return true}return false}
+async function loadStudio(){const ms=activeModels();if(!ms.length){$("#stModels").innerHTML="";$("#stBody").innerHTML=onboardHTML();$("#stTariff").innerHTML="";return}
+  if(!ms.find(m=>m.id===ST.mid))ST.mid=(ms.find(m=>String(m.id)===String(S.mid))||ms[0]).id;
+  $("#stModels").innerHTML=ms.length>1?ms.map(m=>`<button data-sm="${m.id}" class="${m.id===ST.mid?"on":""}"><i></i>${esc(m.name)}</button>`).join(""):"";
+  $$("#stModels button").forEach(b=>b.onclick=()=>{ST.mid=+b.dataset.sm;ST.fan=null;ST.replies=null;ST.day=null;loadStudio()});
+  $$("#stTabs button").forEach(b=>{b.classList.toggle("on",b.dataset.t===ST.tab);b.onclick=()=>{ST.tab=b.dataset.t;LS.set("nf_st_tab",ST.tab);$$("#stTabs button").forEach(x=>x.classList.toggle("on",x===b));renderStudio()}});
+  try{ST.d=await api("/api/studio?mid="+ST.mid)}catch(e){return}
+  if(ST.day==null)ST.day=ST.d.today;
+  if(ST.tab==="chat")await loadFans();
+  tariffChip(ST.d.tariff);renderStudio();
+  if(ST.d.job&&ST.d.job.status==="run")pollJob(ST.d.job.id)}
+function tariffChip(t){if(!t)return;ST.t=t;const P=t.plans[t.plan],u=t.used,left=k=>Math.max(0,P[k]-u[k]);
+  const days=t.plan==="trial"?Math.max(0,Math.ceil((new Date(t.trial_end)-Date.now())/864e5)):null;
+  $("#stTariff").innerHTML=`<span class="tag ${t.plan==="pro"?"ac":t.plan==="trial"?"mg":""}">${esc(t.name)}${days!=null?` · ${days} ${plural(days,"день","дня","дней")}`:""}</span>
+   <span class="qm" title="планы недели на этой неделе">${ic("i-cast")}<b>${left("plan")}</b>/${P.plan}</span><span class="qm" title="посты сегодня">${ic("i-lk")}<b>${left("post")}</b>/${P.post}</span><span class="qm" title="ответы чаттера сегодня">${ic("i-chat")}<b>${left("chat")}</b>/${P.chat}</span>`}
+function renderStudio(){const D=ST.d;if(!D)return;const box=$("#stBody");
+  const pf=D.persona_filled,warn=pf[0]<2&&ST.tab!=="pass"?`<div class="pn banner glow cy"><svg class="i lg"><use href="#i-user"/></svg><p><b>Паспорт модели заполнен на ${pf[0]} из ${pf[1]}.</b> Без характера и примеров речи ИИ пишет безлико — 5 минут на паспорт окупаются каждым постом.</p><button class="btn s" data-st="pass">Заполнить</button></div>`:"";
+  const noai=!D.tariff.ai_ready?`<div class="pn banner"><svg class="i lg"><use href="#i-shield"/></svg><p>ИИ ещё не подключён куратором — паспорт и собеседников уже можно заполнять, генерация заработает после подключения.</p></div>`:"";
+  box.innerHTML=noai+warn+(ST.tab==="chat"?chatHTML():ST.tab==="pass"?passHTML():planHTML());
+  $$("[data-st]").forEach(b=>b.onclick=()=>{ST.tab=b.dataset.st;LS.set("nf_st_tab",ST.tab);loadStudio()});
+  if(ST.tab==="plan")bindPlan();else if(ST.tab==="chat")bindChat();else bindPass()}
+
+/* --- план недели --- */
+function planHTML(){const D=ST.d,P=D.plan,J=ST.job;
+  if(J&&J.status==="run")return`<section class="pn"><div class="pn-b gen"><div class="gen-t"><span class="dot live"></span><b>Пишу неделю для ${esc(D.model.name)}…</b><span class="mono di">${J.step}/${J.total}</span></div>
+    <div class="segbar">${Array.from({length:J.total},(_,i)=>`<i class="${i<J.step?"on":""}"></i>`).join("")}</div><p class="fn">Сначала сюжет недели, потом посты на каждый день под ваши каналы: ${D.channels.map(CHN).join(", ")}. Обычно до минуты.</p></div></section>`;
+  if(!P)return`<section class="pn"><div class="pn-b empty-st"><h2>План постов на неделю</h2><p class="mu">Сюжет недели по воронке «доверие → прогрев → продажа» и посты на каждый день — под каналы, где у модели есть ссылки: <b>${D.channels.map(CHN).join(", ")}</b>. К каждому посту — готовая ссылка для био.</p>
+    <label class="f" style="margin-top:14px"><span>События недели (необязательно)</span><textarea class="in" id="plScn" rows="3" placeholder="например, она едет на море, в пятницу выходит новый сет"></textarea></label>
+    ${J&&J.status==="error"?`<p class="err">${esc(J.error||"Не получилось.")}</p>`:""}<button class="btn ac" id="plGo">${ic("i-spark")}Написать неделю</button><p class="fn" style="margin-top:8px">Списывает 1 план недели из лимита тарифа.</p></div></section>`;
+  const di=ST.day,day=P.days[di],chs=D.channels;
+  const tabs=P.days.map((d,i)=>{const n=d.posts.length,dn=d.posts.filter(x=>x.done).length;return`<button data-day="${i}" class="${i===di?"on":""} ${i===D.today?"td":""}"><b>${d.day}</b><span>${n} ${plural(n,"пост","поста","постов")}${dn?" · ✓"+dn:""}</span></button>`}).join("");
+  const posts=day.posts.map((p,pi)=>{const url=D.links[p.ch];return`<article class="post ${p.done?"done":""}">
+    <div class="post-h"><span class="ico">${chI(p.ch)}</span><b>${esc(CHN(p.ch))}</b><span class="mono di">${esc(p.time)}</span><span class="tag">${esc(p.format)}</span><span class="tag ${p.goal==="Продажа"?"mg":""}">${esc(p.goal)}</span><button class="btn gh s ic pdel" data-del="${pi}" aria-label="Удалить пост">${ic("i-x")}</button></div>
+    ${p.hook?`<div class="post-hook"><span class="mono di">${p.ch==="reddit"?"ЗАГОЛОВОК":"КРЮЧОК"}</span> ${esc(p.hook)}</div>`:""}
+    <div class="post-t" id="pt${pi}">${esc(p.text).split(/\n-{2,}\n/).join('<hr class="part">')}</div>${p.hashtags?`<div class="mu sm">${esc(p.hashtags)}</div>`:""}
+    ${p.imagePrompt||p.sound?`<details class="post-m"><summary>${ic("i-img")}Что снять${p.sound?" · звук":""}</summary>${p.imagePrompt?`<p class="mono">${esc(p.imagePrompt)}</p>`:""}${p.sound?`<p class="mu sm">Звук: ${esc(p.sound)}</p>`:""}</details>`:""}
+    <div class="post-l">${url?`<span class="mono">${esc(url.replace("https://",""))}</span><button class="btn gh s" data-cl="${esc(url)}">${ic("i-copy")}Ссылка для био</button>`:`<span class="di sm">Для ${esc(CHN(p.ch))} нет ссылки кабинета — переходы не посчитаются.</span><button class="btn gh s" data-go="lk">${ic("i-plus")}Создать</button>`}</div>
+    <div class="post-a"><button class="btn s" data-cp="${pi}">${ic("i-copy")}Копировать текст</button><button class="btn gh s" data-re="${pi}">${ic("i-auto")}Переписать</button><button class="btn gh s" data-ed="${pi}">Править</button><label class="pdone"><input type="checkbox" data-done="${pi}" ${p.done?"checked":""}>опубликовано</label></div></article>`}).join("")||`<div class="empty">В этот день постов нет</div>`;
+  return`<section class="pn plan-h"><div class="pn-b"><div class="plan-top"><div><div class="lbl mono di">СЮЖЕТ НЕДЕЛИ ${S.me.week.split("-W")[1]}</div><h2>${esc(P.storyline||"—")}</h2></div><button class="btn gh s" id="plAgain">${ic("i-auto")}Новая неделя</button></div>
+    <div class="days">${tabs}</div><div class="beat"><span class="tag ${day.goal==="Продажа"?"mg":"ac"}">${esc(day.goal)}</span><span>${esc(day.beat)}</span></div></div></section>
+   <div class="posts">${posts}</div>
+   <button class="btn gh" id="plIdea" style="margin-top:var(--g)">${ic("i-plus")}Пост из своей идеи</button>`}
+function bindPlan(){const D=ST.d;
+  if($("#plGo"))$("#plGo").onclick=()=>startPlan(($("#plScn")||{}).value||"");
+  if($("#plAgain"))$("#plAgain").onclick=()=>{modal(MH("Новая неделя")+`<div class="pn-b"><p class="mu sm" style="margin:0 0 10px">Текущий план заменится новым. Списывает 1 план недели.</p><label class="f"><span>События недели (необязательно)</span><textarea class="in" id="plScn2" rows="3" placeholder="например, она едет на море">${esc((D.plan&&D.plan.scenario)||"")}</textarea></label><button class="btn ac" id="plGo2" style="width:100%">${ic("i-spark")}Написать неделю</button></div>`);$("#plGo2").onclick=()=>{const v=$("#plScn2").value;closeModal();startPlan(v)}};
+  $$("[data-day]").forEach(b=>b.onclick=()=>{ST.day=+b.dataset.day;renderStudio()});
+  const P=D.plan;if(!P)return;const posts=P.days[ST.day].posts;
+  $$("[data-cp]").forEach(b=>b.onclick=()=>{const p=posts[+b.dataset.cp];copy(p.text+(p.hashtags?"\n\n"+p.hashtags:""),"Текст скопирован")});
+  $$("[data-cl]").forEach(b=>b.onclick=()=>copy(b.dataset.cl,"Ссылка скопирована — поставьте её в био"));
+  $$("[data-done]").forEach(i=>i.onchange=async()=>{try{const r=await api("/api/studio/plan",{method:"POST",body:{mid:ST.mid,day:ST.day,post:+i.dataset.done,done:i.checked}});D.plan=r.plan;renderStudio()}catch(e){toast(e.message)}});
+  $$("[data-del]").forEach(b=>b.onclick=async()=>{if(!confirm("Удалить пост из плана?"))return;const r=await api("/api/studio/plan",{method:"POST",body:{mid:ST.mid,day:ST.day,post:+b.dataset.del,delete:true}});D.plan=r.plan;renderStudio()});
+  $$("[data-re]").forEach(b=>b.onclick=()=>aiPost({post:+b.dataset.re},b));
+  $$("[data-ed]").forEach(b=>b.onclick=()=>{const pi=+b.dataset.ed,el=$("#pt"+pi);el.outerHTML=`<textarea class="in" id="pe${pi}" rows="6">${esc(posts[pi].text)}</textarea><div style="display:flex;gap:6px;margin-top:6px"><button class="btn s" id="ps${pi}">Сохранить</button></div>`;
+    $("#ps"+pi).onclick=async()=>{const r=await api("/api/studio/plan",{method:"POST",body:{mid:ST.mid,day:ST.day,post:pi,text:$("#pe"+pi).value}});D.plan=r.plan;renderStudio();toast("Сохранено")}});
+  $("#plIdea").onclick=()=>{modal(MH("Пост из своей идеи")+`<div class="pn-b"><label class="f"><span>Канал</span><select class="in" id="idCh">${D.channels.map(c=>`<option value="${c}">${esc(CHN(c))}</option>`).join("")}</select></label>
+     <label class="f"><span>О чём пост — своими словами</span><textarea class="in" id="idT" rows="5" placeholder="например, хочу пост про то, как она впервые попробовала сёрфинг и упала 10 раз"></textarea></label>
+     <label class="toggle" style="margin:0 0 12px"><input type="checkbox" id="idL"><span><b>Только причесать</b><br><span class="mu sm">Сохранить ваши слова, убрать воду и добавить крючок</span></span></label>
+     <button class="btn ac" id="idGo" style="width:100%">${ic("i-spark")}Написать пост</button><p class="fn" style="margin-top:8px">Пост добавится в выбранный день. Списывает 1 пост из лимита.</p></div>`);
+    $("#idGo").onclick=async()=>{const idea=$("#idT").value.trim();if(!idea){toast("Опишите идею");return}const b=$("#idGo");closeModal();await aiPost({idea,light:$("#idL").checked,ch:$("#idCh").value},null)}}}
+async function aiPost(body,btn){if(ST.busy)return;ST.busy=true;if(btn){btn.disabled=true;btn.innerHTML=`<span class="dot live"></span>Пишу…`}else toast("Пишу пост…");
+  try{const r=await api("/api/ai/post",{method:"POST",body:{mid:ST.mid,day:ST.day,...body}});ST.d.plan=r.plan;tariffChip(r.tariff);renderStudio();toast("Готово")}catch(e){if(!quotaHit(e))toast(e.message);if(btn){btn.disabled=false;btn.innerHTML=ic("i-auto")+"Переписать"}}finally{ST.busy=false}}
+async function startPlan(scenario){try{const r=await api("/api/ai/plan",{method:"POST",body:{mid:ST.mid,scenario}});ST.job={id:r.job,status:"run",step:0,total:8};renderStudio();pollJob(r.job)}catch(e){if(!quotaHit(e))toast(e.message)}}
+function pollJob(id){clearTimeout(ST.poll);ST.job=ST.job&&ST.job.id===id?ST.job:{id,status:"run",step:0,total:8};
+  const tick=async()=>{let j;try{j=await api("/api/ai/job/"+id)}catch(e){ST.poll=setTimeout(tick,4000);return}ST.job=j;
+    if(j.status==="done"){ST.d.plan=j.plan;ST.job=null;tariffChip(j.tariff);ST.day=ST.d.today;celebrate("Неделя готова");if(S.page==="st"&&ST.tab==="plan")renderStudio();return}
+    if(j.status==="error"){ST.d.plan=ST.d.plan||null;if(S.page==="st")renderStudio();toast(j.error||"Не получилось");return}
+    if(S.page==="st"&&ST.tab==="plan")renderStudio();ST.poll=setTimeout(tick,1800)};tick()}
+
+/* --- чаттер --- */
+async function loadFans(){try{ST.fans=(await api("/api/fans?mid="+ST.mid)).fans}catch(e){ST.fans=[]}if(ST.fan)ST.fan=ST.fans.find(f=>f.id===ST.fan.id)||null}
+function chatHTML(){const F=ST.fan,stages=ST.d.stages;
+  const list=ST.fans.map(f=>{const last=f.history[f.history.length-1];return`<button class="fan ${F&&F.id===f.id?"on":""}" data-fan="${f.id}"><span class="ava">${esc((f.name[0]||"?").toUpperCase())}</span><span class="fn-m"><b>${esc(f.name)}</b><span>${last?esc((last.role==="fan"?"":"Вы: ")+last.text):"нет сообщений"}</span></span><span class="tag ${f.stage>=4?"mg":""}">${f.stage}</span></button>`}).join("")||`<p class="fn" style="padding:6px 2px">Добавьте первого собеседника — того, кто написал модели в личку.</p>`;
+  const conv=F?`<div class="pn-h"><h3>${esc(F.name)}</h3><button class="btn gh s ic" id="fDel" aria-label="Удалить собеседника">${ic("i-x")}</button></div><div class="pn-b">
+     <div class="stg">${[1,2,3,4,5].map(i=>`<button data-stg="${i}" class="${F.stage===i?"on":""} ${i>=4?"m":""}"><b>${i}</b>${esc(stages[i])}</button>`).join("")}</div>
+     <details class="notes"${F.notes?"":" open"}><summary>Что о нём знаю</summary><textarea class="in" id="fNotes" rows="2" placeholder="например, из Техаса, любит мотоциклы, покупал сет в пятницу">${esc(F.notes)}</textarea></details>
+     <div class="hist" id="hist">${F.history.map(m=>`<div class="msg ${m.role==="fan"?"f":"m"}">${esc(m.text)}</div>`).join("")||`<p class="fn" style="text-align:center">Вставьте его сообщение ниже</p>`}</div>
+     <div class="cin"><textarea class="in" id="fMsg" rows="2" placeholder="его новое сообщение"></textarea><button class="btn ac" id="fGo">${ic("i-spark")}3 ответа</button></div>
+     ${ST.replies?`<div class="reps">${ST.replies.map((r,i)=>`<div class="rep"><span class="mono di">${["ТЁПЛЫЙ","ИГРИВЫЙ","ШАГ ВПЕРЁД"][i]||""}</span><p>${esc(r.text)}</p>${r.translation?`<p class="mu sm">${esc(r.translation)}</p>`:""}<div><button class="btn s" data-rc="${i}">${ic("i-copy")}Копировать</button><button class="btn gh s" data-rs="${i}">${ic("i-check")}Отправил этот</button></div></div>`).join("")}</div>`:""}
+     <p class="fn" style="margin-top:10px">Модель общается в своём характере, но на прямой вопрос «ты настоящая?» честно отвечает, что она ИИ-модель. Это защищает аккаунт и доверие фанатов.</p></div>`
+    :`<div class="pn-b empty"><b>Выберите собеседника слева</b><br>или добавьте нового — вставьте его сообщение и получите 3 варианта ответа голосом модели.</div>`;
+  return`<div class="chat"><section class="pn"><div class="pn-h"><h3>Собеседники</h3><button class="btn gh s" id="fAdd">${ic("i-plus")}Новый</button></div><div class="fans">${list}</div></section><section class="pn">${conv}</section></div>`}
+function bindChat(){
+  $$("[data-fan]").forEach(b=>b.onclick=()=>{ST.fan=ST.fans.find(f=>f.id===+b.dataset.fan);ST.replies=null;renderStudio();const h=$("#hist");if(h)h.scrollTop=h.scrollHeight});
+  $("#fAdd").onclick=()=>{modal(MH("Новый собеседник")+`<form class="pn-b" id="fNew"><label class="f"><span>Имя или ник</span><input class="in" name="name" maxlength="40" required placeholder="например, Mike_tx"></label>
+     <label class="f"><span>Его первое сообщение</span><textarea class="in" name="msg" rows="3" placeholder="вставьте, что он написал"></textarea></label><button class="btn" style="width:100%">Добавить</button></form>`);
+    $("#fNew").onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.target);try{let f=(await api("/api/fans",{method:"POST",body:{mid:ST.mid,name:fd.get("name")}})).fan;
+      if(fd.get("msg").trim())f=(await api("/api/fans/"+f.id,{method:"PATCH",body:{add:{role:"fan",text:fd.get("msg").trim()}}})).fan;closeModal();ST.fans.unshift(f);ST.fan=f;ST.replies=null;renderStudio()}catch(x){toast(x.message)}}};
+  const F=ST.fan;if(!F)return;const h=$("#hist");if(h)h.scrollTop=h.scrollHeight;
+  const patch=async b=>{const r=await api("/api/fans/"+F.id,{method:"PATCH",body:b});Object.assign(F,r.fan);const i=ST.fans.findIndex(x=>x.id===F.id);if(i>=0)ST.fans[i]=F};
+  $$("[data-stg]").forEach(b=>b.onclick=async()=>{await patch({stage:+b.dataset.stg});renderStudio()});
+  $("#fNotes").onchange=e=>patch({notes:e.target.value}).then(()=>toast("Сохранено"));
+  $("#fDel").onclick=async()=>{if(!confirm("Удалить собеседника и переписку?"))return;await api("/api/fans/"+F.id,{method:"DELETE",body:{}});ST.fans=ST.fans.filter(x=>x.id!==F.id);ST.fan=null;renderStudio()};
+  $("#fGo").onclick=async()=>{const t=$("#fMsg").value.trim(),b=$("#fGo");b.disabled=true;b.innerHTML=`<span class="dot live"></span>Думаю…`;
+    try{if(t)await patch({add:{role:"fan",text:t}});const r=await api("/api/ai/chatter",{method:"POST",body:{fid:F.id}});ST.replies=r.replies;tariffChip(r.tariff)}catch(e){if(!quotaHit(e))toast(e.message)}renderStudio()};
+  $$("[data-rc]").forEach(b=>b.onclick=()=>copy(ST.replies[+b.dataset.rc].text,"Ответ скопирован"));
+  $$("[data-rs]").forEach(b=>b.onclick=async()=>{await patch({add:{role:"me",text:ST.replies[+b.dataset.rs].text}});ST.replies=null;renderStudio()})}
+
+/* --- паспорт модели --- */
+function passHTML(){const D=ST.d,p=D.persona,A=D.archetypes;
+  const f=(k,l,ph,rows,hint)=>`<label class="f"><span>${l}</span>${rows?`<textarea class="in" name="${k}" rows="${rows}" placeholder="${ph}">${esc(p[k])}</textarea>`:`<input class="in" name="${k}" value="${esc(p[k])}" placeholder="${ph}">`}${hint?`<em class="fn">${hint}</em>`:""}</label>`;
+  return`<form id="fPass"><section class="pn" style="margin:0 0 var(--g)"><div class="pn-h"><h3>Архетип</h3><span class="meta">ЗАДАЁТ МАНЕРУ РЕЧИ</span></div><div class="pn-b arch">${Object.entries(A).map(([k,v])=>`<label><input type="radio" name="archetype" value="${k}" ${p.archetype===k?"checked":""}><span><b>${esc(v[0])}</b><em>${esc(v[1])}</em></span></label>`).join("")}</div></section>
+   <div class="g2"><section class="pn"><div class="pn-h"><h3>Кто она</h3></div><div class="pn-b">
+     <div style="display:grid;grid-template-columns:120px 1fr;gap:10px">${f("age","Возраст","24")}<label class="f"><span>Язык с фанатами</span><select class="in" name="lang">${Object.entries(D.langs).map(([k,v])=>`<option value="${k}" ${p.lang===k?"selected":""}>${esc(v)}</option>`).join("")}</select></label></div>
+     ${f("character","Характер своими словами","например, дерзкая, но ранимая; смеётся над собой; ненавидит рано вставать",3)}
+     ${f("life_facts","Факты из жизни","например, живёт в Майами, кошка Луна, сёрфинг по утрам, работает бариста",3,"Ими ИИ оживляет посты: конкретные детали вместо общих слов.")}
+     ${f("story","История и сюжет","например, переехала из маленького города, копит на свою студию",3)}</div></section>
+    <section class="pn"><div class="pn-h"><h3>Голос и внешность</h3></div><div class="pn-b">
+     ${f("voice","Как она пишет — 3–5 примеров сообщений","например:\nну привет 🙃\nты опять пропал, я уже начала скучать\nне скажу. угадай",6,"Самое важное поле: ИИ копирует длину фраз, регистр, эмодзи и сленг.")}
+     ${f("appearance","Внешность (на английском, для промптов фото)","e.g. 24 y.o. woman, long wavy auburn hair, green eyes, freckles, athletic",2)}
+     ${f("offer","Что продаёт в закрытой части","например, подписка Fanvue и сеты в личке")}
+     ${f("bans","Запреты","например, не упоминать алкоголь, не писать про бывших")}</div></section></div>
+   <button class="btn" style="min-width:200px">${ic("i-check")}Сохранить паспорт</button></form>`}
+function bindPass(){$("#fPass").onsubmit=async e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.target));d.mid=ST.mid;
+  try{const r=await api("/api/studio/persona",{method:"POST",body:d});ST.d.persona=r.persona;ST.d.persona_filled=r.persona_filled;toast("Паспорт сохранён — ИИ будет писать её голосом");ST.tab="plan";LS.set("nf_st_tab","plan");$$("#stTabs button").forEach(x=>x.classList.toggle("on",x.dataset.t==="plan"));renderStudio()}catch(x){toast(x.message)}}}
+
+/* --- тариф --- */
+async function openTariff(){let t;try{t=await api("/api/tariff")}catch(e){return}tariffChip(t);
+  const rows=[["plan","Планы недели","в неделю"],["post","Посты: переписать и из своей идеи","в день"],["chat","Ответы чаттера (по 3 варианта)","в день"]];
+  const col=k=>`<th class="${t.plan===k?"cur":""}">${esc(t.plans[k].name)}${t.plan===k?`<em>ваш</em>`:""}</th>`;
+  const until=t.plan==="pro"?`до ${new Date(t.pro_until).toLocaleDateString("ru-RU")}`:t.plan==="trial"?`до ${new Date(t.trial_end).toLocaleDateString("ru-RU")}, потом Базовый`:"бесплатно, входит в курс";
+  modal(MH("Тариф и лимиты")+`<div class="pn-b"><div class="cv-top"><div class="cv-big ${t.plan==="pro"?"pos":""}">${esc(t.name)}</div><div class="mu sm">${until}</div></div>
+    <table class="tbl trf"><tr><th></th>${col("trial")}${col("base")}${col("pro")}</tr>${rows.map(([k,l,w])=>`<tr><td>${l}<br><span class="di xs">${w} · использовано ${t.used[k]}</span></td>${["trial","base","pro"].map(p=>`<td class="r mono ${t.plan===p?"cur":""}">${t.plans[p][k]}</td>`).join("")}</tr>`).join("")}
+     <tr><td>Аналитика, лига, NF Core</td><td class="r cur-all" colspan="3">всегда без ограничений</td></tr></table>
+    <p class="fn" style="margin:10px 0 14px">Тест — ${t.trial_days} дней с регистрации. Лимиты обнуляются каждый день (планы — по понедельникам).</p>
+    ${t.plan==="pro"?`<p class="mu sm">Pro активен. Продление — там же, где оформляли.</p>`:t.pro_url?`
+      ${t.tg_linked?"":`<div class="pn banner" style="margin:0 0 10px"><svg class="i lg"><use href="#i-bell"/></svg><p class="sm">Сначала подключите Telegram в кабинете — по нему мы узнаем вашу оплату и включим Pro автоматически.</p><button class="btn gh s" id="trTg">Подключить</button></div>`}
+      <a class="btn ac" href="${esc(t.pro_url)}" target="_blank" rel="noopener" style="width:100%">${ic("i-spark")}Оформить Pro${t.price?" · "+esc(t.price):""}</a><p class="fn" style="margin-top:8px">Оплата через Tribute в Telegram (карта РФ/СБП). Pro включится в течение минуты после оплаты.</p>`
+      :`<p class="mu sm">Pro скоро можно будет оформить прямо здесь. Пока — напишите куратору.</p>`}</div>`);
+  if($("#trTg"))$("#trTg").onclick=()=>{closeModal();openTg()}}
+
 async function bootAdmin(){$("#admin").classList.remove("hide");const tok=qs.get("token");if(tok)history.replaceState(null,"","/admin");
   let st;try{st=await api("/api/admin/state")}catch(e){return}if(!st.logged)return adminAuth(st,tok);$("#adTop").classList.remove("hide");renderAdmin()}
 function adminAuth(st,tok){$("#adMain").innerHTML=`<div style="max-width:420px;margin:8vh auto 0"><section class="pn">
@@ -1104,7 +1309,7 @@ function adminAuth(st,tok){$("#adMain").innerHTML=`<div style="max-width:420px;m
   sub($("#fA"),"/api/admin/login");sub($("#fS"),"/api/admin/setup");if($("#toSetup"))$("#toSetup").onclick=e=>{e.preventDefault();$("#fS").classList.remove("hide")}}
 async function renderAdmin(){let A;try{A=await api("/api/admin/overview")}catch(e){return bootAdmin()}
   const t=A.totals,F=A.funnel||{},pc=(a,b)=>b?Math.round(a/b*100):0,gate=pc(F.with_person_7d,F.users);
-  $("#adMain").innerHTML=`<div class="pgt"><div><h1>Кабинет куратора</h1><p>Неделя ${A.week.split("-W")[1]} · учеников ${fmt(t.users)} · моделей ${fmt(t.models)}</p></div><button class="btn gh s" id="adTg">${ic("i-bell")}${A.backups.admin_tg?"Telegram куратора подключён":"Подключить Telegram куратора"}</button></div>
+  $("#adMain").innerHTML=`<div class="pgt"><div><h1>Кабинет куратора</h1><p>Неделя ${A.week.split("-W")[1]} · учеников ${fmt(t.users)} · моделей ${fmt(t.models)} · ИИ ${A.ai_ready?'<span class="pos">подключён</span>':'<span class="neg">не подключён</span>'} · оплата ${A.pay_ready?'<span class="pos">подключена</span>':'<span class="neg">не подключена</span>'}</p></div><button class="btn gh s" id="adTg">${ic("i-bell")}${A.backups.admin_tg?"Telegram куратора подключён":"Подключить Telegram куратора"}</button></div>
    <section class="pn strip">${[["Живые люди · неделя",fmt(t.week_people),`${fmt(t.week_clicks)} кликов`],["Активны на неделе",fmt(F.active_week),`из ${fmt(F.users)} учеников`],["Telegram у учеников",fmt(F.tg_linked),A.tg_enabled?`${fmt(F.notify_sent_week)} уведомлений за неделю`:"бот кабинета не подключён"],["Карточек · неделя",fmt(F.cards_week),`согласились на ник: ${fmt(A.consent)}`]].map(([l,v,s])=>`<div><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join("")}</section>
    <div class="g2"><section class="pn"><div class="pn-h"><h3>Ворота роста: первый человек за 7 дней</h3><span class="meta">TARGET 60%</span></div><div class="pn-b">
      <div style="display:flex;align-items:baseline;gap:10px"><b class="mono" style="font-size:40px;font-weight:600">${gate}%</b><span class="mu">${fmt(F.with_person_7d)} из ${fmt(F.users)}</span></div><div class="gate"><i style="width:${gate}%"></i><em></em></div>
@@ -1112,12 +1317,13 @@ async function renderAdmin(){let A;try{A=await api("/api/admin/overview")}catch(
     <section class="pn"><div class="pn-h"><h3>Кому нужна помощь</h3><span class="meta">${A.stuck.length} STUCK</span></div><div class="pn-b" style="padding-top:4px"><table class="tbl">${A.stuck.length?A.stuck.slice(0,12).map((s,i)=>`<tr><td><b>${esc(s.nick)}</b><br><span class="mu sm">${esc(s.label)}</span></td><td class="r"><button class="btn gh s" data-msg="${i}">${ic("i-copy")}Текст</button></td></tr>`).join(""):`<tr><td class="empty">Никто не застрял</td></tr>`}</table></div></section></div>
    <div class="g2"><section class="pn"><div class="pn-h"><h3>Ученики</h3><span class="meta">SORT: PEOPLE · WEEK</span></div><div class="pn-b tw" style="padding-top:4px"><table class="tbl"><tr><th>НИК</th><th class="r">МОД.</th><th class="r">ССЫЛ.</th><th class="r">НЕДЕЛЯ</th><th class="r">КЛИКИ</th><th style="padding-left:16px">БЫЛ</th><th></th></tr>
      ${A.users.map(u=>`<tr><td><b>${esc(u.nick)}</b>${u.blocked?' <span class="tag" style="color:var(--neg)">OFF</span>':""}<div class="di xs mono">${esc(u.invite)}</div></td><td class="r mono">${u.models}</td><td class="r mono">${u.links}</td><td class="r mono">${fmt(u.week_people)}</td><td class="r mono">${fmt(u.all_clicks)}</td><td class="mu sm" style="padding-left:16px;white-space:nowrap">${u.seen?ago(u.seen):"—"}</td>
-      <td class="r" style="white-space:nowrap"><button class="btn gh s" data-rp="${u.id}">Сброс пароля</button> <button class="btn s ${u.blocked?"gh":"dg"}" data-bl="${u.id}" data-v="${u.blocked?0:1}">${u.blocked?"Включить":"Отключить"}</button></td></tr>`).join("")||`<tr><td class="empty">Пока никого — создайте инвайт</td></tr>`}</table></div></section>
+      <td class="r" style="white-space:nowrap"><span class="tag ${u.plan==="pro"?"ac":u.plan==="trial"?"mg":""}" title="ИИ-действий за неделю: ${u.ai_week}">${{trial:"Тест",base:"Базовый",pro:"Pro"}[u.plan]||""}</span> <button class="btn gh s" data-pro="${u.id}">Pro +30</button> <button class="btn gh s" data-rp="${u.id}">Сброс пароля</button> <button class="btn s ${u.blocked?"gh":"dg"}" data-bl="${u.id}" data-v="${u.blocked?0:1}">${u.blocked?"Включить":"Отключить"}</button></td></tr>`).join("")||`<tr><td class="empty">Пока никого — создайте инвайт</td></tr>`}</table></div></section>
     <div><section class="pn" style="margin:0 0 12px"><div class="pn-h"><h3>Новые инвайты</h3></div><form id="fInv" class="pn-b"><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><label class="f"><span>Кодов</span><input class="in mono" name="count" type="number" min="1" max="100" value="1"></label><label class="f"><span>Регистраций на код</span><input class="in mono" name="max_uses" type="number" min="1" max="1000" value="1"></label></div>
        <label class="f"><span>Заметка — кому</span><input class="in" name="note" placeholder="например, поток ноябрь"></label><button class="btn" style="width:100%">Создать</button><div id="newCodes" style="margin-top:10px"></div></form></section>
      <section class="pn"><div class="pn-h"><h3>Все инвайты</h3><span class="meta">BACKUP: ${A.backups.last?esc(A.backups.last):"—"}</span></div><div class="pn-b" style="max-height:380px;overflow:auto;padding-top:4px"><table class="tbl">${A.invites.map(i=>`<tr><td class="mono" style="color:${i.uses>=i.max_uses?"var(--di)":"var(--ac)"}">${esc(i.code)}</td><td class="mu sm">${esc(i.note)}${i.used_by?" · "+esc(i.used_by):""}</td><td class="r mono di">${i.uses}/${i.max_uses}</td><td class="r">${i.uses<i.max_uses?`<button class="btn gh s ic" data-ci="${esc(i.url)}" aria-label="Скопировать ссылку">${ic("i-copy")}</button>`:""}</td></tr>`).join("")||`<tr><td class="empty">Инвайтов ещё нет</td></tr>`}</table></div></section></div></div>`;
   $$("[data-msg]").forEach(b=>b.onclick=()=>{const s=A.stuck[+b.dataset.msg];modal(MH("Сообщение · "+esc(s.nick))+`<div class="pn-b"><p class="mu sm" style="margin:0 0 8px">${esc(s.label)}</p><textarea class="in" rows="6" id="msgT">${esc(s.message)}</textarea><button class="btn" style="width:100%;margin-top:10px" id="msgC">${ic("i-copy")}Скопировать</button></div>`);$("#msgC").onclick=()=>copy($("#msgT").value,"Текст скопирован")});
   $$("[data-ci]").forEach(b=>b.onclick=()=>copy(b.dataset.ci,"Ссылка-приглашение скопирована"));
+  $$("[data-pro]").forEach(b=>b.onclick=async()=>{await api("/api/admin/users/"+b.dataset.pro,{method:"PATCH",body:{pro_days:30}});toast("Pro на 30 дней выдан");renderAdmin()});
   $$("[data-bl]").forEach(b=>b.onclick=async()=>{if(b.dataset.v==="1"&&!confirm("Отключить ученика? Его ссылки перестанут работать."))return;await api("/api/admin/users/"+b.dataset.bl,{method:"PATCH",body:{blocked:b.dataset.v==="1"}});renderAdmin()});
   $$("[data-rp]").forEach(b=>b.onclick=async()=>{if(!confirm("Сбросить пароль? Ученика выкинет из кабинета."))return;const r=await api("/api/admin/users/"+b.dataset.rp,{method:"PATCH",body:{reset_password:true}});
     modal(MH("Новый пароль")+`<div class="pn-b"><p class="mu sm" style="margin:0">Передайте ученику лично — он сменит его в меню кабинета.</p><div class="mono" style="font-size:22px;margin:14px 0;color:var(--ac)">${esc(r.password)}</div><button class="btn" id="cpw">${ic("i-copy")}Скопировать</button></div>`);$("#cpw").onclick=()=>copy(r.password)});
