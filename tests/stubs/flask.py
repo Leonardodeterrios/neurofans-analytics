@@ -13,7 +13,8 @@ def redirect(location, code=302): return Response('', status=code, headers={'Loc
 class _Headers(dict):
     def get(self, k, d=''): return dict.get(self, k, d)
 class _Req:
-    def __init__(self): self.args={}; self.values={}; self.headers=_Headers(); self.remote_addr='1.2.3.4'; self.cookies={}; self.method='GET'
+    def __init__(self): self.args={}; self.values={}; self.headers=_Headers(); self.remote_addr='1.2.3.4'; self.cookies={}; self.method='GET'; self.data=b''
+    def get_data(self): return self.data
 request=_Req()
 class Flask:
     def __init__(self, name): pass

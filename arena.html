@@ -230,6 +230,20 @@ body.off-arena #tags,body.off-arena #toasts,body.off-arena #banner,body.off-aren
 @keyframes seg{to{opacity:1}}
 #banner.on .glow{animation:bnin .55s cubic-bezier(.2,1.2,.3,1) both}
 @keyframes bnin{0%{opacity:0;transform:translateX(-60px) skewX(-14deg) scale(.9)}100%{opacity:1;transform:none}}
+#jack{z-index:12;--c:#ffb547}
+#jack .ovc{--ch:26px;padding:16px 34px 20px;text-align:center;min-width:min(460px,90vw)}
+#jack .jt{font:800 clamp(56px,11vw,120px)/1 Oxa,Unb;color:#fff7df;margin:6px 0 2px;letter-spacing:.02em;
+  text-shadow:0 0 26px #ffb547,0 0 60px #ff8a00,3px 0 0 rgba(255,79,139,.55),-3px 0 0 rgba(25,211,197,.55)}
+#jack .jn{font:800 clamp(18px,3vw,28px)/1.1 Unb;color:#ffe3a3;letter-spacing:.08em;text-shadow:0 0 14px #ffb547}
+#jack .js{font:800 14px Man;color:var(--ink);margin-top:8px;letter-spacing:.04em}
+#jack .js b{color:var(--tc)}
+#jack.on .glow{animation:jkin .8s cubic-bezier(.2,1.3,.3,1) both,jkpulse 1.1s .8s ease-in-out 3}
+@keyframes jkin{0%{opacity:0;transform:scale(2.4) rotate(-4deg);filter:brightness(4)}60%{opacity:1;transform:scale(.94)}100%{transform:none}}
+@keyframes jkpulse{50%{transform:scale(1.05)}}
+#jack .coins{position:fixed;inset:0;overflow:hidden}
+#jack .coins i{position:absolute;top:-40px;width:18px;height:18px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff6d0,#ffc444 45%,#b8740a);box-shadow:0 0 12px #ffb547;animation:coin linear forwards}
+@keyframes coin{to{transform:translateY(115vh) rotateY(1080deg)}}
+body.off-arena #jack{visibility:hidden}
 #lbox{z-index:10}
 #lbox:before,#lbox:after{content:"";position:fixed;left:0;right:0;height:11vh;background:#000;transition:transform .45s}
 #lbox:before{top:0;transform:translateY(-100%)}#lbox:after{bottom:0;transform:translateY(100%)}
@@ -337,6 +351,7 @@ body.off-arena #tags,body.off-arena #toasts,body.off-arena #banner,body.off-aren
 </div>
 <div class="dots"><i></i><i class="on"></i><i></i></div>
 <div class="ov" id="lbox"><span>ПОВТОР</span></div>
+<div class="ov" id="jack"><div class="coins" id="jkC"></div><div class="glow"><div class="ovc"><div class="ovl">оплата клуба · джекпот</div><div class="jt">+1000</div><div class="jn">КЛУБ ОПЛАЧЕН</div><div class="js" id="jkS"></div></div></div></div>
 <div class="ov" id="banner"><div class="glow"><div class="ovc"><div class="ovl">серия ударов</div><div class="bt" id="bnT">×5</div><div class="bs" id="bnS"></div><div class="bseg" id="bnSeg"></div></div></div></div>
 <div class="ov" id="fight"><span>БОЙ!</span></div>
 <div class="ov" id="ko"><div class="ko-card" id="koCard"></div></div>
@@ -946,7 +961,8 @@ const ACT={examples:{pts:8,txt:'смотрит примеры генераций
   site:{pts:8,txt:'перешёл на сайт',tag:'НА САЙТЕ',fx:'shock'},
   program:{pts:10,txt:'смотрит программу клуба',tag:'КРИТ · программа',fx:'crit'},
   intent:{pts:12,txt:'хочет такие же результаты',tag:'хочет в клуб',fx:'robot'},
-  checkout:{pts:20,txt:'открыл оплату клуба',tag:'ОПЛАТА',fx:'shock'}};
+  checkout:{pts:20,txt:'открыл оплату клуба',tag:'ОПЛАТА',fx:'shock'},
+  paid:{pts:1000,txt:'оплатил клуб',tag:'ДЖЕКПОТ',fx:'jackpot'}};
 const evPts=ev=>ev.kind==='start'?SP:ev.kind==='hit'?1:(ev.points||(ACT[ev.kind]||{pts:1}).pts);
 /* приёмы под действия: у Лёни (A) катана, у Кати (B) два клинка */
 Object.assign(MOVES.A,{
@@ -1606,20 +1622,22 @@ function strike(team,kind='hit',label='',opts={}){
   if(att.busy||def.busy||koActive){if(!opts.force){evQ.unshift({team,kind,source:label,_retry:1});return}}
   const fx=kind==='start'?'super':kind==='hit'?'hit':(ACT[kind]||{fx:'hit'}).fx,sup=fx==='super';
   const W=1+ARENA.tension*.45;   // при близком счёте / перед гонгом крупные удары весомее
-  const mv=opts.move||(fx==='hit'?pickMove(team):fx==='super'?SUPER[team]:fx);
+  const mv=opts.move||(fx==='hit'?pickMove(team):(fx==='super'||fx==='jackpot')?SUPER[team]:fx);
   lastStrike={team,kind,label,move:mv};
   // редкий мини-поединок питомцев (с кулдауном, чтобы не спамило)
   if(!pets.on&&!koActive&&T>petNext&&Math.random()<(params.has('pets')?1:DEMO?.22:.12))spawnPets();
   snd.whoosh(sup||fx==='shock');att.attacking=true;att.superMove=sup||fx==='shock';let tagged=false;
-  const tag=()=>{if(label&&!tagged&&fx!=='drone'&&fx!=='robot'){tagged=true;showTag(team,label,kind)}};
+  const tag=()=>{if(label&&!tagged&&fx!=='drone'&&fx!=='robot'&&fx!=='jackpot'){tagged=true;showTag(team,label,kind)}};
   att.onFx=k=>{if(k==='bolt'){const T=att.S.A1.tip;lightningTo(T[0],T[1],fx==='bolt'?'#b9b4ff':att.col);if(team==='B')lightningTo(att.S.A2.tip[0],att.S.A2.tip[1],'#b9b4ff');
       sparks(T[0],T[1],'#ffffff',30,380,60);flash(.35,'#b9b4ff');att.glow=1.5;snd.thunder();kick(.02)}
     if(k==='glow'){att.glow=1.4;sparks(att.S.A1.tip[0],att.S.A1.tip[1],AMBER,16,200,40)}};
   if(fx==='drone'){spawnDrone(team,label);snd.charge()}
   if(fx==='robot'){spawnRobot(team,label);snd.charge()}
+  if(fx==='jackpot'&&!opts.replay){spawnRobot(team,'');spawnDrone(team,'');snd.charge();showJackpot(team,label)}
   playSeq(att,MOVES[team][mv],hk=>{
     const D=def.S||solve(def,performance.now()/1000);const cx=D.hip[0]+D.tv[0]*46,cy=D.hip[1]+D.tv[1]*46;
-    if(hk.big&&fx==='super'){
+    if(hk.big&&(fx==='super'||fx==='jackpot')){
+      if(fx==='jackpot')jackpotHit(att,def,cx,cy);
       impact(cx,cy,att.col,true);sparks(cx,cy,att.col,110,760,220,true);ring(cx,cy,att.col,190,7);ring(cx,cy,'#ffffff',120,3);
       for(let i=0;i<(Q===0?1:3);i++)waves.push({x:att.S.A1.tip[0],y:cy-30,v:att.face*(580-i*110),t:-i*.06,c:i===1?'#ffffff':att.col,f:att.face,s:1+i*.22});
       gwaves.push({x:D.hip[0],y:FLOOR+10,t:0,c:att.col});
@@ -1675,6 +1693,21 @@ function showTag(team,label,kind){
   else if(kind==='site')d.innerHTML=`<b>+${pts}</b><span class="tx"><span>НА САЙТЕ</span><small>${esc(label)} · перешёл на сайт</small></span>`;
   else d.innerHTML=`<b>+${pts}</b>${esc(label)}${ACT[kind]?` <em>${esc(ACT[kind].tag)}</em>`:''}`;
   $('tags').appendChild(d);setTimeout(()=>d.remove(),big?2300:1600);
+}
+// оплата клуба: золотой джекпот — монетный дождь, вспышки по всей арене, крупная плашка +1000
+function showJackpot(team,label){
+  const j=$('jack');j.style.setProperty('--tc',COL[team]);
+  $('jkS').innerHTML=(label?`<b>${esc(label)}</b> · `:'')+esc(teamName(team))+(ME&&label===ME?' · ЭТО ТЫ!':'');
+  const C=$('jkC');C.innerHTML=REDUCED?'':Array.from({length:Q===0?24:60},()=>`<i style="left:${rand(0,100).toFixed(1)}%;animation-duration:${rand(1.6,3.4).toFixed(2)}s;animation-delay:${rand(0,1.6).toFixed(2)}s;transform:scale(${rand(.6,1.3).toFixed(2)})"></i>`).join('');
+  j.classList.remove('on');void j.offsetWidth;j.classList.add('on');flash(.6,AMBER);snd.gong();setTimeout(()=>snd.streak(),400);
+  clearTimeout(showJackpot.t);showJackpot.t=setTimeout(()=>{j.classList.remove('on');setTimeout(()=>{C.innerHTML=''},600)},4800);
+}
+function jackpotHit(att,def,cx,cy){
+  for(let i=0;i<(Q===0?3:7);i++)setTimeout(()=>{const x=rand(220,1380),y=FLOOR-rand(80,420);impact(x,y,i%2?AMBER:att.col,true);sparks(x,y,AMBER,70,760,260,true);ring(x,y,AMBER,rand(110,200),5);if(Q>0)flare(x,y,AMBER,.8)},i*140);
+  gwaves.push({x:cx,y:FLOOR+12,t:0,c:AMBER,R:1100,L:1});gwaves.push({x:cx,y:FLOOR+12,t:-.15,c:'#fff3c4',R:900,L:.9});
+  for(let i=0;i<(Q===0?2:4);i++)waves.push({x:att.S.A1.tip[0],y:FLOOR-140,v:att.face*(1200-i*160),t:-i*.05,c:i%2?'#fff3c4':AMBER,f:att.face,s:1.7+i*.25,L:1});
+  setTimeout(()=>{flash(.9,'#fff3c4');shake(40);kick(.18);glitchT=.5;snd.thunder()},120);slow(.9,.2);
+  for(let i=0;i<(Q?40:12);i++)spawnSplash(rand(200,1400),FLOOR+rand(0,120));
 }
 function doStreak(team,n,label){
   const bn=$('banner');bn.style.setProperty('--c',COL[team]);$('bnT').textContent='СЕРИЯ ×'+n;$('bnS').textContent=(label?label+' · ':'')+teamName(team);

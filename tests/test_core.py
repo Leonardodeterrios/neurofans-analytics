@@ -309,4 +309,30 @@ assert json.loads(act("intent",u="888").content)["ok"]
 assert not json.loads(act("checkout",u="888").content)["ok"]          # оплата — один раз на человека
 assert app.get_stats()["action_points"]==b+20+12
 print("новые кнопки: программа +10, хочу +12, оплата +20 — один раз на человека ✅")
+
+# 14) настоящая оплата клуба: вебхук Tribute → +1000 партнёру, кнопкой не получить, возврат снимает
+import base64 as _b64
+app.TRIBUTE_KEY="trbkey"; app.TRIBUTE_FORWARD=""
+def trib(ev, key="trbkey"):
+    raw=json.dumps(ev).encode(); flask.request.data=raw
+    flask.request.headers=flask._Headers({"trbt-signature":_h.new(key.encode(),raw,_hl.sha256).hexdigest()})
+    try: return json.loads(app.tribute_webhook().content)
+    except flask._Abort as a: return a.code
+assert act("paid",method="GET")==404                                            # переходником 1000 не взять
+assert trib({"name":"new_subscription","payload":{"telegram_user_id":888}},key="bad")==401   # чужая подпись
+b=app.get_stats()["action_points"]
+r=trib({"name":"new_subscription","payload":{"telegram_user_id":888,"subscription_id":5}}); assert r["ok"] and r["points"]==1000, r
+assert not trib({"name":"new_digital_product","payload":{"telegram_user_id":888,"product_id":1}})["ok"]   # второй раз — нет
+assert trib({"name":"renewed_subscription","payload":{"telegram_user_id":888}}).get("skip")               # продление — не оплата клуба
+assert trib({"name":"new_subscription","payload":{"telegram_user_id":424242}})["reason"]=="uid_not_attributed"
+assert app.get_stats()["action_points"]==b+1000
+app.TRIBUTE_CLUB_IDS={"77"}
+assert not app.tribute_event({"name":"new_digital_product","payload":{"telegram_user_id":111,"product_id":9}})   # не тот товар
+assert app.tribute_event({"name":"new_digital_product","payload":{"telegram_user_id":111,"product_id":77}})=={"paid":111}
+app.TRIBUTE_CLUB_IDS=set()
+assert trib({"name":"refunded_payment","payload":{"telegram_user_id":888}})["refunded"]==1
+assert app.get_stats()["action_points"]==b
+assert app.tribute_sig_ok(b"x", _b64.b64encode(_h.new(b"trbkey",b"x",_hl.sha256).digest()).decode())  # base64-подпись тоже
+flask.request.headers=flask._Headers()
+print("оплата клуба: +1000 по вебхуку Tribute, один раз, возврат снимает ✅")
 print("\nВСЕ ПРОВЕРКИ ПРОШЛИ ✅")

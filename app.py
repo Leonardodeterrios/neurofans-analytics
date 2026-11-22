@@ -160,6 +160,8 @@ ACTIONS = {
     "program":  (10, "смотрит программу клуба"),
     "intent":   (12, "хочет такие же результаты"),
     "checkout": (20, "открыл оплату клуба"),
+    # настоящая оплата клуба — приходит вебхуком от Tribute, кнопкой её не получить (не в ACT_LINKS)
+    "paid":     (1000, "оплатил клуб"),
 }
 # Кнопки воронки в боте — это ссылки (мини-приложения ai-creators.ru, канал), PuzzleBot при нажатии
 # ничего не шлёт. Поэтому кнопка ведёт на наш переходник /a/<код>: он засчитывает действие и сразу
@@ -180,6 +182,45 @@ for _kv in (os.getenv("ACT_LINKS") or "").split(","):        # переопре�
     _k, _, _v = _kv.strip().partition("=")
     if _k in ACTIONS and _v.startswith("https://"):
         ACT_LINKS[_k] = _v
+# Tribute: вебхук об оплате подписан HMAC-SHA256 тела на API-ключе (заголовок trbt-signature).
+TRIBUTE_KEY = (os.getenv("TRIBUTE_API_KEY") or "").strip()
+TRIBUTE_CLUB_IDS = {x.strip() for x in (os.getenv("TRIBUTE_CLUB_IDS") or "").split(",") if x.strip()}  # пусто — любая покупка
+TRIBUTE_FORWARD = (os.getenv("TRIBUTE_FORWARD", "http://lab:8090/api/tribute/webhook") or "").strip()  # копия вебхука кабинету (Pro)
+PAID_EVENTS = ("new_subscription", "new_digital_product", "new_donation")
+
+def tribute_sig_ok(raw, sig, key=None):
+    key = TRIBUTE_KEY if key is None else key
+    if not key or not sig:
+        return False
+    import base64
+    mac = hmac.new(key.encode(), raw, hashlib.sha256)
+    sig = sig.strip()
+    return hmac.compare_digest(sig, mac.hexdigest()) or hmac.compare_digest(sig, base64.b64encode(mac.digest()).decode())
+
+def tribute_event(ev):
+    """Событие Tribute → {"paid": uid} / {"refund": uid} / {}. Клуб — по TRIBUTE_CLUB_IDS (если задан)."""
+    name, p = str(ev.get("name") or ""), ev.get("payload") or {}
+    try:
+        uid = int(p.get("telegram_user_id") or 0)
+    except (TypeError, ValueError):
+        uid = 0
+    if not uid:
+        return {}
+    if "refund" in name.lower():
+        return {"refund": uid}
+    if name not in PAID_EVENTS:
+        return {}
+    ids = {str(p.get(k)) for k in ("product_id", "subscription_id", "channel_id", "donation_request_id") if p.get(k) is not None}
+    if TRIBUTE_CLUB_IDS and not (ids & TRIBUTE_CLUB_IDS):
+        return {}
+    return {"paid": uid}
+
+def remove_paid(uid):
+    with _conn() as c:
+        n = c.execute("DELETE FROM actions WHERE tg_uid=? AND act='paid'", (uid,)).rowcount
+    _stats_cache.clear()
+    return n
+
 RANKS = [(0, "Новичок"), (10, "Боец"), (30, "Воин"), (75, "Мастер"), (150, "Чемпион"), (300, "Легенда")]
 BADGES = {
     "first_blood": ("🩸", "Первая кровь", "первый удар этого раунда"),
@@ -902,6 +943,8 @@ def notify_start(label, ch):
                f"Команда: {_team_label(label)}{chs}")
 
 def notify_action(label, act, pts):
+    if act == "paid" and ADMIN_IDS:            # оплату сообщаем всегда
+        return notify_all(f"💰 ОПЛАТА КЛУБА! Привёл {label} (+{pts})\nКоманда: {_team_label(label)}")
     if not (ADMIN_IDS and NOTIFY_ACTIONS):
         return
     notify_all(f"⚡ {label}: человек {ACTIONS[act][1]} (+{pts})\nКоманда: {_team_label(label)}")
@@ -1090,6 +1133,38 @@ def bot_start():
         push_sheet({"type": "start", "source": res["label"], "channel": res["ch"]})
     log.info("start label=%s cid=%s scored=%s", res["label"], res["click_id"], res["scored"])
     return jsonify(ok=True, **res)
+
+def _tribute_forward(raw, sig):
+    try:
+        httpx.post(TRIBUTE_FORWARD, content=raw, headers={"trbt-signature": sig, "content-type": "application/json"}, timeout=10)
+    except Exception as e:
+        log.info("tribute forward failed: %s", e)
+
+@app.route("/tribute/webhook", methods=["POST"])
+def tribute_webhook():
+    """Оплата клуба в Tribute → +1000 партнёру, который привёл этого человека (его засчитанный старт).
+    Один человек — одна оплата за всё время; возврат — очки снимаются. Копия вебхука уходит кабинету (Pro)."""
+    raw, sig, ev = request.get_data(), request.headers.get("trbt-signature", ""), {}
+    if not tribute_sig_ok(raw, sig):
+        abort(401)
+    if TRIBUTE_FORWARD:
+        bg(_tribute_forward, raw, sig)
+    try:
+        ev = json.loads(raw or b"{}")
+        what = tribute_event(ev)
+        if "paid" in what:
+            res = record_action(what["paid"], "paid")
+            if res.get("ok"):
+                notify_action(res["label"], res["act"], res["points"])
+        elif "refund" in what:
+            res = {"ok": True, "refunded": remove_paid(what["refund"])}
+        else:
+            res = {"ok": True, "skip": ev.get("name")}
+    except Exception as e:
+        log.error("tribute webhook failed: %s", e)
+        res = {"ok": False, "reason": "error"}
+    log.info("tribute %s → %s", ev.get("name") if isinstance(ev, dict) else "?", res)
+    return jsonify(**res)
 
 @app.route("/bot/action", methods=["GET", "POST"])
 def bot_action():
