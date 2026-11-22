@@ -70,6 +70,9 @@ PER_TEAM           = _int("PER_TEAM", 50)
 PARTNER_SECRET     = _str("PARTNER_SECRET")     # подпись личных ссылок партнёров (/p/<метка>?k=...)
 GEO_ENABLE         = _flag("GEO", "1")          # города кликов по базе DB-IP Lite (скачивается сама)
 GEO_DB             = _str("GEO_DB") or os.path.join(os.path.dirname(DB_PATH) or ".", "geo-city.mmdb")
+ASN_DB             = _str("ASN_DB") or os.path.join(os.path.dirname(DB_PATH) or ".", "geo-asn.mmdb")
+REQUIRE_MOBILE     = _flag("REQUIRE_MOBILE", "1")  # удар только с телефона/из приложения (сканеры ходят с «компьютера»)
+BLOCK_HOSTING      = _flag("BLOCK_HOSTING", "1")   # удар не засчитывается с IP дата-центров/хостингов
 
 TEAM_A_NAME   = _str("TEAM_A_NAME", "Команда Лёни")
 TEAM_A_PREFIX = _str("TEAM_A_PREFIX", "leo").lower()
@@ -90,6 +93,20 @@ BOT_UA = re.compile(
     r"headless|python-requests|python-urllib|aiohttp|httpx|curl/|wget|go-http-client|okhttp|axios|"
     r"node-fetch|scrapy|libwww|java/|phantomjs|puppeteer|playwright|lighthouse|pingdom|uptimerobot|"
     r"statuscake|monitor", re.I)
+# телефон или встроенный браузер приложения: живые люди из био Threads/Instagram/TikTok/YouTube приходят так
+MOBILE_UA = re.compile(r"Mobile|Android|iPhone|iPod|iPad|Instagram|Barcelona|FBAN|FBAV|musical_ly|"
+                       r"BytedanceWebview|TikTok|YouTube", re.I)
+# владельцы IP-сетей дата-центров и хостингов (по названию сети в DB-IP ASN Lite). Не включаем
+# Cloudflare/Akamai Technologies/Fastly — через них ходит iCloud Private Relay (живые айфоны).
+HOSTING_ORG = re.compile(
+    r"amazon|\baws\b|google cloud|google llc|microsoft|azure|digitalocean|hetzner|\bovh|linode|"
+    r"akamai connected cloud|vultr|choopa|oracle|alibaba|tencent|ucloud|contabo|leaseweb|scaleway|"
+    r"online s\.?a\.?s|m247|datacamp|cdn77|hostinger|ionos|hostwinds|colocrossing|quadranet|psychz|"
+    r"servers\.com|g-?core|kamatera|upcloud|zenlayer|interserver|nforce|worldstream|serverion|equinix|"
+    r"frantech|ponynet|buyvm|racknerd|dedipath|tzulo|hivelocity|limestone|liquid web|rackspace|"
+    r"ikoula|timeweb|selectel|aeza|hostkey|vdsina|firstbyte|stark industries|pq hosting|cloudvider|"
+    r"tencent|huawei cloud|byteplus|hosting|data ?cent(er|re)|datacenter|\bvps\b|dedicated|colocation|"
+    r"\bcloud\b|server", re.I)
 SAFE_START = re.compile(r"[^A-Za-z0-9_-]")
 SAFE_LABEL = re.compile(r"[^A-Za-z0-9_-]")
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -212,7 +229,8 @@ def init_db():
         cols = {r[1] for r in c.execute("PRAGMA table_info(clicks)")}
         for col, ddl in (("vid", "TEXT"), ("scored", "INTEGER DEFAULT 1"),
                          ("rnd", "TEXT"), ("ch", "TEXT DEFAULT ''"),
-                         ("city", "TEXT"), ("cc", "TEXT"), ("lat", "REAL"), ("lon", "REAL")):
+                         ("city", "TEXT"), ("cc", "TEXT"), ("lat", "REAL"), ("lon", "REAL"),
+                         ("why", "TEXT")):
             if col not in cols:
                 c.execute(f"ALTER TABLE clicks ADD COLUMN {col} {ddl}")
         c.execute("""CREATE TABLE IF NOT EXISTS starts(
@@ -221,6 +239,7 @@ def init_db():
         c.execute("""CREATE TABLE IF NOT EXISTS actions(
             id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT, tg_uid INTEGER, act TEXT, label TEXT,
             points INTEGER, start_id INTEGER, UNIQUE(tg_uid, act))""")
+        c.execute("CREATE TABLE IF NOT EXISTS meta(k TEXT PRIMARY KEY, v TEXT)")
         c.execute("""CREATE TABLE IF NOT EXISTS alerts(
             id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT, source TEXT, kind TEXT)""")
         c.execute("CREATE INDEX IF NOT EXISTS ix_clicks_src_vid ON clicks(source, vid, rnd)")
@@ -232,8 +251,9 @@ def init_db():
         c.execute("CREATE INDEX IF NOT EXISTS ix_actions_ts ON actions(ts)")
         c.execute("CREATE INDEX IF NOT EXISTS ix_actions_label ON actions(label)")
 
-def record_click(source, ch, ip, ua, vid, geo=None):
-    """Пишет клик. Возвращает (id клика, засчитан ли удар, новый ли человек)."""
+def record_click(source, ch, ip, ua, vid, geo=None, why=""):
+    """Пишет клик. Возвращает (id клика, засчитан ли удар, новый ли человек).
+    why — почему клик не может быть ударом в принципе ("desktop" / "hosting"), "" — может."""
     _stats_cache.clear()
     g = geo or {}
     _start, end = round_bounds()
@@ -245,13 +265,13 @@ def record_click(source, ch, ip, ua, vid, geo=None):
                            (vid, rnd)).fetchone()[0]
         ip_hits = c.execute("SELECT COUNT(*) FROM clicks WHERE ip=? AND rnd=? AND scored=1",
                             (ip, rnd)).fetchone()[0] if ip else 0
-        scored = 0 if (dup or spread >= MAX_PARTNERS_PER_VISITOR or ip_hits >= MAX_HITS_PER_IP
+        scored = 0 if (why or dup or spread >= MAX_PARTNERS_PER_VISITOR or ip_hits >= MAX_HITS_PER_IP
                        or source == "direct") else 1
         new_vis = c.execute("SELECT 1 FROM clicks WHERE vid=? LIMIT 1", (vid,)).fetchone() is None
-        cur = c.execute("INSERT INTO clicks(ts,source,ip,ua,vid,scored,rnd,ch,city,cc,lat,lon) "
-                        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+        cur = c.execute("INSERT INTO clicks(ts,source,ip,ua,vid,scored,rnd,ch,city,cc,lat,lon,why) "
+                        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
                         (_now_iso(), source, ip, ua, vid, scored, rnd, ch,
-                         g.get("city"), g.get("cc"), g.get("lat"), g.get("lon")))
+                         g.get("city"), g.get("cc"), g.get("lat"), g.get("lon"), why or None))
         return cur.lastrowid, bool(scored), new_vis
 
 def record_start(raw_payload, uid):
@@ -593,31 +613,128 @@ def geo_lookup(ip):
             "cc": ((d.get("country") or {}).get("iso_code") or "")[:2],
             "lat": round(float(loc["latitude"]), 1), "lon": round(float(loc["longitude"]), 1)}
 
-def geo_updater():
-    """Раз в сутки проверяет базу городов; если её нет или ей больше 35 дней — скачивает свежую."""
-    while GEO_ENABLE:
+# ---------- сеть IP: дата-центр/хостинг? (DB-IP ASN Lite, CC BY 4.0) ----------
+_asn = {"r": None, "tried": 0.0}
+
+def _asn_reader():
+    if not os.path.exists(ASN_DB):
+        return None
+    if _asn["r"] is None and time.time() - _asn["tried"] > 60:
+        _asn["tried"] = time.time()
         try:
-            fresh = os.path.exists(GEO_DB) and time.time() - os.path.getmtime(GEO_DB) < 35 * 86400
-            if not fresh:
-                today = dt.date.today()
-                months = [today, (today.replace(day=1) - dt.timedelta(days=1))]
-                for m in months:
-                    url = f"https://download.db-ip.com/free/dbip-city-lite-{m:%Y-%m}.mmdb.gz"
-                    tmp = GEO_DB + ".tmp"
-                    with httpx.stream("GET", url, timeout=120, follow_redirects=True) as resp:
-                        if resp.status_code != 200:
-                            continue
-                        d = gzip.decompressobj(16 + 15)
-                        with open(tmp, "wb") as f:
-                            for chunk in resp.iter_bytes():
-                                f.write(d.decompress(chunk))
-                            f.write(d.flush())
-                    os.replace(tmp, GEO_DB)
-                    _geo["r"] = None; _geo["tried"] = 0.0
-                    log.info("geo db updated from %s", url)
-                    break
+            import maxminddb
+            _asn["r"] = maxminddb.open_database(ASN_DB)
+        except Exception as e:
+            log.warning("asn db open failed: %s", e)
+    return _asn["r"]
+
+def asn_org(ip):
+    r = _asn_reader()
+    if not r or not ip:
+        return None
+    try:
+        d = r.get(ip) or {}
+    except Exception:
+        return None
+    return (d.get("autonomous_system_organization") or "").strip() or None
+
+def not_human_reason(ip, ua):
+    """Почему клик не может быть ударом: "desktop" — не телефон и не приложение (так ходят сканеры),
+    "hosting" — IP дата-центра. "" — может (дальше обычные лимиты). Редирект от этого не меняется."""
+    if REQUIRE_MOBILE and not MOBILE_UA.search(ua or ""):
+        return "desktop"
+    if BLOCK_HOSTING:
+        org = asn_org(ip)
+        if org and HOSTING_ORG.search(org):
+            return "hosting"
+    return ""
+
+def rescore_all():
+    """Пересчитать «засчитан ли» для всех кликов и стартов по текущим правилам (клики в базе остаются).
+    Повторяет логику record_click/record_start по порядку id."""
+    _stats_cache.clear()
+    with _conn() as c:
+        pairs, spread, ipn, newsc, why_of = set(), {}, {}, {}, {}
+        for r in c.execute("SELECT id, source, ip, ua, vid, rnd FROM clicks ORDER BY id").fetchall():
+            rnd = r["rnd"] or ""
+            why = not_human_reason(r["ip"], r["ua"])
+            key_s = (rnd, r["vid"])
+            ok = not why and r["source"] != "direct" \
+                and (rnd, r["source"], r["vid"]) not in pairs \
+                and len(spread.get(key_s, ())) < MAX_PARTNERS_PER_VISITOR \
+                and (not r["ip"] or ipn.get((rnd, r["ip"]), 0) < MAX_HITS_PER_IP)
+            if ok:
+                pairs.add((rnd, r["source"], r["vid"]))
+                spread.setdefault(key_s, set()).add(r["source"])
+                if r["ip"]:
+                    ipn[(rnd, r["ip"])] = ipn.get((rnd, r["ip"]), 0) + 1
+            newsc[r["id"]], why_of[r["id"]] = int(ok), (why or None)
+        old = {r[0]: (r[1], r[2]) for r in c.execute("SELECT id, scored, why FROM clicks")}
+        ch_clicks = [(newsc[i], why_of[i], i) for i in newsc if old.get(i) != (newsc[i], why_of[i])]
+        c.executemany("UPDATE clicks SET scored=?, why=? WHERE id=?", ch_clicks)
+        used, seen, ch_starts = set(), set(), []
+        for r in c.execute("SELECT id, label, click_id, tg_uid, scored FROM starts ORDER BY id").fetchall():
+            cid, uid = r["click_id"], r["tg_uid"]
+            sc = int(bool(cid is not None and newsc.get(cid) and cid not in used
+                          and not (uid and uid in seen) and r["label"] != "direct"))
+            if sc:
+                used.add(cid)
+            if uid:
+                seen.add(uid)
+            if sc != (r["scored"] or 0):
+                ch_starts.append((sc, r["id"]))
+        c.executemany("UPDATE starts SET scored=? WHERE id=?", ch_starts)
+        hits = sum(newsc.values())
+    _stats_cache.clear()
+    log.info("rescore: clicks changed %d, starts changed %d, hits now %d", len(ch_clicks), len(ch_starts), hits)
+    return {"clicks_changed": len(ch_clicks), "starts_changed": len(ch_starts), "hits": hits}
+
+def _download_mmdb(kind, path):
+    """kind: city | asn. Свежая база DB-IP Lite за этот или прошлый месяц."""
+    today = dt.date.today()
+    for m in (today, today.replace(day=1) - dt.timedelta(days=1)):
+        url = f"https://download.db-ip.com/free/dbip-{kind}-lite-{m:%Y-%m}.mmdb.gz"
+        tmp = path + ".tmp"
+        with httpx.stream("GET", url, timeout=120, follow_redirects=True) as resp:
+            if resp.status_code != 200:
+                continue
+            d = gzip.decompressobj(16 + 15)
+            with open(tmp, "wb") as f:
+                for chunk in resp.iter_bytes():
+                    f.write(d.decompress(chunk))
+                f.write(d.flush())
+        os.replace(tmp, path)
+        log.info("%s db updated from %s", kind, url)
+        return True
+    return False
+
+def _stale(path):
+    return not (os.path.exists(path) and time.time() - os.path.getmtime(path) < 35 * 86400)
+
+def geo_updater():
+    """Раз в сутки проверяет базы городов и сетей; если базы нет или ей больше 35 дней — скачивает свежую.
+    Один раз после появления базы сетей пересчитывает старые клики по фильтру сканеров (meta rescore_v1)."""
+    while True:
+        try:
+            if GEO_ENABLE and _stale(GEO_DB) and _download_mmdb("city", GEO_DB):
+                _geo["r"] = None; _geo["tried"] = 0.0
         except Exception as e:
             log.warning("geo db update failed: %s", e)
+        try:
+            if BLOCK_HOSTING and _stale(ASN_DB) and _download_mmdb("asn", ASN_DB):
+                _asn["r"] = None; _asn["tried"] = 0.0
+        except Exception as e:
+            log.warning("asn db update failed: %s", e)
+        try:
+            if (not BLOCK_HOSTING or os.path.exists(ASN_DB)):
+                with _conn() as c:
+                    done = c.execute("SELECT v FROM meta WHERE k='rescore_v1'").fetchone()
+                if not done:
+                    res = rescore_all()
+                    with _conn() as c:
+                        c.execute("INSERT OR REPLACE INTO meta(k,v) VALUES('rescore_v1',?)", (json.dumps(res),))
+        except Exception as e:
+            log.warning("rescore failed: %s", e)
         time.sleep(86400)
 
 
@@ -827,7 +944,7 @@ def _track_and_redirect(raw, ch):
         return resp
     ip = _client_ip()
     vid, set_cookie = _visitor(ip, ua)
-    cid, scored, new_vis = record_click(source, ch, ip, ua, vid, geo_lookup(ip))
+    cid, scored, new_vis = record_click(source, ch, ip, ua, vid, geo_lookup(ip), not_human_reason(ip, ua))
     if scored:
         notify_hit(source, ch, new_vis)
         push_sheet({"type": "hit", "source": source, "channel": ch, "visitor": vid})
@@ -1171,6 +1288,12 @@ def export_actions():
             w.writerow([r["ts"], r["label"], TEAMS[tk][0] if tk else "", r["act"], r["points"], r["tg_uid"]])
     return Response(buf.getvalue().encode("utf-8-sig"), mimetype="text/csv",
                     headers={"Content-Disposition": "attachment; filename=actions.csv"})
+
+@app.route("/admin/rescore")
+def admin_rescore():
+    """Пересчитать удары по текущим правилам (после смены фильтров). Только админ."""
+    _need(admin=True)
+    return jsonify(rescore_all())
 
 @app.route("/export/starts")
 def export_starts():

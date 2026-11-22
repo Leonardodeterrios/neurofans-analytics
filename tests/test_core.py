@@ -138,6 +138,39 @@ flask.request.args={"token":"pub","since_c":str(base["last_c"]),"since_s":str(ba
 it=json.loads(app.api_feed().content)["items"]; assert it and it[-1]["city"]=="Москва" and it[-1]["lat"]==55.8, it
 app._geo["r"]=None; app.GEO_DB="/nonexistent"
 print("гео: город в ленте ✅", it[-1]["city"])
+
+# 9) сканеры: «компьютер» и IP дата-центров — редирект тот же, но не удар; пересчёт истории
+def scored_of(r):
+    cid=int(r.headers["Location"].rsplit("-",1)[1],36)
+    return sqlite3.connect(DB).execute("SELECT scored, why FROM clicks WHERE id=?",(cid,)).fetchone()
+DESK="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
+rd=click(app.go_threads,"leo30","31.1.1.1",ua=DESK)
+assert rd.headers["Location"].startswith("https://t.me/AccessGrantedGuide_bot?start=leo30-")
+assert scored_of(rd)==(0,"desktop"), scored_of(rd)
+class FakeASN:
+    def get(self, ip): return {"autonomous_system_organization": {"165.154.1.1":"UCloud Information Technology (HK) Limited",
+        "146.190.1.1":"DigitalOcean, LLC","17.1.1.1":"Akamai Technologies, Inc."}.get(ip,"PJSC MegaFon")}
+app._asn["r"]=FakeASN(); app.ASN_DB=__file__
+MOB="Mozilla/5.0 (Linux; Android 16; SM-S921U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36"
+assert scored_of(click(app.go_threads,"leo31","165.154.1.1",ua=MOB))==(0,"hosting")
+assert scored_of(click(app.go_threads,"leo31","146.190.1.1",ua=MOB))==(0,"hosting")
+assert scored_of(click(app.go_threads,"leo31","17.1.1.1",ua=MOB))==(1,None)     # iCloud Private Relay — человек
+assert scored_of(click(app.go_threads,"leo32","83.1.1.1",ua=MOB))==(1,None)     # обычный мобильный оператор
+print("сканеры: компьютер → desktop, дата-центр → hosting, Private Relay и оператор → удар ✅")
+# пересчёт: подделаем старые «засчитанные» клики сканеров и проверим, что пересчёт их снимает, а людей оставляет
+con=sqlite3.connect(DB); con.execute("UPDATE clicks SET scored=1, why=NULL WHERE source IN ('leo30','leo31')"); con.commit()
+h_before=app.get_stats()["hits"]; res=app.rescore_all(); h_after=app.get_stats()["hits"]
+print("пересчёт:",res,"| удары",h_before,"→",h_after)
+assert h_after==h_before-4, (h_before,h_after)   # 3 сканера + старая запись с UA «Mozilla» из миграции
+assert app.rescore_all()["clicks_changed"]==0          # повторный пересчёт ничего не меняет
+P={p["source"]:p for p in app.get_stats()["partners"]}
+assert P["leo07"]["hits"]==1 and P["leo07"]["starts"]==1, P["leo07"]   # люди и апперкоты на месте
+flask.request.args={"token":"adm"}; assert json.loads(app.admin_rescore().content)["clicks_changed"]==0
+flask.request.args={"token":"pub"}
+try: app.admin_rescore(); assert False
+except flask._Abort as a: assert a.code==401
+app._asn["r"]=None; app.ASN_DB="/nonexistent"
+print("пересчёт истории: сканеры сняты, люди и апперкоты на месте, /admin/rescore только админу ✅")
 # 9) живая лента SSE
 flask.request.args={"token":"pub","since_c":str(base["last_c"]),"since_s":str(base["last_s"])}
 gen=app.api_stream().content; first=next(gen); assert "hello" in first and "id: " in first
