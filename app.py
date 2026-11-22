@@ -321,11 +321,13 @@ def record_start(raw_payload, uid):
     ch, click_ok = "", False
     with _conn() as c:
         if cid is not None:
-            row = c.execute("SELECT source, ch, scored FROM clicks WHERE id=?", (cid,)).fetchone()
+            row = c.execute("SELECT source, ch, scored, why FROM clicks WHERE id=?", (cid,)).fetchone()
             if row is None or row["source"] != label:
                 cid, label = None, whole       # не наш id клика — считаем всю строку меткой
             else:
-                ch, click_ok = row["ch"] or "", bool(row["scored"])
+                # клик с компьютера — не удар, но если человек дошёл до бота (живой Telegram) — апперкот даём.
+                # Клики с хостингов и поддельных браузеров апперкот не дают.
+                ch, click_ok = row["ch"] or "", bool(row["scored"]) or row["why"] == "desktop"
         # апперкот только за человека, который пришёл через засчитанный клик партнёра:
         # один старт на клик и один на Telegram-аккаунт. «Голые» t.me/...?start=метка не считаются.
         used = cid is not None and c.execute(
@@ -361,7 +363,8 @@ def record_action(uid, act):
 
 # ---------- статистика ----------
 def _conv(starts, hits):
-    return round(starts / hits * 100, 1) if hits else None
+    # апперкот бывает и без удара (клик с компьютера, человек дошёл до бота) — доходимость не больше 100%
+    return min(100.0, round(starts / hits * 100, 1)) if hits else None
 
 _stats_cache = {}
 
@@ -720,7 +723,7 @@ def rescore_all():
         used, seen, ch_starts = set(), set(), []
         for r in c.execute("SELECT id, label, click_id, tg_uid, scored FROM starts ORDER BY id").fetchall():
             cid, uid = r["click_id"], r["tg_uid"]
-            sc = int(bool(cid is not None and newsc.get(cid) and cid not in used
+            sc = int(bool(cid is not None and (newsc.get(cid) or why_of.get(cid) == "desktop") and cid not in used
                           and not (uid and uid in seen) and r["label"] != "direct"))
             if sc:
                 used.add(cid)

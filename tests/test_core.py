@@ -193,6 +193,16 @@ con=sqlite3.connect(DB); before=con.execute("SELECT id,scored FROM clicks WHERE 
 app.rescore_all()                                 # пересчёт с тем же лимитом — по leo34 то же, что живой подсчёт
 assert sqlite3.connect(DB).execute("SELECT id,scored FROM clicks WHERE source='leo34' ORDER BY id").fetchall()==before
 app.MAX_HITS_PER_NET=10
+# апперкот за клик с компьютера, если человек дошёл до бота; за хостинг/подделку — нет
+rdk=click(app.go_threads,"leo35","85.1.1.1",ua=DESK); assert scored_of(rdk)==(0,"desktop")
+sd=start("leo35-"+rdk.headers["Location"].rsplit("-",1)[1],9001); assert sd["scored"], sd
+rfk=click(app.go_threads,"leo36","86.1.1.1",ua=FAKE[0]); sf=start("leo36-"+rfk.headers["Location"].rsplit("-",1)[1],9002); assert not sf["scored"]
+P=_P=None
+st=app.get_stats(); P={p["source"]:p for p in st["partners"]}
+assert P["leo35"]["hits"]==0 and P["leo35"]["starts"]==1 and P["leo35"]["power"]==3, P["leo35"]
+assert app.rescore_all()["starts_changed"]==0   # пересчёт сохраняет это правило
+assert app._conv(5,2)==100.0
+print("клик с компьютера → не удар, но апперкот, если дошёл до бота; подделка — ничего ✅")
 print("поддельные айфоны → forged, настоящие (вкл. iOS 26 с OS 18_6) — люди; лимит на подсеть ✅")
 # 9) живая лента SSE
 flask.request.args={"token":"pub","since_c":str(base["last_c"]),"since_s":str(base["last_s"])}
