@@ -68,7 +68,7 @@ def call_relay(url, secret, payload, timeout=58):
                    "HTTP-Referer": "https://lab.neurofans.ru", "X-Title": "NeuroFans Lab"}
     else:
         headers = {"Content-Type": "application/json", "x-relay-secret": secret}
-    body = json.dumps(payload).encode()
+    body = json.dumps(payload, ensure_ascii=False).encode()
     status, text = None, ""
     for ip in RESOLVE:
         try:

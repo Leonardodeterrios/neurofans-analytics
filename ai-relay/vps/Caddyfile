@@ -1,0 +1,4 @@
+# HTTPS для ретранслятора: сертификат Let's Encrypt на RELAY_DOMAIN (A-запись → IP этого сервера).
+{$RELAY_DOMAIN} {
+	reverse_proxy relay:8080
+}
