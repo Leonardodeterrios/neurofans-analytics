@@ -943,7 +943,10 @@ const ATTACKS={A:['slashH','slashD','thrust','spin','iaido','overhead','crescent
 const ACT={examples:{pts:8,txt:'смотрит примеры генераций',tag:'примеры',fx:'robot'},guide:{pts:3,txt:'взял гайд',tag:'гайд',fx:'bolt'},
   prompts:{pts:3,txt:'взял базу промтов',tag:'промты',fx:'bolt'},sim:{pts:4,txt:'в симуляторе чаттера',tag:'симулятор',fx:'combo'},
   channel:{pts:4,txt:'в ТГ-канале',tag:'ТГ-канал',fx:'drone'},reviews:{pts:5,txt:'читает отзывы',tag:'КРИТ · отзывы',fx:'crit'},
-  site:{pts:8,txt:'перешёл на сайт',tag:'НА САЙТЕ',fx:'shock'}};
+  site:{pts:8,txt:'перешёл на сайт',tag:'НА САЙТЕ',fx:'shock'},
+  program:{pts:10,txt:'смотрит программу клуба',tag:'КРИТ · программа',fx:'crit'},
+  intent:{pts:12,txt:'хочет такие же результаты',tag:'хочет в клуб',fx:'robot'},
+  checkout:{pts:20,txt:'открыл оплату клуба',tag:'ОПЛАТА',fx:'shock'}};
 const evPts=ev=>ev.kind==='start'?SP:ev.kind==='hit'?1:(ev.points||(ACT[ev.kind]||{pts:1}).pts);
 /* приёмы под действия: у Лёни (A) катана, у Кати (B) два клинка */
 Object.assign(MOVES.A,{
@@ -1668,6 +1671,7 @@ function showTag(team,label,kind){
   $('tags').querySelectorAll('.tag:not(.big)').forEach(o=>{if(!big)o.style.marginTop=(parseFloat(o.style.marginTop||0)-26)+'px'});
   if(kind==='start')d.innerHTML=`<b>+${SP}</b><span class="tx"><span>${esc(label)} · АППЕРКОТ</span><small>новый человек в боте</small></span>`;
   else if(kind==='examples')d.innerHTML=`<b>+${pts}</b><span class="tx"><span>РАКЕТНЫЙ ЗАЛП</span><small>${esc(label)} · смотрит примеры генераций</small></span>`;
+  else if(kind==='checkout')d.innerHTML=`<b>+${pts}</b><span class="tx"><span>ОПЛАТА</span><small>${esc(label)} · открыл оплату клуба</small></span>`;
   else if(kind==='site')d.innerHTML=`<b>+${pts}</b><span class="tx"><span>НА САЙТЕ</span><small>${esc(label)} · перешёл на сайт</small></span>`;
   else d.innerHTML=`<b>+${pts}</b>${esc(label)}${ACT[kind]?` <em>${esc(ACT[kind].tag)}</em>`:''}`;
   $('tags').appendChild(d);setTimeout(()=>d.remove(),big?2300:1600);
@@ -2084,7 +2088,7 @@ function demoStats(){
   partners[0].badges=['belt','marathon'];partners[10].badges=['ko','night'];partners[3].badges=['sniper'];partners[12].badges=['funnel'];
   return{start_power:3,teams:[{key:'A',name:'Команда Лёни',color:COL.A,today:0,hits_today:0,starts_today:0,conv:31},{key:'B',name:'Команда Кати',color:COL.B,today:0,hits_today:0,starts_today:0,conv:34}],
     partners,round_end:new Date(Date.now()+demoLen()).toISOString(),server_now:new Date().toISOString(),round_no:12,ranks,
-    badge_defs:{first_blood:{icon:'🩸',name:'Первая кровь',desc:'первый удар этого раунда'},champ:{icon:'👑',name:'Чемпион раунда',desc:'лучший боец прошлого раунда'},belt:{icon:'🥋',name:'Пояс недели',desc:'больше всех силы за 7 раундов'},ko:{icon:'⚡',name:'Нокаутёр',desc:'10+ апперкотов'},sniper:{icon:'🎯',name:'Снайпер',desc:'доходимость 50%+ при 10+ ударах'},hundred:{icon:'💯',name:'Сотня',desc:'100+ ударов'},combo:{icon:'🔥',name:'Комбо ×5',desc:'5 ударов за 10 минут в этом раунде'},heavy:{icon:'💥',name:'Тяжёлая артиллерия',desc:'2+ действия в боте по +8 (сайт, примеры)'},globe:{icon:'🌍',name:'Кругосветка',desc:'удары из 5+ разных городов за раунд'},funnel:{icon:'🧭',name:'Проводник',desc:'люди прошли 4+ разных шага в боте'},rush:{icon:'🚀',name:'Рывок',desc:'сила за раунд ≥10 и вдвое больше прошлого раунда'},marathon:{icon:'🏃',name:'Марафонец',desc:'сила в 5 раундах подряд'},night:{icon:'🌙',name:'Ночной дозор',desc:'удар между 00:00 и 05:00 в этом раунде'}}};
+    badge_defs:{first_blood:{icon:'🩸',name:'Первая кровь',desc:'первый удар этого раунда'},champ:{icon:'👑',name:'Чемпион раунда',desc:'лучший боец прошлого раунда'},belt:{icon:'🥋',name:'Пояс недели',desc:'больше всех силы за 7 раундов'},ko:{icon:'⚡',name:'Нокаутёр',desc:'10+ апперкотов'},sniper:{icon:'🎯',name:'Снайпер',desc:'доходимость 50%+ при 10+ ударах'},hundred:{icon:'💯',name:'Сотня',desc:'100+ ударов'},combo:{icon:'🔥',name:'Комбо ×5',desc:'5 ударов за 10 минут в этом раунде'},heavy:{icon:'💥',name:'Тяжёлая артиллерия',desc:'2+ действия в боте от +8 (сайт, примеры, программа, оплата)'},globe:{icon:'🌍',name:'Кругосветка',desc:'удары из 5+ разных городов за раунд'},funnel:{icon:'🧭',name:'Проводник',desc:'люди прошли 4+ разных шага в боте'},rush:{icon:'🚀',name:'Рывок',desc:'сила за раунд ≥10 и вдвое больше прошлого раунда'},marathon:{icon:'🏃',name:'Марафонец',desc:'сила в 5 раундах подряд'},night:{icon:'🌙',name:'Ночной дозор',desc:'удар между 00:00 и 05:00 в этом раунде'}}};
 }
 const demoLen=()=>Number(params.get('round')||75)*1000;
 function demoRoundEnd(){state.round_end=new Date(Date.now()+demoLen()).toISOString();skew=0}

@@ -298,4 +298,15 @@ for _ in range(50):
 assert sent==[1,2,3], sent                                     # уведомления всё равно ушли — в фоне
 app.tg_send, app.ADMIN_IDS, app.NOTIFY_CLICKS=_old
 print(f"редирект при медленном Telegram: {dt_*1000:.0f} мс, уведомления ушли в фоне ✅")
+
+# 13) кнопки ближе к покупке: программа/хочу/оплата — свои очки и адреса
+assert app.ACTIONS["program"][0]==10 and app.ACTIONS["intent"][0]==12 and app.ACTIONS["checkout"][0]==20
+for k in ("program","intent","checkout"):
+    pg=act(k,method="GET"); assert app.ACT_LINKS[k] in pg.content, k
+b=app.get_stats()["action_points"]
+assert json.loads(act("checkout",init=init_for(888)).content)["ok"]
+assert json.loads(act("intent",u="888").content)["ok"]
+assert not json.loads(act("checkout",u="888").content)["ok"]          # оплата — один раз на человека
+assert app.get_stats()["action_points"]==b+20+12
+print("новые кнопки: программа +10, хочу +12, оплата +20 — один раз на человека ✅")
 print("\nВСЕ ПРОВЕРКИ ПРОШЛИ ✅")
