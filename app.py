@@ -157,6 +157,22 @@ ACTIONS = {
     "reviews":  (5, "читает отзывы учеников"),
     "site":     (8, "перешёл на сайт"),
 }
+# Кнопки воронки в боте — это ссылки (мини-приложения ai-creators.ru, канал), PuzzleBot при нажатии
+# ничего не шлёт. Поэтому кнопка ведёт на наш переходник /a/<код>: он засчитывает действие и сразу
+# открывает настоящую страницу. Куда вести — только отсюда (никаких адресов из ссылки: не открытый редирект).
+ACT_LINKS = {
+    "examples": "https://ai-creators.ru/primery",
+    "guide":    "https://ai-creators.ru/guide-model",
+    "prompts":  "https://ai-creators.ru/prompts",
+    "sim":      "https://ai-creators.ru/simulator",
+    "channel":  "https://t.me/+X-AXokWU0zswZTFi",
+    "reviews":  "https://t.me/+X-AXokWU0zswZTFi",
+    "site":     "https://ai-creators.ru/",
+}
+for _kv in (os.getenv("ACT_LINKS") or "").split(","):        # переопределение в .env: ACT_LINKS=site=https://…,guide=https://…
+    _k, _, _v = _kv.strip().partition("=")
+    if _k in ACTIONS and _v.startswith("https://"):
+        ACT_LINKS[_k] = _v
 RANKS = [(0, "Новичок"), (10, "Боец"), (30, "Воин"), (75, "Мастер"), (150, "Чемпион"), (300, "Легенда")]
 BADGES = {
     "first_blood": ("🩸", "Первая кровь", "первый удар этого раунда"),
@@ -1057,6 +1073,70 @@ def bot_action():
         notify_action(res["label"], res["act"], res["points"])
     log.info("action uid=%s act=%s ok=%s %s", uid, res.get("act"), res.get("ok"), res.get("reason", ""))
     return jsonify(**res)
+
+def tg_webapp_uid(init_data, max_age=86400):
+    """Telegram ID из initData мини-приложения, если подпись верна (HMAC на токене бота, как в документации
+    Telegram WebApp). Подделать без токена бота нельзя. Неверно/нет токена/старше суток — 0."""
+    if not (BOT_TOKEN and init_data):
+        return 0
+    try:
+        from urllib.parse import parse_qsl
+        d = dict(parse_qsl(init_data, keep_blank_values=True, strict_parsing=True))
+        got = d.pop("hash", "")
+        check = "\n".join(f"{k}={v}" for k, v in sorted(d.items()))
+        secret = hmac.new(b"WebAppData", BOT_TOKEN.encode(), hashlib.sha256).digest()
+        want = hmac.new(secret, check.encode(), hashlib.sha256).hexdigest()
+        if not got or not hmac.compare_digest(got, want):
+            return 0
+        if max_age and time.time() - int(d.get("auth_date", "0")) > max_age:
+            return 0
+        return int((json.loads(d.get("user") or "{}")).get("id") or 0)
+    except Exception:
+        return 0
+
+_ACT_PAGE = """<!doctype html><html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+<meta http-equiv="refresh" content="4;url=__URL__"><title>Открываем…</title>
+<style>body{margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:#0b0d14;color:#9aa4b2;font:15px system-ui,sans-serif}</style>
+</head><body>Открываем…<script>
+(function(){var to=__JSURL__,done=false;function go(){if(!done){done=true;location.replace(to)}}
+var h=new URLSearchParams(location.hash.slice(1)),q=new URLSearchParams(location.search);
+var b=new URLSearchParams();b.set("init",h.get("tgWebAppData")||"");b.set("u",q.get("u")||"");
+try{fetch(location.pathname,{method:"POST",body:b,keepalive:true,credentials:"omit"}).then(go,go)}catch(e){go()}
+setTimeout(go,1500)})();
+</script></body></html>"""
+
+@app.route("/a/<act>", methods=["GET", "POST"])
+def act_link(act):
+    """Переходник для кнопок-ссылок бота. GET — страница, которая отправляет кто открыл и сразу ведёт дальше;
+    POST — засчитать действие. Человек = подписанный initData мини-приложения (надёжно), иначе ?u=<id>
+    из ссылки (для кнопок «в браузере»; засчитывается только тем, у кого есть засчитанный старт)."""
+    act = (act or "").strip().lower()
+    to = ACT_LINKS.get(act)
+    if not to:
+        abort(404)
+    if request.method == "GET":
+        html = _ACT_PAGE.replace("__JSURL__", json.dumps(to)).replace("__URL__", to.replace('"', "%22"))
+        resp = Response(html, mimetype="text/html")
+        resp.headers["Cache-Control"] = "no-store"
+        resp.headers["Referrer-Policy"] = "no-referrer"
+        return resp
+    uid, how = tg_webapp_uid(request.values.get("init", "")), "webapp"
+    if not uid:
+        how = "link"
+        try:
+            uid = int(re.sub(r"\D", "", request.values.get("u") or "")[:15] or 0)
+        except ValueError:
+            uid = 0
+    try:
+        res = record_action(uid, act) if uid else {"ok": False, "reason": "no_uid"}
+    except Exception as e:
+        log.error("act link failed: %s", e)
+        res = {"ok": False, "reason": "error"}
+    if res.get("ok"):
+        notify_action(res["label"], res["act"], res["points"])
+    log.info("act link act=%s via=%s ok=%s %s", act, how, res.get("ok"), res.get("reason", ""))
+    return jsonify(ok=bool(res.get("ok")))
 
 @app.route("/api/stats")
 def api_stats():

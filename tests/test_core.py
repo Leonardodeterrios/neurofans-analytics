@@ -253,4 +253,34 @@ gen=app.api_stream().content; next(gen); ev=next(gen); assert '"site"' in ev and
 print("действия в боте: +8 сайт, +8 примеры, повтор игнор, чужой uid игнор, в ленте и SSE ✅")
 print("\n"+app.daily_results_text())
 print("\n"+app.stats_text())
+
+# 11) кнопки-ссылки бота через переходник /a/<код>: подписанный initData мини-приложения или ?u=
+import hmac as _h, hashlib as _hl, time as _t, urllib.parse as _up
+app.BOT_TOKEN="123456:TEST-token"
+def init_for(uid, token=app.BOT_TOKEN, age=0):
+    d={"auth_date":str(int(_t.time())-age),"query_id":"AAE","user":json.dumps({"id":uid,"first_name":"Тест"},ensure_ascii=False,separators=(",",":"))}
+    chk="\n".join(f"{k}={v}" for k,v in sorted(d.items()))
+    sec=_h.new(b"WebAppData",token.encode(),_hl.sha256).digest()
+    d["hash"]=_h.new(sec,chk.encode(),_hl.sha256).hexdigest()
+    return _up.urlencode(d)
+assert app.tg_webapp_uid(init_for(111))==111
+assert app.tg_webapp_uid(init_for(111,token="999:other"))==0                    # чужой токен
+assert app.tg_webapp_uid(init_for(111).replace("111","222"))==0                 # подменили id
+assert app.tg_webapp_uid(init_for(111,age=3*86400))==0                         # старая подпись
+assert app.tg_webapp_uid("garbage")==0 and app.tg_webapp_uid("")==0
+def act(act_code, init="", u="", method="POST"):
+    flask.request.method=method; flask.request.values={"init":init,"u":u}; flask.request.args={}
+    try: return app.act_link(act_code)
+    except flask._Abort as a: return a.code
+    finally: flask.request.method="GET"
+pg=act("examples",method="GET"); assert "ai-creators.ru/primery" in pg.content and pg.headers["Cache-Control"]=="no-store"
+assert act("evil",method="GET")==404                                            # неизвестная кнопка — 404, не редирект
+before=app.get_stats()["action_points"]
+r=json.loads(act("examples",init=init_for(888)).content); assert r["ok"], r    # uid 888 — засчитанный старт kate11
+r2=json.loads(act("examples",init=init_for(888)).content); assert not r2["ok"] # второй раз то же действие — нет
+r3=json.loads(act("guide",u="888").content); assert r3["ok"]                    # кнопка «в браузере» — по ?u=
+r4=json.loads(act("site",u="555000").content); assert not r4["ok"]             # чужой uid без старта — тихо нет
+r5=json.loads(act("site",init=init_for(888,token="999:x"),u="").content); assert not r5["ok"]  # поддельная подпись
+after=app.get_stats()["action_points"]; assert after==before+8+3, (before,after)
+print("переходник кнопок /a/: подпись Telegram проверяется, подделки и чужие id не проходят, редиректа на чужие адреса нет ✅")
 print("\nВСЕ ПРОВЕРКИ ПРОШЛИ ✅")
