@@ -171,6 +171,29 @@ try: app.admin_rescore(); assert False
 except flask._Abort as a: assert a.code==401
 app._asn["r"]=None; app.ASN_DB="/nonexistent"
 print("пересчёт истории: сканеры сняты, люди и апперкоты на месте, /admin/rescore только админу ✅")
+
+# 10) поддельные «айфоны» и лимит на подсеть
+REAL=["Mozilla/5.0 (iPhone; CPU iPhone OS 17_5_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1",
+ "Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1",
+ "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+ "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/124.0.6367.88 Mobile/15E148 Safari/604.1"]+HUMANS
+FAKE=["Mozilla/5.0 (iPhone; CPU iPhone OS 16_6_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Mobile/15E148 Safari/604.1",
+ "Mozilla/5.0 (iPhone; CPU iPhone OS 26_3_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/144.0.7559.95 Mobile/15E148 Safari/604.1",
+ "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1"]
+assert not [u for u in REAL if app.forged_ua(u)], [u for u in REAL if app.forged_ua(u)]
+assert all(app.forged_ua(u) for u in FAKE), [u for u in FAKE if not app.forged_ua(u)]
+assert scored_of(click(app.go_threads,"leo33","84.1.1.1",ua=FAKE[0]))==(0,"forged")
+assert app.ip_net("172.111.15.17")==app.ip_net("172.111.15.200")!=app.ip_net("172.111.150.1")
+assert app.ip_net("2a00:1:2:3::5")==app.ip_net("2a00:1:2:ffff::1")
+app.MAX_HITS_PER_NET=3
+got=[scored_of(click(app.go_threads,"leo34",f"172.111.15.{i}",ua=MOB))[0] for i in range(1,6)]
+assert got==[1,1,1,0,0], got
+assert scored_of(click(app.go_threads,"leo34","172.111.150.9",ua=MOB))[0]==1   # соседняя подсеть — отдельно
+con=sqlite3.connect(DB); before=con.execute("SELECT id,scored FROM clicks WHERE source='leo34' ORDER BY id").fetchall()
+app.rescore_all()                                 # пересчёт с тем же лимитом — по leo34 то же, что живой подсчёт
+assert sqlite3.connect(DB).execute("SELECT id,scored FROM clicks WHERE source='leo34' ORDER BY id").fetchall()==before
+app.MAX_HITS_PER_NET=10
+print("поддельные айфоны → forged, настоящие (вкл. iOS 26 с OS 18_6) — люди; лимит на подсеть ✅")
 # 9) живая лента SSE
 flask.request.args={"token":"pub","since_c":str(base["last_c"]),"since_s":str(base["last_s"])}
 gen=app.api_stream().content; first=next(gen); assert "hello" in first and "id: " in first

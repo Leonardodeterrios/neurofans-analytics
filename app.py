@@ -65,6 +65,7 @@ START_POWER        = _int("START_POWER", 3)
 TRUST_CF           = _flag("TRUST_CF", "0")   # 1 = сайт за Cloudflare, берём IP из CF-Connecting-IP
 MAX_PARTNERS_PER_VISITOR = _int("MAX_PARTNERS_PER_VISITOR", 3)
 MAX_HITS_PER_IP    = _int("MAX_HITS_PER_IP", 100)
+MAX_HITS_PER_NET   = _int("MAX_HITS_PER_NET", 10)   # с одной подсети /24 (IPv6 — /48) за раунд: прокси-сканеры идут блоками
 BASE_URL           = _str("BASE_URL").rstrip("/")
 PER_TEAM           = _int("PER_TEAM", 50)
 PARTNER_SECRET     = _str("PARTNER_SECRET")     # подпись личных ссылок партнёров (/p/<метка>?k=...)
@@ -107,6 +108,38 @@ HOSTING_ORG = re.compile(
     r"ikoula|timeweb|selectel|aeza|hostkey|vdsina|firstbyte|stark industries|pq hosting|cloudvider|"
     r"tencent|huawei cloud|byteplus|hosting|data ?cent(er|re)|datacenter|\bvps\b|dedicated|colocation|"
     r"\bcloud\b|server", re.I)
+IOS_VER = re.compile(r"(?:iPhone|CPU) OS (\d+)_(\d+)(?:_(\d+))?")
+SAFARI_VER = re.compile(r"Version/(\d+)(?:\.(\d+))?")
+NOT_SAFARI = re.compile(r"CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser|Instagram|Barcelona|FBAN|FBAV|musical_ly|Bytedance|"
+                        r"TikTok|YouTube|GSA/|Line/|Telegram", re.I)
+
+def forged_ua(ua):
+    """Строка браузера, которую не отправляет ни один настоящий айфон (так притворяются сканеры):
+    версия iOS с нулевым третьим числом (26_3_0 — у Apple всегда 26_3) или Safari, чья версия
+    не совпадает с версией iOS (iOS 16.6.1 → Version/16.6). С iOS 26 Safari пишет старую версию
+    системы (OS 18_6 … Version/26.0) — это настоящий айфон, его не трогаем."""
+    m = IOS_VER.search(ua or "")
+    if not m:
+        return False
+    if m.group(3) == "0":
+        return True
+    v = SAFARI_VER.search(ua)
+    if v and not NOT_SAFARI.search(ua) and "Safari" in ua:
+        os_maj, os_min, sv_maj = int(m.group(1)), int(m.group(2)), int(v.group(1))
+        if sv_maj < os_maj:
+            return True
+        if sv_maj == os_maj and v.group(2) is not None and int(v.group(2)) != os_min:
+            return True
+    return False
+
+def ip_net(ip):
+    """Подсеть адреса: /24 для IPv4, /48 для IPv6."""
+    try:
+        a = ipaddress.ip_address(ip)
+    except ValueError:
+        return ip or ""
+    return str(ipaddress.ip_network(f"{ip}/{24 if a.version == 4 else 48}", strict=False))
+
 SAFE_START = re.compile(r"[^A-Za-z0-9_-]")
 SAFE_LABEL = re.compile(r"[^A-Za-z0-9_-]")
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -265,8 +298,15 @@ def record_click(source, ch, ip, ua, vid, geo=None, why=""):
                            (vid, rnd)).fetchone()[0]
         ip_hits = c.execute("SELECT COUNT(*) FROM clicks WHERE ip=? AND rnd=? AND scored=1",
                             (ip, rnd)).fetchone()[0] if ip else 0
+        net_hits = 0
+        if ip and MAX_HITS_PER_NET:
+            net = ip_net(ip)
+            for (oip,) in c.execute("SELECT ip FROM clicks WHERE rnd=? AND scored=1 AND ip LIKE ?",
+                                    (rnd, net.split("/")[0].rsplit("." if ":" not in net else ":", 1)[0] + "%")):
+                if ip_net(oip) == net:
+                    net_hits += 1
         scored = 0 if (why or dup or spread >= MAX_PARTNERS_PER_VISITOR or ip_hits >= MAX_HITS_PER_IP
-                       or source == "direct") else 1
+                       or (MAX_HITS_PER_NET and net_hits >= MAX_HITS_PER_NET) or source == "direct") else 1
         new_vis = c.execute("SELECT 1 FROM clicks WHERE vid=? LIMIT 1", (vid,)).fetchone() is None
         cur = c.execute("INSERT INTO clicks(ts,source,ip,ua,vid,scored,rnd,ch,city,cc,lat,lon,why) "
                         "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
@@ -640,9 +680,11 @@ def asn_org(ip):
 
 def not_human_reason(ip, ua):
     """Почему клик не может быть ударом: "desktop" — не телефон и не приложение (так ходят сканеры),
-    "hosting" — IP дата-центра. "" — может (дальше обычные лимиты). Редирект от этого не меняется."""
+    "hosting" — IP дата-центра, "forged" — поддельная строка браузера. "" — может (дальше обычные лимиты). Редирект от этого не меняется."""
     if REQUIRE_MOBILE and not MOBILE_UA.search(ua or ""):
         return "desktop"
+    if forged_ua(ua):
+        return "forged"
     if BLOCK_HOSTING:
         org = asn_org(ip)
         if org and HOSTING_ORG.search(org):
@@ -654,7 +696,7 @@ def rescore_all():
     Повторяет логику record_click/record_start по порядку id."""
     _stats_cache.clear()
     with _conn() as c:
-        pairs, spread, ipn, newsc, why_of = set(), {}, {}, {}, {}
+        pairs, spread, ipn, netn, newsc, why_of = set(), {}, {}, {}, {}, {}
         for r in c.execute("SELECT id, source, ip, ua, vid, rnd FROM clicks ORDER BY id").fetchall():
             rnd = r["rnd"] or ""
             why = not_human_reason(r["ip"], r["ua"])
@@ -662,12 +704,15 @@ def rescore_all():
             ok = not why and r["source"] != "direct" \
                 and (rnd, r["source"], r["vid"]) not in pairs \
                 and len(spread.get(key_s, ())) < MAX_PARTNERS_PER_VISITOR \
-                and (not r["ip"] or ipn.get((rnd, r["ip"]), 0) < MAX_HITS_PER_IP)
+                and (not r["ip"] or ipn.get((rnd, r["ip"]), 0) < MAX_HITS_PER_IP) \
+                and (not r["ip"] or not MAX_HITS_PER_NET or netn.get((rnd, ip_net(r["ip"])), 0) < MAX_HITS_PER_NET)
             if ok:
                 pairs.add((rnd, r["source"], r["vid"]))
                 spread.setdefault(key_s, set()).add(r["source"])
                 if r["ip"]:
                     ipn[(rnd, r["ip"])] = ipn.get((rnd, r["ip"]), 0) + 1
+                    k = (rnd, ip_net(r["ip"]))
+                    netn[k] = netn.get(k, 0) + 1
             newsc[r["id"]], why_of[r["id"]] = int(ok), (why or None)
         old = {r[0]: (r[1], r[2]) for r in c.execute("SELECT id, scored, why FROM clicks")}
         ch_clicks = [(newsc[i], why_of[i], i) for i in newsc if old.get(i) != (newsc[i], why_of[i])]
@@ -713,7 +758,7 @@ def _stale(path):
 
 def geo_updater():
     """Раз в сутки проверяет базы городов и сетей; если базы нет или ей больше 35 дней — скачивает свежую.
-    Один раз после появления базы сетей пересчитывает старые клики по фильтру сканеров (meta rescore_v1)."""
+    Один раз после появления базы сетей пересчитывает старые клики по фильтру сканеров (meta rescore_v2 — при смене правил поднять номер)."""
     while True:
         try:
             if GEO_ENABLE and _stale(GEO_DB) and _download_mmdb("city", GEO_DB):
@@ -728,11 +773,11 @@ def geo_updater():
         try:
             if (not BLOCK_HOSTING or os.path.exists(ASN_DB)):
                 with _conn() as c:
-                    done = c.execute("SELECT v FROM meta WHERE k='rescore_v1'").fetchone()
+                    done = c.execute("SELECT v FROM meta WHERE k='rescore_v2'").fetchone()
                 if not done:
                     res = rescore_all()
                     with _conn() as c:
-                        c.execute("INSERT OR REPLACE INTO meta(k,v) VALUES('rescore_v1',?)", (json.dumps(res),))
+                        c.execute("INSERT OR REPLACE INTO meta(k,v) VALUES('rescore_v2',?)", (json.dumps(res),))
         except Exception as e:
             log.warning("rescore failed: %s", e)
         time.sleep(86400)
