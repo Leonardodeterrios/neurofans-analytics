@@ -13,7 +13,7 @@ IP="${1:-}"; DOM="${2:-ai.neurofans.ru}"
 [ -n "$IP" ] || { echo "Укажи IP: bash ai-relay/vps/setup_from_lab.sh 1.2.3.4"; exit 1; }
 cd "$(dirname "$0")/../.."
 [ -f .env ] || { echo "Нет .env — запускай в /opt/neurofans-analytics"; exit 1; }
-SEC=$(grep '^LAB_AI_SECRET=' .env | cut -d= -f2- || true)
+SEC=$(grep '^LAB_AI_SECRET=' .env | cut -d= -f2- | tr -d '\r\n"'"'"' ' || true)
 [ -n "$SEC" ] || { echo "В .env нет LAB_AI_SECRET"; exit 1; }
 
 echo "== 1/5 жду DNS: $DOM → $IP"

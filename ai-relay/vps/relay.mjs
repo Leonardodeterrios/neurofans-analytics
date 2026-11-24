@@ -8,7 +8,7 @@ import http from 'node:http';
 import crypto from 'node:crypto';
 
 const KEY = process.env.AI_KEY || process.env.OPENAI_KEY || '';
-const SECRET = process.env.LAB_AI_SECRET || '';
+const SECRET = (process.env.LAB_AI_SECRET || '').trim().replace(/^["']|["']$/g, '');
 const OR = KEY.startsWith('sk-or-');
 const UPSTREAM = process.env.UPSTREAM_URL ||
   (OR ? 'https://openrouter.ai/api/v1/chat/completions' : 'https://api.openai.com/v1/chat/completions');
