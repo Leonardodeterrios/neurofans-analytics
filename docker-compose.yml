@@ -44,4 +44,6 @@ services:
       DOMAIN: ${DOMAIN:-localhost}   # из .env; пока не задан — работает только http
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./site:/srv/site:ro          # новый сайт курса (new.neurofans.ru)
+      - ./static/fonts:/srv/fonts:ro
       - ./caddy:/data       # сертификаты, чтобы не получать их заново при перезапуске
