@@ -25,6 +25,7 @@ services:
       TRIBUTE_API_KEY: ${TRIBUTE_API_KEY:-} # API-ключ Tribute (им подписаны вебхуки)
       TRIBUTE_PRO_URL: ${TRIBUTE_PRO_URL:-} # ссылка на подписку Pro в Tribute
       TRIBUTE_PRODUCTS: ${TRIBUTE_PRODUCTS:-}
+      TRIBUTE_COURSE: ${TRIBUTE_COURSE:-}   # товары курса в Tribute: "id:base,id:adv,id:up" → доступ в кабинет
       PRO_PRICE: ${PRO_PRICE:-}
     expose:
       - "8090"

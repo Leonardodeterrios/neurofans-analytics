@@ -370,6 +370,61 @@ assert J(c.post("/api/tribute/webhook", data=body, headers={**LAB, "trbt-signatu
 T = J(c.get("/api/tariff", headers=LAB)); assert T["plan"] == "pro" and T["pro_until"].startswith("2099"), T
 assert lab_ai.parse_products("12:30, 7:90,x:1") == {12: 30, 7: 90}
 print("Студия: паспорт, план недели, чаттер, лимиты, Tribute: OK")
+
+# ---------- оплата курса в Tribute → личная ссылка в кабинет ----------
+import re as _re, lab_pay
+lab.TRIBUTE_COURSE = lab_pay.parse_course("111:base, 222:adv,333:up,x:adv,444:zzz")
+assert lab.TRIBUTE_COURSE == {111: "base", 222: "adv", 333: "up"}
+lab.NOTIFIER = lab_notify.Notifier(lab.db, lab.TZ, lab.week_key, "TOKEN", "lab.neurofans.ru", http=fake_http)
+lab._bg = lambda f, *a: f(*a)                                      # в тестах фон — сразу
+qq = lab.db(); lab.kv_set(qq, "admin_chat", "9000"); qq.commit()
+def trb(name, payload):
+    b = json.dumps({"name": name, "payload": payload}).encode()
+    return J(c.post("/api/tribute/webhook", data=b, headers={**LAB, "trbt-signature": _h.new(b"trbkey", b, _hl.sha256).hexdigest(),
+                                                             "Content-Type": "application/json"}))
+N2, cn2, now2 = lab.NOTIFIER, lab.db(), lab.now_utc()
+bot = lambda chat, text: N2.handle_update(cn2, {"update_id": 1, "message": {"text": text, "chat": {"id": chat, "type": "private"}}}, now2)
+sent.clear(); bot(4242, "/start buy")
+assert "не вижу" in sent[-1]["text"]                               # нажал кнопку раньше, чем дошёл вебхук
+sent.clear()
+assert trb("new_digital_product", {"product_id": 111, "purchase_id": 9001, "telegram_user_id": 4242, "amount": 390000})["course"] == "paid"
+assert trb("new_digital_product", {"product_id": 111, "purchase_id": 9001, "telegram_user_id": 4242})["dup"]
+to_user = [x for x in sent if x["chat_id"] == 4242]; to_adm = [x for x in sent if x["chat_id"] == 9000]
+assert to_user and "?invite=NF-" in to_user[0]["text"] and "Базовый" in to_user[0]["text"], sent
+assert to_adm and "Базовый" in to_adm[0]["text"] and "не зарегистрировался" in to_adm[0]["text"], to_adm
+code_b = _re.search(r"\?invite=(NF-\w+)", to_user[0]["text"]).group(1)
+sent.clear(); bot(4242, "/start buy"); assert code_b in sent[-1]["text"]          # повторная кнопка — та же ссылка
+assert "course" not in trb("new_digital_product", {"product_id": 999, "purchase_id": 9002, "telegram_user_id": 5555})
+S = J(c.get("/api/admin/overview", headers={**LAB, **ADM}))["sales"]
+assert S["ready"] and S["base"] == 1 and S["waiting"] == 1, S
+# регистрация по личной ссылке: Telegram привязан, тариф курса стоит, ссылка одноразовая
+nb = lab.app.test_client()
+assert nb.post("/api/register", json={"invite": code_b, "nick": "buyer1", "password": "12345678"}, headers=LAB).status_code == 200
+me = lambda cl: J(cl.get("/api/me", headers=LAB))
+assert me(nb)["course"] == "base" and me(nb)["tg_linked"]
+assert lab.app.test_client().post("/api/register", json={"invite": code_b, "nick": "buyer2", "password": "12345678"}, headers=LAB).status_code == 400
+assert J(c.get("/api/admin/overview", headers={**LAB, **ADM}))["sales"]["waiting"] == 0
+# доплата → Продвинутый; кнопка в боте уже не даёт новую ссылку
+trb("new_digital_product", {"product_id": 333, "purchase_id": 9003, "telegram_user_id": 4242})
+assert me(nb)["course"] == "adv"
+sent.clear(); bot(4242, "/start buy")
+assert "доступ открыт" in sent[-1]["text"] and "Продвинутый" in sent[-1]["text"] and "invite" not in sent[-1]["text"]
+# возврат доплаты → снова Базовый; возврат без purchase_id — последняя живая покупка курса
+assert trb("digital_product_refund", {"product_id": 333, "purchase_id": 9003, "telegram_user_id": 4242})["course"] == "refund"
+assert me(nb)["course"] == "base"
+trb("digital_product_refund", {"telegram_user_id": 4242}); assert me(nb)["course"] is None
+# доплата без Базового Продвинутый не даёт; куратор может выдать курс вручную
+trb("new_digital_product", {"product_id": 333, "purchase_id": 9004, "telegram_user_id": 4242}); assert me(nb)["course"] is None
+uid_b = cn2.execute("SELECT id FROM users WHERE nick='buyer1'").fetchone()[0]
+c.patch(f"/api/admin/users/{uid_b}", json={"course": "base"}, headers={**LAB, **ADM}); assert me(nb)["course"] == "adv"   # Базовый от куратора + доплата
+c.patch(f"/api/admin/users/{uid_b}", json={"course": ""}, headers={**LAB, **ADM}); assert me(nb)["course"] is None
+sent.clear(); bot(4242, "/start"); assert "доступ открыт" not in sent[-1]["text"]   # без живой оплаты — обычный ответ
+# ученик уже был в кабинете без Telegram, оплатил → привязал Telegram кодом → тариф подтянулся сам
+trb("new_digital_product", {"product_id": 222, "purchase_id": 9005, "telegram_user_id": 31337})
+uid3 = cn2.execute("SELECT id FROM users WHERE nick=?", (me(c3)["nick"],)).fetchone()[0]
+sent.clear(); bot(31337, "/start " + N2.new_link_code(cn2, uid3, now2))
+assert me(c3)["course"] == "adv" and "Продвинутый" in sent[-1]["text"], sent
+print("оплата курса → кабинет: OK")
 # прямой OpenAI-совместимый API (OpenRouter): Bearer-ключ вместо секрета ретранслятора
 import threading as _th
 from http.server import BaseHTTPRequestHandler as _B, HTTPServer as _S

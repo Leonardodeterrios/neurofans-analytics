@@ -24,6 +24,7 @@ import os
 
 import lab_game as game
 import lab_ops as ops
+import lab_pay as pay
 
 log = logging.getLogger("lab.notify")
 
@@ -149,6 +150,17 @@ class Notifier:
             else:
                 self._send(chat, "Код админа не подошёл или устарел. Получи новый в админке кабинета.")
             return
+        if text.startswith("/start") and text[6:].strip() in ("", "buy"):
+            # после оплаты курса: в товаре Tribute ссылка t.me/<бот>?start=buy
+            reply = pay.welcome(c, chat, self.lab_host, now.isoformat(timespec="seconds"))
+            c.commit()
+            if reply:
+                self._send(chat, reply)
+                return
+            if text[6:].strip() == "buy":
+                self._send(chat, "Оплату пока не вижу. Обычно она доходит за минуту, я сам напишу сюда, как только "
+                                 "она придёт. Если прошло больше 10 минут, напиши куратору.")
+                return
         if text.startswith("/start"):
             code = text[6:].strip()
             u = c.execute("SELECT id, nick, tg_code_exp FROM users WHERE tg_code=? AND tg_code IS NOT NULL",
@@ -157,8 +169,10 @@ class Notifier:
                 c.execute("UPDATE users SET tg_chat_id=NULL WHERE tg_chat_id=?", (chat,))
                 c.execute("UPDATE users SET tg_chat_id=?, tg_code=NULL, tg_code_exp=NULL, "
                           "tg_mode=CASE WHEN tg_mode='off' THEN 'all' ELSE tg_mode END WHERE id=?", (chat, u["id"]))
+                course = pay.sync_user(c, u["id"])      # оплатил курс до привязки — тариф подтянется сейчас
                 c.commit()
                 self._send(chat, f"✅ Готово! Уведомления подключены к кабинету {u['nick']}.\n\n"
+                                 + (f"Тариф курса: «{pay.COURSE_NAME[course]}».\n\n" if course else "") +
                                  "Пришлю: первого человека по новой ссылке, вехи по людям, места в лиге, "
                                  "новые ачивки, воскресный дайджест и итоги недели. Не больше 4 сообщений "
                                  "в день, ночью — тишина.\n\nВыключить: /stop")

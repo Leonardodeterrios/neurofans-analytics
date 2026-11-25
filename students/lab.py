@@ -20,6 +20,7 @@ import lab_game as game
 import lab_ops as ops
 import lab_core
 import lab_ai as ai
+import lab_pay as pay
 from concurrent.futures import ThreadPoolExecutor
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -52,6 +53,7 @@ AI_MODEL = _env("LAB_AI_MODEL", "gpt-4o-mini")
 TRIBUTE_KEY = _env("TRIBUTE_API_KEY")               # API-ключ Tribute: им подписаны вебхуки (trbt-signature)
 TRIBUTE_PRO_URL = _env("TRIBUTE_PRO_URL")           # ссылка на подписку/товар Pro в Tribute
 TRIBUTE_PRODUCTS = ai.parse_products(_env("TRIBUTE_PRODUCTS"))   # "id:дней,…" для разовых товаров
+TRIBUTE_COURSE = pay.parse_course(_env("TRIBUTE_COURSE"))        # "id:base,id:adv,id:up" — товары курса → доступ в кабинет
 PRO_PRICE = _env("PRO_PRICE", "")
 MAX_LINKS_PER_MODEL = 20
 STATIC_DIR = next((p for p in (os.path.join(HERE, "static"), os.path.join(HERE, "..", "static"))
@@ -178,6 +180,7 @@ def init_db():
                          ("tg_code", "TEXT"), ("tg_code_exp", "TEXT"), ("public_ok", "INTEGER DEFAULT 0")):
             if col not in cols:
                 c.execute(f"ALTER TABLE users ADD COLUMN {col} {ddl}")
+        pay.migrate(c)
         if not kv_get(c, "ai_launch"):          # с этого момента у уже зарегистрированных начинается Тест
             kv_set(c, "ai_launch", iso())
         c.commit()
@@ -582,8 +585,9 @@ def api_register():
                         (nick, generate_password_hash(pw), iso(), code))
         used = ",".join(x for x in [inv["used_by"], nick] if x)
         c.execute("UPDATE invites SET uses=uses+1, used_by=? WHERE code=?", (used, code))
-        c.commit()
         uid = cur.lastrowid
+        pay.on_register(c, uid, inv)          # личная ссылка после оплаты: Telegram и тариф курса — сами
+        c.commit()
     return start_session(jsonify({"ok": True}), uid)
 
 @app.route("/api/login", methods=["POST"])
@@ -661,7 +665,7 @@ def api_me():
         models = models_of(c, u["id"])
         onb = onboarding(c, u, models)
     resp = jsonify({"ok": True, "nick": u["nick"], "models": models, "onboarding": onb,
-                    "public_ok": bool(u["public_ok"]), "tg_linked": bool(u["tg_chat_id"]),
+                    "public_ok": bool(u["public_ok"]), "tg_linked": bool(u["tg_chat_id"]), "course": u["course"],
                     "channels": [{"id": k, "name": v[0]} for k, v in CHANNELS.items()],
                     "link_host": LINK_HOST, "week": week_key(), "week_end": e.isoformat(),
                     "tz": str(TZ), "limits": {"models": MAX_MODELS_PER_USER, "links": MAX_LINKS_PER_MODEL}})
@@ -1226,7 +1230,7 @@ def api_admin_overview():
     wk = week_key()
     with closing(db()) as c:
         users = [dict(r) for r in c.execute(
-            "SELECT u.id, u.nick, u.created, u.blocked, u.invite, "
+            "SELECT u.id, u.nick, u.created, u.blocked, u.invite, u.course, u.course_admin, "
             "(SELECT COUNT(*) FROM models m WHERE m.uid=u.id AND m.archived=0) models, "
             "(SELECT COUNT(*) FROM links l WHERE l.uid=u.id AND l.archived=0) links, "
             "(SELECT COALESCE(SUM(scored),0) FROM clicks k WHERE k.uid=u.id AND k.wk=?) week_people, "
@@ -1261,10 +1265,16 @@ def api_admin_overview():
         backups = {"last": os.path.basename(ops.latest_backup(BACKUP_DIR) or "") or None,
                    "admin_tg": bool(kv_get(c, "admin_chat"))}
         consent = one("SELECT COUNT(*) FROM users WHERE public_ok=1")
+        sales = {"base": 0, "adv": 0, "up": 0}
+        for k, n in c.execute("SELECT kind, COUNT(*) FROM purchases WHERE refunded IS NULL GROUP BY kind"):
+            sales[k] = n
+        sales["waiting"] = one("SELECT COUNT(DISTINCT p.tg_id) FROM purchases p WHERE p.refunded IS NULL "
+                               "AND NOT EXISTS (SELECT 1 FROM users u WHERE u.tg_chat_id=p.tg_id)")
+        sales["ready"] = bool(TRIBUTE_COURSE)
     for i in invites:
         i["url"] = f"https://{LAB_HOST}/?invite={i['code']}"
     return jsonify({"ok": True, "users": users, "invites": invites, "totals": tot, "week": wk, "funnel": funnel,
-                    "tg_enabled": bool(LAB_BOT_TOKEN), "ai_ready": AI_READY, "pay_ready": bool(TRIBUTE_KEY), "stuck": stuck, "backups": backups, "consent": consent})
+                    "tg_enabled": bool(LAB_BOT_TOKEN), "ai_ready": AI_READY, "pay_ready": bool(TRIBUTE_KEY), "stuck": stuck, "backups": backups, "consent": consent, "sales": sales})
 
 @app.route("/api/admin/invites", methods=["POST"])
 def api_admin_invites():
@@ -1304,6 +1314,10 @@ def api_admin_user(uid):
                       (uid, iso(base + dt.timedelta(days=n)), "admin", "", iso()))
         if d.get("pro_off"):
             c.execute("DELETE FROM pro WHERE uid=? AND source='admin'", (uid,))
+        if "course" in d:                     # тариф курса от куратора; оплаты Tribute всё равно учитываются (берётся максимум)
+            t = d["course"] if d["course"] in ("base", "adv") else None
+            c.execute("UPDATE users SET course_admin=? WHERE id=?", (t, uid))
+            pay.sync_user(c, uid)
         if d.get("reset_password"):
             pw = secrets.token_urlsafe(9)
             c.execute("UPDATE users SET pw=? WHERE id=?", (generate_password_hash(pw), uid))
@@ -1639,8 +1653,50 @@ def api_tribute():
                       (int(tg), iso(base + dt.timedelta(days=days)), "tribute_product", ref, iso()))
         elif "refund" in name.lower() and p.get("purchase_id"):
             c.execute("DELETE FROM pro WHERE ref=?", (str(p["purchase_id"]),))
+        # курс: покупка → доступ; возврат → тариф пересчитывается (кабинет остаётся, уроки закроются)
+        pid = int(p.get("product_id")) if str(p.get("product_id") or "").isdigit() else 0
+        course = None
+        if tg and name == "new_digital_product" and pid in TRIBUTE_COURSE:
+            if pay.record(c, tg, pid, TRIBUTE_COURSE[pid], p.get("purchase_id") or key, iso()):
+                course = ("paid", TRIBUTE_COURSE[pid])
+        elif tg and "refund" in name.lower() and TRIBUTE_COURSE:
+            if pay.refund(c, tg, pid, p.get("purchase_id"), iso(), TRIBUTE_COURSE):
+                course = ("refund", None)
+        if course:
+            u = pay.user_by_tg(c, tg)
+            if u:
+                pay.sync_user(c, u["id"])
         c.commit()
-    return jsonify({"ok": True})
+    if course:
+        _bg(_course_news, int(tg), *course)
+    return jsonify({"ok": True, **({"course": course[0]} if course else {})})
+
+
+def _bg(fn, *a):
+    threading.Thread(target=fn, args=a, daemon=True).start()
+
+COURSE_KIND = {"base": "Базовый", "adv": "Продвинутый", "up": "доплата до Продвинутого"}
+
+def _course_news(tg, ev, kind):
+    """В фоне (Telegram из РФ отвечает медленно): ученику — ссылку в кабинет, куратору — о продаже/возврате.
+    Если ученик ещё не нажимал «Старт» в боте, Telegram откажет — это нормально: ссылку он получит по кнопке из товара."""
+    N = notifier()
+    if not N.enabled:
+        return
+    try:
+        with closing(db()) as c:
+            text = pay.welcome(c, tg, LAB_HOST, iso()) if ev == "paid" else None
+            c.commit()
+            admin = kv_get(c, "admin_chat")
+            u = pay.user_by_tg(c, tg)
+        if text:
+            N._send(tg, text)
+        if admin:
+            who = f"ученик {u['nick']}" if u else f"Telegram ID {tg}, ещё не зарегистрировался"
+            N._send(int(admin), f"💰 Оплата курса: {COURSE_KIND.get(kind, kind)} — {who}." if ev == "paid"
+                    else f"↩️ Возврат по курсу — {who}. Тариф курса пересчитан.")
+    except Exception as e:
+        log.warning("course news failed: %s", e)
 
 
 @app.errorhandler(401)
