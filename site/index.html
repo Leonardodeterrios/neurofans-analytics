@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>NEUROFANS: создание и монетизация ИИ-моделей 18+</title>
 <meta name="description" content="Пошаговая система: своя ИИ-модель, 18+ контент и продажи на Fanvue и в Telegram. Вместе с курсом ты получаешь собственный софт: аналитику трафика, ИИ-Студию и нейро-чаттер.">
-<meta name="robots" content="noindex,nofollow">
+<link rel="canonical" href="https://neurofans.ru/">
 <meta name="theme-color" content="#04050c">
 <style>
 @font-face{font-family:Unb;src:url(/fonts/Unbounded-ExtraBold.woff) format("woff");font-weight:800;font-display:swap}
@@ -525,6 +525,14 @@ footer p{margin:6px 0 0;max-width:48em}
   div.who{grid-template-columns:1fr}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+.dock{position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));z-index:40;display:none;align-items:center;gap:12px;padding:10px 10px 10px 16px;border-radius:16px;background:rgba(10,14,28,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line2);box-shadow:0 12px 40px rgba(0,0,0,.5);transform:translateY(140%);transition:transform .3s}
+.dock.on{transform:none}
+.dock div{flex:1;line-height:1.25}
+.dock b{display:block;font:600 17px/1.2 var(--num)}
+.dock span{font-size:13px;color:var(--mu)}
+.dock .btn{padding:12px 16px;font-size:14px}
+@media(max-width:760px){.dock{display:flex}footer{padding-bottom:96px}}
+@media(prefers-reduced-motion:reduce){.dock{transition:none}}
 </style>
 </head>
 <body>
@@ -560,7 +568,7 @@ footer p{margin:6px 0 0;max-width:48em}
       <p class="plbl">Ориентиры из кейсов учеников</p>
       <div class="proof">
         <div><b class="g">$6 840</b><span>лучший первый месяц ученика</span></div>
-        <div><b>$840+</b><span>первые деньги учеников за 2 недели</span></div>
+        <div><b>$840+</b><span>первые деньги ученика за 2 недели</span></div>
         <div><b>380+</b><span>учеников в закрытом комьюнити</span></div>
       </div>
     </div>
@@ -617,9 +625,9 @@ footer p{margin:6px 0 0;max-width:48em}
       <p>Новички палятся на «пластиковой» коже. Внутри курса учим живую текстуру кожи, свет и ракурсы. Все модели на фото вымышленные и созданы ИИ, откровенные примеры только в закрытой галерее.</p>
     </div>
     <div class="gal" id="gal" aria-label="Примеры генераций">
-      <figure class="gc"><div class="ph"><img data-src="https://ai-creators.ru/P1.jpg" alt="ИИ-модель в светлом платье на ночной лестнице" referrerpolicy="no-referrer"><span class="ai">100% ИИ</span></div><figcaption><b>Вечерний город</b><span>Тёплые фонари, живой свет на коже, одна модель в разных сценах.</span><ul><li>Свет</li><li>Кожа</li><li>Образ</li></ul></figcaption></figure>
-      <figure class="gc"><div class="ph"><img data-src="https://ai-creators.ru/P4.jpg" alt="ИИ-модель за ужином в ресторане" referrerpolicy="no-referrer"><span class="ai">100% ИИ</span></div><figcaption><b>Ужин в ресторане</b><span>Лайфстайл-кадр «как с iPhone»: смешанный свет, детали интерьера.</span><ul><li>Сцена</li><li>Свет</li><li>Реализм</li></ul></figcaption></figure>
-      <figure class="gc"><div class="ph"><img data-src="https://ai-creators.ru/P7.jpg" alt="ИИ-модель в шёлковой пижаме" referrerpolicy="no-referrer"><span class="ai">100% ИИ</span></div><figcaption><b>Утро дома</b><span>Мягкий дневной свет, ткань и текстура кожи без «пластика».</span><ul><li>Текстура</li><li>Ткань</li><li>Образ</li></ul></figcaption></figure>
+      <figure class="gc"><div class="ph"><img data-src="/real/p1.jpg" alt="ИИ-модель в светлом платье на ночной лестнице" referrerpolicy="no-referrer"><span class="ai">100% ИИ</span></div><figcaption><b>Вечерний город</b><span>Тёплые фонари, живой свет на коже, одна модель в разных сценах.</span><ul><li>Свет</li><li>Кожа</li><li>Образ</li></ul></figcaption></figure>
+      <figure class="gc"><div class="ph"><img data-src="/real/p4.jpg" alt="ИИ-модель за ужином в ресторане" referrerpolicy="no-referrer"><span class="ai">100% ИИ</span></div><figcaption><b>Ужин в ресторане</b><span>Лайфстайл-кадр «как с iPhone»: смешанный свет, детали интерьера.</span><ul><li>Сцена</li><li>Свет</li><li>Реализм</li></ul></figcaption></figure>
+      <figure class="gc"><div class="ph"><img data-src="/real/p7.jpg" alt="ИИ-модель в шёлковой пижаме" referrerpolicy="no-referrer"><span class="ai">100% ИИ</span></div><figcaption><b>Утро дома</b><span>Мягкий дневной свет, ткань и текстура кожи без «пластика».</span><ul><li>Текстура</li><li>Ткань</li><li>Образ</li></ul></figcaption></figure>
     </div>
     <div class="galf"><div><b>Примеры генераций 18+</b><span>Ещё 30+ фото и видео, за которые фанаты платят больше всего. Открываются в закрытой галерее.</span></div><a class="btn mg" href="https://gallery.lukaflow.shop/" target="_blank" rel="noopener">Смотреть примеры генераций</a></div>
   </div>
@@ -964,9 +972,9 @@ footer p{margin:6px 0 0;max-width:48em}
   <div class="wrap">
     <div class="sh"><h2>Начни бесплатно</h2><p>Материалы, чтобы попробовать нишу до покупки.</p></div>
     <div class="free">
-      <a href="https://ai-creators.ru/guide-model" target="_blank" rel="noopener"><h3>Пошаговый гайд</h3><p>Как создать ИИ-модель с нуля и настроить нейросети.</p><span>Забрать гайд</span></a>
-      <a href="https://ai-creators.ru/prompts" target="_blank" rel="noopener"><h3>Пак промптов</h3><p>Формулы для реалистичных генераций: ракурсы, кожа, свет.</p><span>Забрать пак</span></a>
-      <a href="https://t.me/+eTPiqcFkeoE0YWYy" target="_blank" rel="noopener"><h3>Telegram-канал</h3><p>Свежие связки, разборы и отчёты учеников.</p><span>Перейти в канал</span></a>
+      <a href="/guide"><h3>Пошаговый гайд</h3><p>Как создать ИИ-модель с нуля, вывести в соцсети и заработать на Fanvue.</p><span>Читать гайд</span></a>
+      <a href="/prompts"><h3>Мануал по реализму</h3><p>Формулы промптов против «пластика», живые позы и словарь тегов.</p><span>Открыть мануал</span></a>
+      <a href="https://t.me/AccessGrantedGuide_bot?start=site" target="_blank" rel="noopener"><h3>Бот NEUROFANS</h3><p>Примеры генераций, симулятор переписки и ответы на вопросы в Telegram.</p><span>Открыть бота</span></a>
     </div>
   </div>
 </section>
@@ -990,7 +998,7 @@ footer p{margin:6px 0 0;max-width:48em}
   <div class="wrap">
     <h2>Запусти свою первую модель</h2>
     <p>Уроки, кабинет с софтом и закрытое комьюнити откроются сразу после оплаты.</p>
-    <div class="cta"><a class="btn pr" href="#price">Выбрать тариф</a><a class="btn gh" href="https://t.me/+eTPiqcFkeoE0YWYy" target="_blank" rel="noopener">Задать вопрос в Telegram</a></div>
+    <div class="cta"><a class="btn pr" href="#price">Выбрать тариф</a><a class="btn gh" href="https://t.me/AccessGrantedGuide_bot?start=site" target="_blank" rel="noopener">Задать вопрос в Telegram</a></div>
   </div>
 </section>
 </main>
@@ -1168,16 +1176,21 @@ if (!reduce) setInterval(() => { if (auto && inView && !document.hidden) show((c
   if (!reduce) setInterval(tick, 1400);
 })();
 
-/* Галерея: фото со старого сайта (все модели созданы ИИ) */
+/* Галерея: свои файлы в /real (закрытые кадры, все модели созданы ИИ) */
 const gal = document.getElementById("gal");
-/* галерея: картинки со старого сайта, только закрытые кадры (P1, P4, P7) */
 gal.querySelectorAll("img").forEach(img => {
   const card = img.closest(".gc");
   img.onload = () => card.classList.add("ok");
   img.onerror = () => { card.remove(); if (!gal.children.length) gal.hidden = true; };
   img.loading = "lazy"; img.decoding = "async"; img.src = img.dataset.src;
 });
-setTimeout(() => { gal.querySelectorAll(".gc:not(.ok)").forEach(c => c.remove()); if (!gal.children.length) gal.hidden = true; }, 12000);
+</script>
+<div class="dock" id="dock" aria-hidden="true"><div><b>от 3 900 ₽</b><span>один платёж, доступ сразу</span></div><a class="btn pr" href="#price" tabindex="-1">Выбрать тариф</a></div>
+<script>
+(()=>{const d=document.getElementById("dock"),hero=document.querySelector("main section"),pr=document.getElementById("price");
+ const vis={h:true,p:false};const up=()=>{const on=!vis.h&&!vis.p;d.classList.toggle("on",on);d.setAttribute("aria-hidden",on?"false":"true");d.querySelector("a").tabIndex=on?0:-1};
+ new IntersectionObserver(e=>{vis.h=e[0].isIntersecting;up()}).observe(hero);
+ new IntersectionObserver(e=>{vis.p=e[0].isIntersecting;up()},{rootMargin:"0px 0px 200px 0px"}).observe(pr);})();
 </script>
 </body>
 </html>

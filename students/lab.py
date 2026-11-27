@@ -55,6 +55,7 @@ TRIBUTE_PRO_URL = _env("TRIBUTE_PRO_URL")           # ссылка на подп
 TRIBUTE_PRODUCTS = ai.parse_products(_env("TRIBUTE_PRODUCTS"))   # "id:дней,…" для разовых товаров
 TRIBUTE_COURSE = pay.parse_course(_env("TRIBUTE_COURSE"))        # "id:base,id:adv,id:up" — товары курса → доступ в кабинет
 PRO_PRICE = _env("PRO_PRICE", "")
+UPGRADE_URL = _env("TRIBUTE_UPGRADE_URL", "https://t.me/tribute/app?startapp=hLUF")  # доплата Базовый → Продвинутый
 MAX_LINKS_PER_MODEL = 20
 STATIC_DIR = next((p for p in (os.path.join(HERE, "static"), os.path.join(HERE, "..", "static"))
                    if os.path.isdir(p)), os.path.join(HERE, "static"))
@@ -675,7 +676,7 @@ def api_me():
         models = models_of(c, u["id"])
         onb = onboarding(c, u, models)
     resp = jsonify({"ok": True, "nick": u["nick"], "models": models, "onboarding": onb,
-                    "public_ok": bool(u["public_ok"]), "tg_linked": bool(u["tg_chat_id"]), "course": u["course"],
+                    "public_ok": bool(u["public_ok"]), "tg_linked": bool(u["tg_chat_id"]), "course": u["course"], "upgrade_url": UPGRADE_URL,
                     "channels": [{"id": k, "name": v[0]} for k, v in CHANNELS.items()],
                     "link_host": LINK_HOST, "week": week_key(), "week_end": e.isoformat(),
                     "tz": str(TZ), "limits": {"models": MAX_MODELS_PER_USER, "links": MAX_LINKS_PER_MODEL}})

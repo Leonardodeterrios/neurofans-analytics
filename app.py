@@ -169,14 +169,14 @@ ACTIONS = {
 # открывает настоящую страницу. Куда вести — только отсюда (никаких адресов из ссылки: не открытый редирект).
 ACT_LINKS = {
     "examples": "https://gallery.lukaflow.shop/",          # галерея 18+ на зарубежном сервере (27.11.2026)
-    "guide":    "https://ai-creators.ru/guide-model",
-    "prompts":  "https://ai-creators.ru/prompts",
-    "sim":      "https://new.neurofans.ru/#sim",                # симулятор на новом сайте
+    "guide":    "https://neurofans.ru/guide",
+    "prompts":  "https://neurofans.ru/prompts",
+    "sim":      "https://neurofans.ru/#sim",                # симулятор на новом сайте
     "channel":  "https://t.me/+X-AXokWU0zswZTFi",
-    "reviews":  "https://new.neurofans.ru/#cases",              # кейсы и пруфы на новом сайте
-    "site":     "https://new.neurofans.ru/",
-    "program":  "https://new.neurofans.ru/#program",
-    "intent":   "https://new.neurofans.ru/#price",
+    "reviews":  "https://neurofans.ru/#cases",              # кейсы и пруфы на новом сайте
+    "site":     "https://neurofans.ru/",
+    "program":  "https://neurofans.ru/#program",
+    "intent":   "https://neurofans.ru/#price",
     "checkout": "https://t.me/tribute/app?startapp=hLUB",       # Продвинутый 14 900 ₽
     "checkout_base": "https://t.me/tribute/app?startapp=hLUy",  # Базовый 3 900 ₽
 }
@@ -195,6 +195,13 @@ PB_CMD_NUDGE = os.getenv("PB_CMD_NUDGE", "Сомнения перед оплат
 PB_PAID_VAR = os.getenv("PB_PAID_VAR", "nf_paid")                     # переменная пользователя: 1 = купил
 NUDGE_AFTER_MIN = int(os.getenv("NUDGE_AFTER_MIN", "120"))
 NUDGE_MAX_H = int(os.getenv("NUDGE_MAX_H", "48"))
+PB_CMD_UPGRADE = os.getenv("PB_CMD_UPGRADE", "Апгрейд на Продвинутый")  # блок: купил Базовый → через N дней предложить доплату
+UPGRADE_AFTER_D = float(os.getenv("UPGRADE_AFTER_D", "5"))
+# догоны после конца цепочки PuzzleBot: (день после первого «Старт», колонка, блок-условие «не купил → …»)
+FOLLOWUPS = [(7, "f1_ts", os.getenv("PB_CMD_F1", "Не купил → Догон 1")),
+             (10, "f2_ts", os.getenv("PB_CMD_F2", "Не купил → Догон 2")),
+             (14, "f3_ts", os.getenv("PB_CMD_F3", "Не купил → Догон 3"))]
+FOLLOWUP_WINDOW_D = 2                            # опоздали больше чем на 2 дня — не шлём (старым людям не пишем пачкой)
 ASK_PER_DAY = int(os.getenv("ASK_PER_DAY", "15"))
 AI_URL    = (os.getenv("LAB_AI_URL") or "").strip()
 AI_SECRET = (os.getenv("LAB_AI_SECRET") or "").strip().strip('"\'\r')
@@ -229,6 +236,18 @@ def tribute_event(ev):
     if TRIBUTE_CLUB_IDS and not (ids & TRIBUTE_CLUB_IDS):
         return {}
     return {"paid": uid}
+
+def course_kind(ev):
+    """Тариф курса по названию товара Tribute: up / adv / base / '' (как kind_by_name в кабинете)."""
+    p = (ev or {}).get("payload") or {}
+    t = str(p.get("product_name") or p.get("product_title") or p.get("name") or p.get("title") or "").lower()
+    if "апгрейд" in t or "upgrade" in t:
+        return "up"
+    if "продвинут" in t:
+        return "adv"
+    if "базов" in t:
+        return "base"
+    return ""
 
 def remove_paid(uid):
     with _conn() as c:
@@ -355,6 +374,10 @@ def init_db():
         # автоматика бота: кто открыл оплату, кто купил (любой человек, не только приведённый партнёром), догоны, вопросы ИИ
         c.execute("""CREATE TABLE IF NOT EXISTS bot_people(
             tg_uid INTEGER PRIMARY KEY, pay_open_ts TEXT, pay_kind TEXT, paid_ts TEXT, nudge_ts TEXT)""")
+        bp = {r[1] for r in c.execute("PRAGMA table_info(bot_people)")}
+        for col in ("paid_kind", "upg_ts", "f1_ts", "f2_ts", "f3_ts"):  # что купил, апгрейд, догоны после цепочки
+            if col not in bp:
+                c.execute(f"ALTER TABLE bot_people ADD COLUMN {col} TEXT")
         c.execute("""CREATE TABLE IF NOT EXISTS bot_asks(
             id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT, tg_uid INTEGER, q TEXT, a TEXT, human INTEGER DEFAULT 0)""")
         c.execute("""CREATE TABLE IF NOT EXISTS alerts(
@@ -1032,6 +1055,8 @@ def scheduler_loop():
                 log.error("silence check failed: %s", e)
         try:
             run_nudges()
+            run_upgrades()
+            run_followups()
         except Exception as e:
             log.error("nudges failed: %s", e)
         if DAILY_SUMMARY_TIME and ADMIN_IDS:
@@ -1177,7 +1202,7 @@ def tribute_webhook():
         ev = json.loads(raw or b"{}")
         what = tribute_event(ev)
         if "paid" in what:
-            note_paid(what["paid"], True)
+            note_paid(what["paid"], True, course_kind(ev))
             res = record_action(what["paid"], "paid")
             if res.get("ok"):
                 notify_action(res["label"], res["act"], res["points"])
@@ -1601,11 +1626,15 @@ def note_pay_open(uid, kind):
                   "pay_kind=excluded.pay_kind", (uid, _now_iso(), kind))
     return True
 
-def note_paid(uid, paid=True):
-    """Оплата из Tribute (любой человек): метка в PuzzleBot + блок «Спасибо за покупку»; возврат — снять метку."""
+def note_paid(uid, paid=True, kind=""):
+    """Оплата из Tribute (любой человек): метка в PuzzleBot + блок «Спасибо за покупку»; возврат — снять метку.
+    kind — что купил: Продвинутый/апгрейд перекрывают Базовый (тогда апгрейд не предлагаем)."""
     with _conn() as c:
-        c.execute("INSERT INTO bot_people(tg_uid, paid_ts) VALUES(?,?) ON CONFLICT(tg_uid) DO UPDATE SET paid_ts=excluded.paid_ts",
-                  (uid, _now_iso() if paid else None))
+        c.execute("INSERT INTO bot_people(tg_uid, paid_ts, paid_kind) VALUES(?,?,?) ON CONFLICT(tg_uid) DO UPDATE SET "
+                  "paid_ts=excluded.paid_ts, paid_kind=CASE WHEN excluded.paid_kind IN ('adv','up') "
+                  "OR COALESCE(bot_people.paid_kind,'') IN ('','base') AND excluded.paid_kind<>'' "
+                  "THEN excluded.paid_kind ELSE bot_people.paid_kind END",
+                  (uid, _now_iso() if paid else None, kind or ""))
     bg(_pb_paid, uid, paid)
 
 def _pb_paid(uid, paid):
@@ -1635,6 +1664,49 @@ def run_nudges(limit=20):
         pb_call("sendCommand", command_name=PB_CMD_NUDGE, platform_chat_id=uid)
     return len(rows)
 
+def run_upgrades(limit=20):
+    """Купил Базовый ≥ UPGRADE_AFTER_D дней назад, не докупил Продвинутый, ещё не предлагали — одно сообщение."""
+    if not PB_TOKEN or not PB_CMD_UPGRADE or _quiet_now():
+        return 0
+    now = dt.datetime.now(dt.timezone.utc).replace(tzinfo=None)
+    hi = (now - dt.timedelta(days=UPGRADE_AFTER_D)).isoformat(timespec="seconds")
+    lo = (now - dt.timedelta(days=UPGRADE_AFTER_D + 7)).isoformat(timespec="seconds")
+    with _conn() as c:
+        rows = [r["tg_uid"] for r in c.execute(
+            "SELECT tg_uid FROM bot_people WHERE paid_kind='base' AND paid_ts BETWEEN ? AND ? AND upg_ts IS NULL LIMIT ?",
+            (lo, hi, limit))]
+        for uid in rows:
+            c.execute("UPDATE bot_people SET upg_ts=? WHERE tg_uid=?", (_now_iso(), uid))
+    for uid in rows:
+        pb_call("sendCommand", command_name=PB_CMD_UPGRADE, platform_chat_id=uid)
+    return len(rows)
+
+def run_followups(limit=20):
+    """Неделя, 10 и 14 дней после первого «Старт», не купил — по одному сообщению (блоки «Догон 1–3»).
+    Блок-условие в PuzzleBot ещё раз проверяет nf_paid. Каждый догон один раз, только в своём окне."""
+    if not PB_TOKEN or _quiet_now():
+        return 0
+    now = dt.datetime.now(dt.timezone.utc).replace(tzinfo=None)
+    sent = 0
+    for day, col, cmd in FOLLOWUPS:
+        if not cmd or sent >= limit:
+            continue
+        hi = (now - dt.timedelta(days=day)).isoformat(timespec="seconds")
+        lo = (now - dt.timedelta(days=day + FOLLOWUP_WINDOW_D)).isoformat(timespec="seconds")
+        with _conn() as c:
+            rows = [r["tg_uid"] for r in c.execute(
+                f"SELECT s.tg_uid FROM starts s WHERE s.tg_uid>0 GROUP BY s.tg_uid HAVING MIN(s.ts) BETWEEN ? AND ? "
+                f"AND NOT EXISTS (SELECT 1 FROM bot_people p WHERE p.tg_uid=s.tg_uid AND (p.paid_ts IS NOT NULL OR p.{col} IS NOT NULL)) "
+                f"AND NOT EXISTS (SELECT 1 FROM actions a WHERE a.tg_uid=s.tg_uid AND a.act='paid') LIMIT ?",
+                (lo, hi, limit - sent))]
+            for uid in rows:
+                c.execute(f"INSERT INTO bot_people(tg_uid, {col}) VALUES(?,?) ON CONFLICT(tg_uid) DO UPDATE SET {col}=excluded.{col}",
+                          (uid, _now_iso()))
+        for uid in rows:
+            pb_call("sendCommand", command_name=cmd, platform_chat_id=uid)
+        sent += len(rows)
+    return sent
+
 BOT_FACTS = """Ты ИИ-ассистент курса NEUROFANS в Telegram-боте. Отвечай по-русски, коротко (до 6 предложений), тепло и по делу,
 на «ты». Не используй длинные тире. Ничего не выдумывай: цифры, цены, сроки и состав курса бери ТОЛЬКО из фактов ниже.
 Если ответа в фактах нет, честно скажи, что уточнишь у Кати, и предложи написать слово «Катя». Не обещай заработок:
@@ -1654,7 +1726,7 @@ BOT_FACTS = """Ты ИИ-ассистент курса NEUROFANS в Telegram-б�
 - Английский не нужен: переписка переводится в один клик.
 - Анонимность: модель вымышленная, твоего лица нигде нет; аккаунты ведутся под аудиторию США и Европы.
 - Учеников больше 380. Примеры результатов учеников: Соня $1 932 в первый месяц, Анна $1 400 за 3 недели, лучший первый месяц $6 840. Пример расчёта одной модели: 35 подписчиков по $15 + продажи паков + чаевые ≈ $2 155 в месяц. Это примеры, не обещание.
-- Сайт курса: https://new.neurofans.ru (там тарифы и примеры). Купить: кнопки «Базовый» и «Продвинутый» в боте."""
+- Сайт курса: https://neurofans.ru (там тарифы и примеры). Купить: кнопки «Базовый» и «Продвинутый» в боте."""
 
 HUMAN_WORDS = re.compile(r"^\s*(катя|кате|человек|оператор|менеджер|живой человек)\s*[.!?]*\s*$", re.I)
 
@@ -1858,7 +1930,7 @@ th{color:var(--mut);font-weight:600}
 .rk{width:34px;font-weight:700}.mut{color:var(--mut)}
 .foot{color:var(--mut);font-size:12px;margin-top:14px}
 </style></head><body>
-<h1>🏆 NeuroFans — соревнование команд &nbsp;<a id="arenaLink" href="/arena" style="font-size:14px">🥊 Открыть арену</a></h1>
+<h1>🏆 NeuroFans — соревнование команд &nbsp;<a id="arenaLink" href="/arena" style="font-size:14px">🥊 Открыть арену</a> &nbsp;<a id="funnelLink" href="/funnel" style="font-size:14px">📈 Воронка бота</a></h1>
 <p class="sub" id="updated">загрузка…</p>
 <div class="teams" id="teams"></div>
 <div class="bar"><i id="barA" style="width:50%"></i></div>
@@ -1888,7 +1960,7 @@ th{color:var(--mut);font-weight:600}
 <script>
 const token=new URLSearchParams(location.search).get('token');
 const q=token?('?token='+encodeURIComponent(token)):'';
-document.getElementById('csv').href='/export'+q;document.getElementById('csvS').href='/export/starts'+q;document.getElementById('csvP').href='/export/partner_links'+q;document.getElementById('story').href='/story.png'+q;document.getElementById('arenaL').href='/arena'+q;
+document.getElementById('csv').href='/export'+q;document.getElementById('csvS').href='/export/starts'+q;document.getElementById('csvP').href='/export/partner_links'+q;document.getElementById('story').href='/story.png'+q;document.getElementById('arenaL').href='/arena'+q;document.getElementById('funnelLink').href='/funnel'+q;
 document.getElementById('arenaLink').href='/arena'+q;
 let dayChart,topChart;const medals=['🥇','🥈','🥉'];
 function fmt(ts){return ts?ts.replace('T',' '):'—';}

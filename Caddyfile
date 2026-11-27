@@ -13,34 +13,41 @@ http://{$DOMAIN} {
 	redir https://{host}{uri} 308
 }
 
-# Кабинет учеников NeuroFans Lab: lab.<домен> — кабинет, to.<домен>/<метка> — ссылки учеников,
-# сам <домен> и www → кабинет. Отдельный сервис lab, трекер партнёров не затрагивает.
-lab.{$LAB_ROOT:neurofans.ru}, to.{$LAB_ROOT:neurofans.ru}, {$LAB_ROOT:neurofans.ru}, www.{$LAB_ROOT:neurofans.ru} {
+# Кабинет учеников NeuroFans Lab: lab.<домен> — кабинет, to.<домен>/<метка> — ссылки учеников.
+# Отдельный сервис lab, трекер партнёров не затрагивает.
+lab.{$LAB_ROOT:neurofans.ru}, to.{$LAB_ROOT:neurofans.ru} {
 	reverse_proxy lab:8090 {
 		header_up X-Real-IP {remote_host}
 	}
 }
 
-http://lab.{$LAB_ROOT:neurofans.ru}, http://to.{$LAB_ROOT:neurofans.ru}, http://{$LAB_ROOT:neurofans.ru}, http://www.{$LAB_ROOT:neurofans.ru} {
+http://lab.{$LAB_ROOT:neurofans.ru}, http://to.{$LAB_ROOT:neurofans.ru}, http://{$LAB_ROOT:neurofans.ru}, http://www.{$LAB_ROOT:neurofans.ru}, http://new.{$LAB_ROOT:neurofans.ru} {
 	redir https://{host}{uri} 308
 }
 
-# Новый сайт курса (превью): статическая страница из папки site/, поисковикам закрыт.
-# Старый сайт ai-creators.ru не затрагивается. DNS: A-запись new → IP сервера.
-new.{$LAB_ROOT:neurofans.ru} {
-	header X-Robots-Tag "noindex, nofollow"
+# Сайт курса (с 28.11.2026 на корне домена; раньше — new.<домен>). Статика из папки site/.
+# Старые адреса кабинета на корне (инвайты, админка, API) уводим на lab., чтобы ничего не сломалось.
+{$LAB_ROOT:neurofans.ru} {
+	@lab {
+		path /admin* /api/* /r/* /manifest.webmanifest /sw.js /icon-*
+	}
+	redir @lab https://lab.{$LAB_ROOT:neurofans.ru}{uri} 302
+	@invite query invite=*
+	redir @invite https://lab.{$LAB_ROOT:neurofans.ru}{uri} 302
 	handle_path /fonts/* {
 		root * /srv/fonts
 		file_server
 	}
 	handle {
 		root * /srv/site
+		try_files {path} {path}/ {path}.html
 		file_server
 	}
 }
 
-http://new.{$LAB_ROOT:neurofans.ru} {
-	redir https://{host}{uri} 308
+# www. и старый адрес new. → основной домен (тот же путь)
+www.{$LAB_ROOT:neurofans.ru}, new.{$LAB_ROOT:neurofans.ru} {
+	redir https://{$LAB_ROOT:neurofans.ru}{uri} 301
 }
 
 # Короткие домены партнёров (.shop, Spaceship, DNS у регистратора: A-записи @, go, my, hi → IP сервера).

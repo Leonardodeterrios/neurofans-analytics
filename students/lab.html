@@ -455,6 +455,8 @@ label.f em.fn{display:block;margin-top:4px}
 .cardprev{display:block;width:100%;max-width:260px;margin:14px auto;border-radius:8px;border:1px solid var(--ln2);aspect-ratio:9/16;background:var(--s2);object-fit:cover}
 .banner{display:flex;gap:12px;align-items:center;margin:0 0 var(--g);padding:10px 14px}
 .banner p{margin:0;flex:1;font-size:13px}
+#upg{flex-wrap:wrap}
+#upg p{min-width:220px}
 </style>
 </head>
 <body>
@@ -575,6 +577,7 @@ label.f em.fn{display:block;margin-top:4px}
    <div id="ovEmpty" class="hide"></div>
    <div id="ovBody">
     <section class="pn onb hide" id="onb"></section>
+    <section class="pn banner hide" id="upg"></section>
     <section class="pn hero">
      <div class="kp">
       <div class="lbl" id="hLbl">ЛЮДИ · НЕДЕЛЯ</div>
@@ -798,7 +801,12 @@ function drawCanvases(){if(!S.stats)return;drawSignal();drawHours(S.stats.hours)
 addEventListener("resize",()=>{clearTimeout(S.rz);S.rz=setTimeout(()=>{if(S.page==="ov")drawCanvases()},150)});
 
 const ONB_ACT={model:()=>openModel(),link:()=>go("lk"),check:()=>go("lk"),person:()=>go("lk"),tg:()=>openTg()};
-function renderOnb(){const o=S.me.onboarding,box=$("#onb");if(!o||o.hidden){box.classList.add("hide");return}
+function renderUpg(){const b=$("#upg");if(!b)return;const hid=+(LS.get("nf_upg_hide")||0);
+  if(S.me.course!=="base"||!S.me.upgrade_url||Date.now()-hid<7*864e5){b.classList.add("hide");return}
+  b.classList.remove("hide");
+  b.innerHTML=`<svg class="i lg"><use href="#i-spark"/></svg><p class="sm"><b>Следующий шаг: продажи.</b> На Базовом ты учишься делать контент. Продвинутый добавляет видео, Fanvue, трафик, чаттинг и закрытый чат. Доплата только разницы, 11 000 ₽, кабинет и прогресс остаются.</p><a class="btn ac s" href="${esc(S.me.upgrade_url)}" target="_blank" rel="noopener">Перейти на Продвинутый</a><button class="btn gh s" id="upgHide">Позже</button>`;
+  $("#upgHide").onclick=()=>{LS.set("nf_upg_hide",Date.now());renderUpg()}}
+function renderOnb(){renderUpg();const o=S.me.onboarding,box=$("#onb");if(!o||o.hidden){box.classList.add("hide");return}
   const prev=+(LS.get("nf_onb")||0);LS.set("nf_onb",o.done);if(o.done>prev&&prev>0)celebrate("Шаг пройден");
   const next=o.steps.find(s=>!s.done);box.classList.remove("hide");
   box.innerHTML=`<div class="pn-h"><h3>Первый день в кабинете <span class="tag ${o.done===o.total?"ac":""}">${o.done}/${o.total}</span></h3><div style="display:flex;gap:6px">${next?`<button class="btn ac s" id="onbGo">${esc(next.title)}</button>`:""}<button class="btn gh s" id="onbHide">Скрыть</button></div></div>

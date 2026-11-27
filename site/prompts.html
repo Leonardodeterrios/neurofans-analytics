@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Мануал: живой ИИ-контент и позы модели | NEUROFANS</title>
+<meta name="description" content="Как убрать «пластик» из ИИ-фото и поставить модель в живую позу: формулы промптов, negative prompt и словарь поз.">
+<link rel="canonical" href="https://neurofans.ru/prompts">
+<meta name="theme-color" content="#04050c">
+<style>
+@font-face{font-family:Unb;src:url(/fonts/Unbounded-ExtraBold.woff) format("woff");font-weight:800;font-display:swap}
+@font-face{font-family:Man;src:url(/fonts/Manrope-Medium.woff) format("woff");font-weight:500;font-display:swap}
+@font-face{font-family:Man;src:url(/fonts/Manrope-ExtraBold.woff) format("woff");font-weight:800;font-display:swap}
+@font-face{font-family:Oxa;src:url(/fonts/Oxanium-SemiBold.woff) format("woff");font-weight:600;font-display:swap}
+:root{--bg:#04050c;--panel:#0a0e1c;--panel2:#0f1528;--line:#1b2238;--line2:#283255;--tx:#e9edf8;--tx2:#c4cade;--mu:#8a93ae;--cy:#2ee6d6;--mg:#ff4f8b;--co:#ff7d6e;
+  --disp:Unb,Manrope,system-ui,sans-serif;--body:Man,system-ui,-apple-system,"Segoe UI",sans-serif;--num:Oxa,Man,system-ui,sans-serif}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--tx);font:500 17px/1.65 var(--body)}
+body:before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(900px 520px at 90% -10%,rgba(46,230,214,.10),transparent 60%),radial-gradient(800px 560px at -10% 40%,rgba(255,79,139,.07),transparent 60%)}
+a{color:var(--cy)}
+.wrap{max-width:760px;margin:0 auto;padding:0 20px}
+.top{position:sticky;top:0;z-index:5;background:rgba(4,5,12,.82);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.top .wrap{max-width:1100px;display:flex;align-items:center;justify-content:space-between;height:62px}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--tx);font:800 17px/1 var(--disp);letter-spacing:.02em}
+.logo i{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(46,230,214,.18),rgba(255,79,139,.18));border:1px solid var(--line2)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;padding:14px 22px;font:800 15px/1.2 var(--body);text-decoration:none;border:1px solid transparent;cursor:pointer;color:var(--tx);background:none;text-align:center}
+.btn.pr{background:linear-gradient(135deg,#3ff0df,#22c9bb);color:#03110f}
+.btn.gh{border-color:var(--line2);background:rgba(255,255,255,.02)}
+.btn.s{padding:10px 16px;font-size:14px}
+h1{font:800 clamp(28px,6vw,44px)/1.12 var(--disp);margin:44px 0 14px;letter-spacing:-.01em}
+.lead{color:var(--tx2);font-size:19px;margin:0 0 22px}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 34px;padding:0;list-style:none}
+.toc a{display:block;padding:8px 13px;border:1px solid var(--line2);border-radius:999px;color:var(--tx2);text-decoration:none;font-size:14px}
+.step{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:26px 24px;margin:0 0 18px;scroll-margin-top:80px}
+.step h2{display:flex;align-items:baseline;gap:14px;font:800 22px/1.25 var(--body);margin:0 0 14px}
+.step h2 b{font:600 15px/1 var(--num);color:var(--cy);border:1px solid rgba(46,230,214,.35);border-radius:8px;padding:6px 8px;flex:none}
+.step p{margin:0 0 12px;color:var(--tx2)}
+.step ol,.step ul{margin:0 0 12px;padding-left:22px;color:var(--tx2)}
+.step li{margin:0 0 8px}
+.step strong{color:var(--tx)}
+.note{border-left:3px solid var(--mg);background:rgba(255,79,139,.06);border-radius:0 12px 12px 0;padding:12px 16px;margin:12px 0;color:var(--tx2);font-size:16px}
+.note.cy{border-color:var(--cy);background:rgba(46,230,214,.06)}
+.chain{list-style:none;padding:0!important;counter-reset:c}
+.chain li{position:relative;padding:12px 14px 12px 50px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);margin:0 0 8px}
+.chain li:before{counter-increment:c;content:counter(c);position:absolute;left:14px;top:12px;width:24px;height:24px;border-radius:7px;display:grid;place-items:center;font:600 13px/1 var(--num);color:var(--bg);background:var(--cy)}
+.end{margin:34px 0 20px;padding:28px 24px;border-radius:20px;border:1px solid rgba(255,79,139,.35);background:linear-gradient(135deg,rgba(255,79,139,.10),rgba(46,230,214,.06))}
+.end h2{font:800 24px/1.25 var(--disp);margin:0 0 10px}
+.end p{color:var(--tx2);margin:0 0 18px}
+.end .row{display:flex;flex-wrap:wrap;gap:10px}
+.more{display:block;margin:0 0 18px;padding:18px 20px;border:1px solid var(--line2);border-radius:16px;text-decoration:none;color:var(--tx)}
+.more b{display:block;font-weight:800}
+.more span{color:var(--mu);font-size:15px}
+footer{border-top:1px solid var(--line);margin-top:40px;padding:22px 0 40px;color:var(--mu);font-size:14px}
+@media(max-width:560px){.step{padding:20px 18px}.end .row .btn{width:100%}body{font-size:16px}}
+:focus-visible{outline:2px solid var(--cy);outline-offset:2px}
+.code{position:relative;background:#060812;border:1px solid var(--line2);border-radius:12px;padding:14px 14px 52px;margin:10px 0 14px;font:500 14px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;color:#cfe;word-break:break-word}
+.code button{position:absolute;right:10px;bottom:10px;border:1px solid var(--line2);background:var(--panel2);color:var(--tx);border-radius:9px;padding:7px 12px;font:800 13px/1 var(--body);cursor:pointer}
+.code button.ok{border-color:var(--cy);color:var(--cy)}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 14px}
+.tags span{padding:5px 9px;border-radius:8px;background:var(--panel2);border:1px solid var(--line);font-size:14px;color:var(--tx2)}
+.step h3{font:800 17px/1.3 var(--body);margin:16px 0 6px}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="logo" href="/"><i><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#2ee6d6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 9h3l2-5 3 9 2-6 1.5 2H15"/></svg></i>NEUROFANS</a>
+  <a class="btn pr s" href="/#price">Тарифы курса</a>
+</div></header>
+
+<main class="wrap">
+  <h1>Живой ИИ-контент: мануал по реализму и позам</h1>
+  <p class="lead">Если фото выглядит слишком идеальным, оно выглядит нейросетевым. Настоящий телефон ошибается: смазывает кадр, пересвечивает окно, ловит шум, криво режет композицию. Наша задача не идеальная картинка, а поведение настоящей камеры.</p>
+  <ul class="toc"><li><a href="#neg">Защита от пластика</a></li><li><a href="#cam">Камера и дефекты</a></li><li><a href="#pose">Живая поза</a></li><li><a href="#dict">Словарь поз</a></li></ul>
+
+  <section class="step" id="neg">
+    <h2><b>00</b>Базовый negative prompt</h2>
+    <p>Вставляй в поле negative prompt в любой генерации. Он убирает рендер, мультяшность и «кукольную» кожу.</p>
+    <div class="code"><span>(3d render, cgi, painting, drawing, cartoon, anime, doll, plastic skin, smooth skin, professional studio lighting, makeup flawless, airbrushed, overexposed, bad anatomy, bad hands, missing fingers, blurry, watermark)</span><button type="button">Скопировать</button></div>
+  </section>
+
+  <section class="step" id="cam">
+    <h2><b>01</b>Камера и дефекты</h2>
+    <p>Начинай промпт с устройства. Не пиши просто photo, укажи, на что якобы снят кадр: <strong>shot on iPhone 13 Pro Max, iPhone 14 Pro camera, smartphone photo, front camera, selfie camera</strong>. Для «профессиональной» съёмки: Canon EOS R5, Sony A7 III, Nikon D850. Чем конкретнее, тем реалистичнее обработка.</p>
+    <p>Не бойся дефектов, именно они убирают ощущение ИИ: <strong>slight blur, motion blur, noise, film grain, overexposed, underexposed, harsh lighting, uneven lighting, lens flare, reflections</strong>.</p>
+    <h3>Универсальный блок для лайфстайла</h3>
+    <div class="code"><span>ultra realistic photo, shot on iPhone 13 Pro Max, natural lighting, soft shadows, slightly imperfect composition, casual snapshot, real life moment, no studio lighting, authentic texture, detailed fabric, realistic wrinkles.</span><button type="button">Скопировать</button></div>
+    <p><strong>Раскладка.</strong> Забудь про ровные композиции по линейке: laid on bed, soft wrinkled sheets, minimal styling, everyday aesthetic, slightly messy composition, no symmetry.</p>
+    <p><strong>Селфи.</strong> Главное естественность: casual selfie, spontaneous photo, unposed, natural iPhone selfie, quick mirror selfie, imperfect composition, slightly awkward framing. Домашний свет: soft indoor lighting, warm apartment lighting, dim evening lighting. Для максимума: uneven lighting, flash reflection, low light grain.</p>
+    <p><strong>Недостатки камеры.</strong> front camera distortion, skin texture visible, compression artifacts, imperfect focus, lens smudges, washed highlights. Самые живые кадры выглядят так, будто человек не собирался фотографировать: awkward crop, partially cut off, off-center subject, accidental photo aesthetic, messy background, realistic clutter.</p>
+  </section>
+
+  <section class="step" id="pose">
+    <h2><b>02</b>Живая поза</h2>
+    <p>ИИ-модель чаще всего выдаёт не лицо, а поза. Нейросети ставят девушку прямо перед камерой: руки висят, ноги симметрично. Получается манекен. Забудь фразу standing woman: в жизни люди переносят вес на одну ногу, поправляют волосы, держатся за одежду, отворачивают плечо.</p>
+    <h3>Формула</h3>
+    <p>Положение тела + перенос веса + действие рукой + наклон головы + взгляд + настроение.</p>
+    <div class="code"><span>standing, weight on one leg, one hand touching hair, head slightly tilted, looking into camera, confident expression.</span><button type="button">Скопировать</button></div>
+    <ol>
+      <li><strong>Руки всегда заняты:</strong> поправляют волосы, касаются шеи, лежат на талии, поправляют бретельку или воротник.</li>
+      <li><strong>Перенос веса:</strong> weight on one leg, hip slightly shifted, asymmetric stance. Если обе ноги стоят одинаково, тело плоское.</li>
+      <li><strong>S-линия:</strong> плечи и бёдра под разными углами, одна нога расслаблена.</li>
+      <li><strong>Движение:</strong> walking toward camera, adjusting jacket, turning over shoulder. Пусть кадр выглядит случайным.</li>
+    </ol>
+  </section>
+
+  <section class="step" id="dict">
+    <h2><b>03</b>Словарь поз</h2>
+    <p>Собирай позу из блоков: по одному из каждой группы.</p>
+    <h3>Положение тела</h3><div class="tags"><span>Standing</span><span>Sitting</span><span>Sitting on the floor</span><span>Walking</span><span>Walking toward camera</span><span>Walking sideways</span><span>Leaning</span><span>Leaning against wall</span><span>Turning body</span><span>Three-quarter view</span><span>Front view</span><span>Side view</span><span>Over the shoulder</span><span>Mid-turn</span><span>Twisting torso</span></div><h3>Ноги и перенос веса</h3><div class="tags"><span>Weight on one leg</span><span>Weight on back leg</span><span>Hip slightly shifted</span><span>Hip pushed outward</span><span>One leg extended forward</span><span>One knee slightly bent</span><span>Legs crossed at the ankles</span><span>Legs slightly apart</span><span>One foot forward</span><span>Long stride posture</span><span>One leg bent against wall</span><span>Relaxed posture</span><span>Asymmetric stance</span></div><h3>Руки, это самое важное</h3><div class="tags"><span>One hand touching hair</span><span>Brushing hair away from face</span><span>Hands on hips</span><span>One hand on waist</span><span>One hand resting on thigh</span><span>Hands in pockets</span><span>Hands in back pockets</span><span>Holding jacket lapel</span><span>Adjusting jacket</span><span>Adjusting collar</span><span>Fingers on collar</span><span>Holding coat open</span><span>Holding edge of coat</span><span>Holding edge of dress</span><span>Holding sunglasses</span><span>One hand behind neck</span><span>One hand touching neck</span><span>One hand touching collarbone</span><span>One hand touching chin</span><span>One hand touching temple</span><span>Fingers touching lips</span><span>One arm crossing the body</span><span>One arm touching opposite shoulder</span><span>Arms crossed</span><span>Arms folded loosely</span><span>One hand holding bag</span><span>Hands clasped in front</span><span>Both hands behind back</span><span>Arms slightly lifted</span><span>Adjusting sleeves</span><span>Adjusting cuffs</span><span>One arm draped across body holding opposite elbow</span></div><h3>Голова и взгляд</h3><div class="tags"><span>Head slightly tilted</span><span>Chin up</span><span>Chin slightly lowered</span><span>Head tilted downward</span><span>Looking into camera</span><span>Looking over shoulder</span><span>Looking down</span><span>Looking away</span><span>Eyes looking upward toward camera</span><span>Face turned back toward viewer</span><span>Confident gaze</span><span>Intense editorial gaze</span></div><h3>Движение</h3><div class="tags"><span>Mid-step</span><span>Natural movement</span><span>Coat moving with motion</span><span>Dress flowing</span><span>Fabric moving naturally</span><span>Body leaning forward</span><span>Turning toward camera</span><span>Relaxed movement</span></div><h3>Настроение и стиль</h3><div class="tags"><span>Confident</span><span>Editorial</span><span>High fashion</span><span>Runway inspired</span><span>Cinematic</span><span>Elegant</span><span>Sophisticated</span><span>Relaxed</span><span>Minimalistic</span><span>Powerful</span><span>Dramatic</span><span>Effortless</span><span>Beauty portrait</span><span>Fashion editorial</span></div>
+  </section>
+
+  <div class="end">
+    <h2>Дальше: одно лицо, 18+ и продажи</h2>
+    <p>В курсе разбираем, как держать одно лицо во всех кадрах, делать 18+ в Seedream 4.5 Edit с живой кожей и продавать контент на Fanvue и в Telegram.</p>
+    <div class="row">
+      <a class="btn pr" href="/#program">Смотреть программу</a>
+      <a class="btn gh" href="/#price">Тарифы от 3 900 ₽</a>
+      <a class="btn gh" href="https://t.me/AccessGrantedGuide_bot?start=prompts" target="_blank" rel="noopener">Задать вопрос в боте</a>
+    </div>
+  </div>
+  <a class="more" href="/guide"><b>Бесплатный гайд: своя ИИ-модель с нуля</b><span>Пять шагов от первой генерации до первых продаж.</span></a>
+</main>
+<footer><div class="wrap">18+ · © 2026 NEUROFANS. Все персонажи вымышлены и созданы ИИ. Результаты учеников индивидуальны и не являются гарантией дохода.</div></footer>
+<script>
+document.querySelectorAll(".code button").forEach(b=>b.onclick=async()=>{const t=b.previousElementSibling.textContent;
+try{await navigator.clipboard.writeText(t)}catch(e){const a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();document.execCommand("copy");a.remove()}
+b.textContent="Скопировано";b.classList.add("ok");setTimeout(()=>{b.textContent="Скопировать";b.classList.remove("ok")},1600)});
+</script>
+</body>
+</html>

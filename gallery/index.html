@@ -240,7 +240,7 @@ body.adult .age{display:none}
     <div class="wrap">
       <h2>Сделай такую же модель</h2>
       <p>В курсе разбираем, как держать одно лицо, делать живую кожу и свет, и как продавать контент на Fanvue и в Telegram. Софт для трафика и переписки входит в курс.</p>
-      <div class="cta"><a class="btn pr" data-site="#price" href="#">Выбрать тариф</a><a class="btn gh" href="https://t.me/+eTPiqcFkeoE0YWYy" target="_blank" rel="noopener">Задать вопрос в Telegram</a></div>
+      <div class="cta"><a class="btn pr" data-site="#price" href="#">Выбрать тариф</a><a class="btn gh" href="https://t.me/AccessGrantedGuide_bot?start=gallery" target="_blank" rel="noopener">Задать вопрос в Telegram</a></div>
     </div>
   </section>
 </main>
@@ -256,7 +256,7 @@ body.adult .age{display:none}
 
 <script>
 /* Список работ — в media.json рядом со страницей (лежит только на зарубежном сервере, не в репозитории).
-   Формат: {"site":"https://new.neurofans.ru/","items":[{"src":"media/g1.jpeg","type":"photo|video","title":"…","group":"Модель G"}]} */
+   Формат: {"site":"https://neurofans.ru/","items":[{"src":"media/g1.jpeg","type":"photo|video","title":"…","group":"Модель G"}]} */
 const $ = s => document.querySelector(s);
 const body = document.body;
 const DESC = {
@@ -268,7 +268,7 @@ const DESC = {
   "Модель H": "Одно лицо в разных образах, ракурсах и местах.",
   "Модель G": "Приватный сет: то, что продаётся в платных постах и кастомах."
 };
-let SITE = "https://new.neurofans.ru/", ALL = [], view = [], cur = "Все", lbI = -1;
+let SITE = "https://neurofans.ru/", ALL = [], view = [], cur = "Все", lbI = -1;
 
 function adult() { try { return localStorage.getItem("nf18") === "1"; } catch (e) { return false; } }
 function setAdult() { try { localStorage.setItem("nf18", "1"); } catch (e) {} body.classList.add("adult"); load(); }

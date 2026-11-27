@@ -363,6 +363,22 @@ sentb=[]; app.bot_send=lambda u,t: sentb.append((u,t)); app._ai_answer=lambda q:
 app.handle_ask(7001,"сколько стоит?"); assert sentb[-1][0]==7001 and "ИИ-помощник" in sentb[-1][1] and "«Катя»" in sentb[-1][1]
 app.handle_ask(7001,"а видео есть?"); assert "ИИ-помощник" not in sentb[-1][1]          # представляется один раз в сутки
 app.handle_ask(7001,"Катя"); assert notes and "7001" in notes[-1] and "видео есть" in notes[-1] and "Кате" in sentb[-1][1]
+# купил Базовый → через 5 дней предложить апгрейд (один раз); купившему Продвинутый не предлагаем
+assert app.course_kind({"payload":{"product_name":"NEUROFANS Базовый"}})=="base" and app.course_kind({"payload":{"product_name":"NEUROFANS Апгрейд до Продвинутого"}})=="up"
+app.note_paid(7003, True, "base"); app.note_paid(7004, True, "base"); app.note_paid(7004, True, "up")
+assert app.run_upgrades()==0                                       # рано
+old=(dt.datetime.utcnow()-dt.timedelta(days=6)).isoformat(timespec="seconds")
+with app._conn() as c: c.execute("UPDATE bot_people SET paid_ts=? WHERE tg_uid IN (7003,7004)",(old,))
+assert app.run_upgrades()==1 and calls[-1]==("sendCommand",{"command_name":app.PB_CMD_UPGRADE,"platform_chat_id":7003})
+assert app.run_upgrades()==0                                       # второй раз не предлагаем
+# догоны после цепочки: 7/10/14 день после первого старта, не купившим, один раз, старым не пачкой
+def _start(uid, days):
+    with app._conn() as c: c.execute("INSERT INTO starts(ts,label,click_id,tg_uid,ch,scored) VALUES(?,?,?,?,?,?)",((dt.datetime.utcnow()-dt.timedelta(days=days)).isoformat(timespec="seconds"),"leo01",None,uid,"t",0))
+_start(8001,7.5); _start(8002,11); _start(8003,30); _start(8004,8); app.note_paid(8004, True)
+n0=len(calls); assert app.run_followups()==2
+got=[(p["platform_chat_id"],p["command_name"]) for m,p in calls[n0:] if m=="sendCommand"]
+assert (8001,"Не купил → Догон 1") in got and (8002,"Не купил → Догон 2") in got and all(u not in (8003,8004) for u,_ in got)
+assert app.run_followups()==0                                      # второй раз не шлём
 app.bg=_bgsave; app.notify_all=_na; app.PB_TOKEN=""
 print("автоматика бота: догон брошенной оплаты, метка «оплатил», ИИ-ассистент и «Катя» ✅")
 print("\nВСЕ ПРОВЕРКИ ПРОШЛИ ✅")

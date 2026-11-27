@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Бесплатный гайд: своя ИИ-модель с нуля | NEUROFANS</title>
+<meta name="description" content="Пять шагов от первой генерации до первых продаж: внешность модели, соцсети, продвижение, монетизация на Fanvue и реализм в 18+ контенте.">
+<link rel="canonical" href="https://neurofans.ru/guide">
+<meta name="theme-color" content="#04050c">
+<style>
+@font-face{font-family:Unb;src:url(/fonts/Unbounded-ExtraBold.woff) format("woff");font-weight:800;font-display:swap}
+@font-face{font-family:Man;src:url(/fonts/Manrope-Medium.woff) format("woff");font-weight:500;font-display:swap}
+@font-face{font-family:Man;src:url(/fonts/Manrope-ExtraBold.woff) format("woff");font-weight:800;font-display:swap}
+@font-face{font-family:Oxa;src:url(/fonts/Oxanium-SemiBold.woff) format("woff");font-weight:600;font-display:swap}
+:root{--bg:#04050c;--panel:#0a0e1c;--panel2:#0f1528;--line:#1b2238;--line2:#283255;--tx:#e9edf8;--tx2:#c4cade;--mu:#8a93ae;--cy:#2ee6d6;--mg:#ff4f8b;--co:#ff7d6e;
+  --disp:Unb,Manrope,system-ui,sans-serif;--body:Man,system-ui,-apple-system,"Segoe UI",sans-serif;--num:Oxa,Man,system-ui,sans-serif}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--tx);font:500 17px/1.65 var(--body)}
+body:before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(900px 520px at 90% -10%,rgba(46,230,214,.10),transparent 60%),radial-gradient(800px 560px at -10% 40%,rgba(255,79,139,.07),transparent 60%)}
+a{color:var(--cy)}
+.wrap{max-width:760px;margin:0 auto;padding:0 20px}
+.top{position:sticky;top:0;z-index:5;background:rgba(4,5,12,.82);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.top .wrap{max-width:1100px;display:flex;align-items:center;justify-content:space-between;height:62px}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--tx);font:800 17px/1 var(--disp);letter-spacing:.02em}
+.logo i{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(46,230,214,.18),rgba(255,79,139,.18));border:1px solid var(--line2)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;padding:14px 22px;font:800 15px/1.2 var(--body);text-decoration:none;border:1px solid transparent;cursor:pointer;color:var(--tx);background:none;text-align:center}
+.btn.pr{background:linear-gradient(135deg,#3ff0df,#22c9bb);color:#03110f}
+.btn.gh{border-color:var(--line2);background:rgba(255,255,255,.02)}
+.btn.s{padding:10px 16px;font-size:14px}
+h1{font:800 clamp(28px,6vw,44px)/1.12 var(--disp);margin:44px 0 14px;letter-spacing:-.01em}
+.lead{color:var(--tx2);font-size:19px;margin:0 0 22px}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 34px;padding:0;list-style:none}
+.toc a{display:block;padding:8px 13px;border:1px solid var(--line2);border-radius:999px;color:var(--tx2);text-decoration:none;font-size:14px}
+.step{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:26px 24px;margin:0 0 18px;scroll-margin-top:80px}
+.step h2{display:flex;align-items:baseline;gap:14px;font:800 22px/1.25 var(--body);margin:0 0 14px}
+.step h2 b{font:600 15px/1 var(--num);color:var(--cy);border:1px solid rgba(46,230,214,.35);border-radius:8px;padding:6px 8px;flex:none}
+.step p{margin:0 0 12px;color:var(--tx2)}
+.step ol,.step ul{margin:0 0 12px;padding-left:22px;color:var(--tx2)}
+.step li{margin:0 0 8px}
+.step strong{color:var(--tx)}
+.note{border-left:3px solid var(--mg);background:rgba(255,79,139,.06);border-radius:0 12px 12px 0;padding:12px 16px;margin:12px 0;color:var(--tx2);font-size:16px}
+.note.cy{border-color:var(--cy);background:rgba(46,230,214,.06)}
+.chain{list-style:none;padding:0!important;counter-reset:c}
+.chain li{position:relative;padding:12px 14px 12px 50px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);margin:0 0 8px}
+.chain li:before{counter-increment:c;content:counter(c);position:absolute;left:14px;top:12px;width:24px;height:24px;border-radius:7px;display:grid;place-items:center;font:600 13px/1 var(--num);color:var(--bg);background:var(--cy)}
+.end{margin:34px 0 20px;padding:28px 24px;border-radius:20px;border:1px solid rgba(255,79,139,.35);background:linear-gradient(135deg,rgba(255,79,139,.10),rgba(46,230,214,.06))}
+.end h2{font:800 24px/1.25 var(--disp);margin:0 0 10px}
+.end p{color:var(--tx2);margin:0 0 18px}
+.end .row{display:flex;flex-wrap:wrap;gap:10px}
+.more{display:block;margin:0 0 18px;padding:18px 20px;border:1px solid var(--line2);border-radius:16px;text-decoration:none;color:var(--tx)}
+.more b{display:block;font-weight:800}
+.more span{color:var(--mu);font-size:15px}
+footer{border-top:1px solid var(--line);margin-top:40px;padding:22px 0 40px;color:var(--mu);font-size:14px}
+@media(max-width:560px){.step{padding:20px 18px}.end .row .btn{width:100%}body{font-size:16px}}
+:focus-visible{outline:2px solid var(--cy);outline-offset:2px}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="logo" href="/"><i><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#2ee6d6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 9h3l2-5 3 9 2-6 1.5 2H15"/></svg></i>NEUROFANS</a>
+  <a class="btn pr s" href="/#price">Тарифы курса</a>
+</div></header>
+
+<main class="wrap">
+  <h1>Своя ИИ-модель с нуля: бесплатный гайд</h1>
+  <p class="lead">Пять шагов от первой генерации до первых продаж. Без лица, без мощного компьютера и без знания английского.</p>
+  <ul class="toc">
+    <li><a href="#s1">Модель</a></li><li><a href="#s2">Соцсети</a></li><li><a href="#s3">Продвижение</a></li><li><a href="#s4">Монетизация</a></li><li><a href="#s5">Реализм и 18+</a></li>
+  </ul>
+
+  <section class="step" id="s1">
+    <h2><b>01</b>Создаём модель</h2>
+    <p>Модель можно сделать в любой нейросети: ты описываешь внешность словами, а нейросеть рисует. Главное, чтобы лицо было одним и тем же во всех кадрах.</p>
+    <ol>
+      <li><strong>Придумай образ.</strong> Возраст 21+, тип внешности, волосы, глаза, фигура, стиль одежды, характер. Модель полностью вымышленная: не копируй реальных людей, ни знаменитостей, ни чужие фото из интернета.</li>
+      <li><strong>Сделай промпт.</strong> Попроси ChatGPT превратить твоё описание в подробный промпт на английском: лицо, фигура, кожа, свет.</li>
+      <li><strong>Сгенерируй эталон.</strong> Портретное фото, где хорошо видно лицо и фигуру. С ним ты будешь делать все остальные кадры.</li>
+      <li><strong>Набросай 50 сцен.</strong> С помощью ChatGPT сделай 50 промптов: разные локации, одежда, эмоции. Это будущие посты в соцсетях.</li>
+      <li><strong>Сделай серию.</strong> В Nano Banana Pro Edit загрузи эталон и по промптам сгенерируй 50 фото с тем же лицом.</li>
+    </ol>
+    <p>Эти фото подойдут для постов и каруселей в Instagram, TikTok, Threads и X. Из них же можно сделать короткие 10-секундные видео, например в Kling 3.0.</p>
+    <div class="note cy">Как сделать кадры живыми, а не «пластиковыми», с готовыми формулами промптов: <a href="/prompts">мануал по реализму и позам</a>.</div>
+  </section>
+
+  <section class="step" id="s2">
+    <h2><b>02</b>Регистрируем соцсети</h2>
+    <p>Для продвижения нужны новые аккаунты на имя модели: Instagram, Threads, TikTok, X.</p>
+    <p>Платят ИИ-моделям в основном мужчины из США, Великобритании и Канады. Они знакомы с Fanvue и OnlyFans и платят охотнее европейцев. Чтобы соцсети сразу показывали модель им:</p>
+    <ul>
+      <li>сбрось телефон до заводских настроек;</li>
+      <li>при настройке выбери язык и время США;</li>
+      <li>подключи VPN на США;</li>
+      <li>купи виртуальный американский номер;</li>
+      <li>зарегистрируй аккаунты на имя модели и укажи в профиле, что это ИИ-персонаж;</li>
+      <li>прогрей аккаунты, прежде чем публиковать посты.</li>
+    </ul>
+    <div class="note">Прогрев значит пару дней вести себя как обычный пользователь: смотреть ленту, ставить лайки, без резких действий. От прогрева зависит, будут ли посты показывать людям, поэтому не торопись и соблюдай правила площадки.</div>
+  </section>
+
+  <section class="step" id="s3">
+    <h2><b>03</b>Продвигаем модель</h2>
+    <p>Когда аккаунты прогреты, можно публиковать. В обычных соцсетях откровенный контент запрещён, и он там не нужен: нужную аудиторию цепляют красивые и живые кадры.</p>
+    <ul>
+      <li>публикуй качественный контент регулярно;</li>
+      <li>пиши подписи, на которые хочется ответить в комментариях;</li>
+      <li>отвечай на комментарии и сообщения;</li>
+      <li>цепляй с первой строки и первой секунды видео;</li>
+      <li>соблюдай правила площадки, иначе аккаунт закроют.</li>
+    </ul>
+  </section>
+
+  <section class="step" id="s4">
+    <h2><b>04</b>Зарабатываем</h2>
+    <p><strong>За что платят.</strong> За внимание, общение и эксклюзивный контент: личные сеты, фото и видео под запрос фаната. Многие платят за то, что с ними интересно и тепло общаются.</p>
+    <p><strong>Где платят.</strong> Трафик из соцсетей ведём на площадку, где разрешены ИИ-модели и 18+ контент, например Fanvue. Регистрируешься как AI creator, контент помечается как созданный ИИ.</p>
+    <ol class="chain">
+      <li>Публикуешь контент в соцсетях и набираешь просмотры.</li>
+      <li>Мужчины, которым понравилась модель, пишут в личку.</li>
+      <li>Ты приглашаешь их на профиль модели на Fanvue, ссылка в био.</li>
+      <li>Там общаешься и предлагаешь платный контент: сеты, фото под запрос, личные сообщения.</li>
+      <li>Выводишь деньги и подключаешь вторую модель, когда первая работает стабильно.</li>
+    </ol>
+    <div class="note">Не выдавай модель за живую девушку. На прямой вопрос «ты настоящая?» отвечай честно: фанаты и так знают, что это ИИ, и платят за общение и контент. Обман приводит к жалобам и блокировкам.</div>
+  </section>
+
+  <section class="step" id="s5">
+    <h2><b>05</b>Реализм и 18+ контент</h2>
+    <p>Откровенный контент можно публиковать только на 18+ площадках вроде Fanvue и только со своей вымышленной моделью 21+. Фанаты становятся всё насмотреннее: «пластиковую» кожу и мультяшные кадры не покупают.</p>
+    <ul>
+      <li><strong>Одно лицо во всех кадрах.</strong> Для этого обучают LoRA на свою модель или работают через редактор по эталону.</li>
+      <li><strong>ComfyUI.</strong> Собираешь свою схему генерации из блоков. Полный контроль, но нужно время на настройку.</li>
+      <li><strong>Онлайн-сервисы с режимом 18+.</strong> Быстрее на старте, но без LoRA лицо «плывёт» от кадра к кадру.</li>
+      <li><strong>Кадры без лица.</strong> Продаются, но дешевле: фанат хочет видеть ту самую модель, с которой общается.</li>
+    </ul>
+    <p>В курсе 18+ генерацию в Seedream 4.5 Edit разбираем пошагово, от живой кожи до готового фотосета.</p>
+  </section>
+
+  <div class="end">
+    <h2>Хочешь пройти это по шагам?</h2>
+    <p>В курсе каждый шаг разобран видеоуроком и текстовой инструкцией, а софт в кабинете показывает, какие ссылки приводят людей и что ответить фанату.</p>
+    <div class="row">
+      <a class="btn pr" href="/#program">Смотреть программу</a>
+      <a class="btn gh" href="/#price">Тарифы от 3 900 ₽</a>
+      <a class="btn gh" href="https://t.me/AccessGrantedGuide_bot?start=guide" target="_blank" rel="noopener">Задать вопрос в боте</a>
+    </div>
+  </div>
+  <a class="more" href="/prompts"><b>Мануал: живой лайфстайл-контент и позы</b><span>Формулы промптов против «пластика» и словарь поз. Бесплатно.</span></a>
+</main>
+
+<footer><div class="wrap">18+ · © 2026 NEUROFANS. Все персонажи вымышлены и созданы ИИ. Результаты учеников индивидуальны и не являются гарантией дохода.</div></footer>
+</body>
+</html>
