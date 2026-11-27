@@ -342,4 +342,26 @@ assert allr["group"]=="Все" and allr["steps"]["start"]>0 and allr["steps"]["e
 assert allr["steps"]["pay_open"]>=1 and "clicks" in allr
 assert app.funnel(0,"label")["rows"][0]["group"]=="Все" and app.funnel(1,"team")["rows"]
 print(f"воронка бота: стартов {allr['steps']['start']}, открыли оплату {allr['steps']['pay_open']} ✅")
+import datetime as dt
+# 15) автоматика бота: открыл оплату → догон через 2 ч (один раз, не ночью, не купившим); оплата → метка; вопросы → ИИ
+calls=[]; app.pb_call=lambda m,**p: calls.append((m,p)) or {"code":0}
+app.PB_TOKEN="tok"; app._quiet_now=lambda: False
+_bgsave=app.bg; app.bg=lambda f,*a: f(*a)
+with app._conn() as c: c.execute("INSERT INTO starts(ts,label,click_id,tg_uid,ch,scored) VALUES(?,?,?,?,?,?)",(app._now_iso(),"leo01",None,7001,"t",0))
+assert app.note_pay_open(7001,"checkout_base") and not app.note_pay_open(424242,"checkout")   # чужой uid не пишем
+assert app.run_nudges()==0                                         # рано
+with app._conn() as c: c.execute("UPDATE bot_people SET pay_open_ts=? WHERE tg_uid=7001",((dt.datetime.utcnow()-dt.timedelta(hours=3)).isoformat(timespec="seconds"),))
+assert app.run_nudges()==1 and calls[-1]==("sendCommand",{"command_name":app.PB_CMD_NUDGE,"platform_chat_id":7001})
+assert app.run_nudges()==0                                         # второй раз не догоняем
+with app._conn() as c: c.execute("INSERT INTO starts(ts,label,click_id,tg_uid,ch,scored) VALUES(?,?,?,?,?,?)",(app._now_iso(),"kate02",None,7002,"v",0))
+app.note_pay_open(7002,"checkout"); app.note_paid(7002, True)
+assert ("variableChange",{"variable":"nf_paid","expression":"1","user_id":7002}) in calls and calls[-1][0]=="sendCommand" and calls[-1][1]["command_name"]==app.PB_CMD_PAID
+with app._conn() as c: c.execute("UPDATE bot_people SET pay_open_ts=? WHERE tg_uid=7002",((dt.datetime.utcnow()-dt.timedelta(hours=3)).isoformat(timespec="seconds"),))
+assert app.run_nudges()==0                                         # купившего не догоняем
+app.note_paid(7002, False); assert calls[-1]==("variableChange",{"variable":"nf_paid","expression":"0","user_id":7002})
+sentb=[]; app.bot_send=lambda u,t: sentb.append((u,t)); app._ai_answer=lambda q: "Ответ — про тарифы"; notes=[]; _na=app.notify_all; app.notify_all=lambda t: notes.append(t)
+app.handle_ask(7001,"сколько стоит?"); assert sentb[-1][0]==7001 and "ИИ-ассистент" in sentb[-1][1]
+app.handle_ask(7001,"Катя"); assert notes and "7001" in notes[-1] and "сколько стоит" in notes[-1] and "Кате" in sentb[-1][1]
+app.bg=_bgsave; app.notify_all=_na; app.PB_TOKEN=""
+print("автоматика бота: догон брошенной оплаты, метка «оплатил», ИИ-ассистент и «Катя» ✅")
 print("\nВСЕ ПРОВЕРКИ ПРОШЛИ ✅")

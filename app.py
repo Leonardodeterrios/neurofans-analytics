@@ -187,6 +187,19 @@ for _kv in (os.getenv("ACT_LINKS") or "").split(","):        # переопре�
 # Tribute: вебхук об оплате подписан HMAC-SHA256 тела на API-ключе (заголовок trbt-signature).
 TRIBUTE_KEY = (os.getenv("TRIBUTE_API_KEY") or "").strip()
 TRIBUTE_CLUB_IDS = {x.strip() for x in (os.getenv("TRIBUTE_CLUB_IDS") or "").split(",") if x.strip()}  # пусто — любая покупка
+# PuzzleBot API (входящие запросы): метка «оплатил», догон брошенной оплаты, ответы ИИ-ассистента
+PB_TOKEN    = (os.getenv("PUZZLEBOT_API_TOKEN") or "").strip().strip('"\'')
+PB_API      = os.getenv("PUZZLEBOT_API", "https://api.puzzlebot.top/")
+PB_CMD_PAID = os.getenv("PB_CMD_PAID", "Спасибо за покупку")          # блок PuzzleBot после оплаты
+PB_CMD_NUDGE = os.getenv("PB_CMD_NUDGE", "Сомнения перед оплатой")    # блок «открыл оплату, но не купил»
+PB_PAID_VAR = os.getenv("PB_PAID_VAR", "nf_paid")                     # переменная пользователя: 1 = купил
+NUDGE_AFTER_MIN = int(os.getenv("NUDGE_AFTER_MIN", "120"))
+NUDGE_MAX_H = int(os.getenv("NUDGE_MAX_H", "48"))
+ASK_PER_DAY = int(os.getenv("ASK_PER_DAY", "15"))
+AI_URL    = (os.getenv("LAB_AI_URL") or "").strip()
+AI_SECRET = (os.getenv("LAB_AI_SECRET") or "").strip().strip('"\'\r')
+AI_KEY    = (os.getenv("LAB_AI_KEY") or "").strip()
+AI_MODEL  = (os.getenv("BOT_AI_MODEL") or os.getenv("LAB_AI_MODEL") or "gpt-4o-mini").strip()
 TRIBUTE_FORWARD = (os.getenv("TRIBUTE_FORWARD", "http://lab:8090/api/tribute/webhook") or "").strip()  # копия вебхука кабинету (Pro)
 PAID_EVENTS = ("new_subscription", "new_digital_product", "new_donation")
 
@@ -339,6 +352,11 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT, tg_uid INTEGER, act TEXT, label TEXT,
             points INTEGER, start_id INTEGER, UNIQUE(tg_uid, act))""")
         c.execute("CREATE TABLE IF NOT EXISTS meta(k TEXT PRIMARY KEY, v TEXT)")
+        # автоматика бота: кто открыл оплату, кто купил (любой человек, не только приведённый партнёром), догоны, вопросы ИИ
+        c.execute("""CREATE TABLE IF NOT EXISTS bot_people(
+            tg_uid INTEGER PRIMARY KEY, pay_open_ts TEXT, pay_kind TEXT, paid_ts TEXT, nudge_ts TEXT)""")
+        c.execute("""CREATE TABLE IF NOT EXISTS bot_asks(
+            id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT, tg_uid INTEGER, q TEXT, a TEXT, human INTEGER DEFAULT 0)""")
         c.execute("""CREATE TABLE IF NOT EXISTS alerts(
             id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT, source TEXT, kind TEXT)""")
         c.execute("CREATE INDEX IF NOT EXISTS ix_clicks_src_vid ON clicks(source, vid, rnd)")
@@ -1012,6 +1030,10 @@ def scheduler_loop():
                 run_silence_check()
             except Exception as e:
                 log.error("silence check failed: %s", e)
+        try:
+            run_nudges()
+        except Exception as e:
+            log.error("nudges failed: %s", e)
         if DAILY_SUMMARY_TIME and ADMIN_IDS:
             try:
                 nowtz = dt.datetime.now(ZoneInfo(SUMMARY_TZ))
@@ -1155,10 +1177,12 @@ def tribute_webhook():
         ev = json.loads(raw or b"{}")
         what = tribute_event(ev)
         if "paid" in what:
+            note_paid(what["paid"], True)
             res = record_action(what["paid"], "paid")
             if res.get("ok"):
                 notify_action(res["label"], res["act"], res["points"])
         elif "refund" in what:
+            note_paid(what["refund"], False)
             res = {"ok": True, "refunded": remove_paid(what["refund"])}
         else:
             res = {"ok": True, "skip": ev.get("name")}
@@ -1179,7 +1203,10 @@ def bot_action():
     except ValueError:
         uid = 0
     try:
-        res = record_action(uid, request.values.get("act") or request.values.get("a") or "")
+        _a = (request.values.get("act") or request.values.get("a") or "").strip().lower()
+        if uid and _a in ("checkout", "checkout_base"):
+            note_pay_open(uid, _a)
+        res = record_action(uid, _a)
     except Exception as e:                      # никаких 500 для PuzzleBot
         log.error("action failed: %s", e)
         res = {"ok": False, "reason": "error"}
@@ -1243,6 +1270,8 @@ def act_link(act):
         except ValueError:
             uid = 0
     try:
+        if uid and act in ("checkout", "checkout_base"):
+            note_pay_open(uid, act)
         res = record_action(uid, act) if uid else {"ok": False, "reason": "no_uid"}
     except Exception as e:
         log.error("act link failed: %s", e)
@@ -1547,6 +1576,152 @@ def export_starts():
 def index():
     _need(admin=True)
     return Response(PAGE, mimetype="text/html")
+
+# ── Автоматика бота через PuzzleBot API (27.11.2026) ─────────────────────────────────────────────
+# Сеть — только в фоне (bg) или в планировщике: редиректы и ответы PuzzleBot не ждут внешние сервисы.
+def pb_call(method, **params):
+    """Запрос к API PuzzleBot (входящие запросы). Возвращает dict ответа; без токена — {"code": -1}."""
+    if not PB_TOKEN:
+        return {"code": -1, "reason": "no_token"}
+    try:
+        r = httpx.post(PB_API, params={"token": PB_TOKEN, "method": method, "platform": "tg"},
+                       data={k: v for k, v in params.items() if v is not None}, timeout=15)
+        return r.json()
+    except Exception as e:
+        log.warning("puzzlebot %s failed: %s", method, e)
+        return {"code": -2, "reason": str(e)[:200]}
+
+def note_pay_open(uid, kind):
+    """Человек открыл оплату (кнопка → /a/checkout*). Помним первый раз — для догона через NUDGE_AFTER_MIN."""
+    with _conn() as c:
+        if not c.execute("SELECT 1 FROM starts WHERE tg_uid=? LIMIT 1", (uid,)).fetchone():
+            return False                         # неизвестный в боте uid — не пишем (защита от подделки ?u=)
+        c.execute("INSERT INTO bot_people(tg_uid, pay_open_ts, pay_kind) VALUES(?,?,?) "
+                  "ON CONFLICT(tg_uid) DO UPDATE SET pay_open_ts=COALESCE(pay_open_ts, excluded.pay_open_ts), "
+                  "pay_kind=excluded.pay_kind", (uid, _now_iso(), kind))
+    return True
+
+def note_paid(uid, paid=True):
+    """Оплата из Tribute (любой человек): метка в PuzzleBot + блок «Спасибо за покупку»; возврат — снять метку."""
+    with _conn() as c:
+        c.execute("INSERT INTO bot_people(tg_uid, paid_ts) VALUES(?,?) ON CONFLICT(tg_uid) DO UPDATE SET paid_ts=excluded.paid_ts",
+                  (uid, _now_iso() if paid else None))
+    bg(_pb_paid, uid, paid)
+
+def _pb_paid(uid, paid):
+    pb_call("variableChange", variable=PB_PAID_VAR, expression="1" if paid else "0", user_id=uid)
+    if paid and PB_CMD_PAID:
+        pb_call("sendCommand", command_name=PB_CMD_PAID, platform_chat_id=uid)
+
+def _quiet_now():
+    h = dt.datetime.now(ZoneInfo("Europe/Moscow")).hour
+    return h < 10 or h >= 22                     # ночью по Москве не пишем
+
+def run_nudges(limit=20):
+    """Открыл оплату ≥ NUDGE_AFTER_MIN назад, не купил, не догоняли и прошло меньше NUDGE_MAX_H — один догон."""
+    if not PB_TOKEN or not PB_CMD_NUDGE or _quiet_now():
+        return 0
+    now = dt.datetime.now(dt.timezone.utc).replace(tzinfo=None)
+    lo = (now - dt.timedelta(hours=NUDGE_MAX_H)).isoformat(timespec="seconds")
+    hi = (now - dt.timedelta(minutes=NUDGE_AFTER_MIN)).isoformat(timespec="seconds")
+    with _conn() as c:
+        rows = [r["tg_uid"] for r in c.execute(
+            "SELECT p.tg_uid FROM bot_people p WHERE p.pay_open_ts BETWEEN ? AND ? AND p.paid_ts IS NULL "
+            "AND p.nudge_ts IS NULL AND NOT EXISTS (SELECT 1 FROM actions a WHERE a.tg_uid=p.tg_uid AND a.act='paid') "
+            "LIMIT ?", (lo, hi, limit))]
+        for uid in rows:                         # отмечаем до отправки: лучше пропустить, чем написать дважды
+            c.execute("UPDATE bot_people SET nudge_ts=? WHERE tg_uid=?", (_now_iso(), uid))
+    for uid in rows:
+        pb_call("sendCommand", command_name=PB_CMD_NUDGE, platform_chat_id=uid)
+    return len(rows)
+
+BOT_FACTS = """Ты ИИ-ассистент курса NEUROFANS в Telegram-боте. Отвечай по-русски, коротко (до 6 предложений), тепло и по делу,
+на «ты». Не используй длинные тире. Ничего не выдумывай: цифры, цены, сроки и состав курса бери ТОЛЬКО из фактов ниже.
+Если ответа в фактах нет, честно скажи, что уточнишь у Кати, и предложи написать слово «Катя». Не обещай заработок:
+цифры учеников и расчёты называй как примеры, а не гарантию. Ты ИИ и не притворяешься человеком.
+Не помогай с реальными людьми, дипфейками, «заменой лица», подростковой или школьной эстетикой: модель только вымышленная, 21+.
+
+ФАКТЫ:
+- NEUROFANS: курс, как создать свою вымышленную ИИ-модель 21+ и зарабатывать на её контенте на Fanvue и в Telegram. Автор курса Катя, у неё своя ИИ-модель на Fanvue.
+- Тариф Базовый, 3 900 ₽: 9 видеоуроков с текстовыми инструкциями; оплата нейросетей из России без иностранной карты; своя модель с уникальной внешностью и первые 100 фото; 18+ фото с живой кожей; референсы, кастомы под заказ, сеты; библиотека промптов. Без LoRA, ComfyUI и мощного компьютера.
+- Тариф Продвинутый, 14 900 ₽: всё из Базового + стратегия (7 архетипов модели, психология фаната, паспорт модели), видео-генерация 18+, 199 примеров генераций с промптами, Fanvue (профиль, цены, платные посты, автосообщения, правила, вывод денег), трафик (рабочий телефон под США, прогрев Instagram и Threads по 10-дневному плану, TikTok, система ссылок, Telegram-каналы модели с автооплатой, автокомментинг в Threads), чаттинг (стратегии продаж, кастомы, фразы-границы, нейро-чаттер по 5 этапам воронки) и закрытый чат участников.
+- Апгрейд с Базового на Продвинутый: 11 000 ₽ (доплата разницы).
+- В обоих тарифах кабинет NEUROFANS: аналитика переходов по ссылкам, ИИ-Студия для постов под модель, нейро-чаттер с подсказками для переписки, лига учеников.
+- Оплата разовая, через Tribute: картой РФ, СБП или в Telegram. Возврата нет, потому что доступ ко всем материалам открывается сразу после оплаты. Поэтому, если сомневаешься, можно начать с Базового.
+- После оплаты по ссылке из Tribute открывается бот @NeuroFansLab_bot, он присылает личную ссылку на регистрацию в кабинете.
+- Мощный компьютер не нужен: работаем в облачных нейросетях через браузер, хватит телефона или обычного ноутбука.
+- Английский не нужен: переписка переводится в один клик.
+- Анонимность: модель вымышленная, твоего лица нигде нет; аккаунты ведутся под аудиторию США и Европы.
+- Учеников больше 380. Примеры результатов учеников: Соня $1 932 в первый месяц, Анна $1 400 за 3 недели, лучший первый месяц $6 840. Пример расчёта одной модели: 35 подписчиков по $15 + продажи паков + чаевые ≈ $2 155 в месяц. Это примеры, не обещание.
+- Сайт курса: https://new.neurofans.ru (там тарифы и примеры). Купить: кнопки «Базовый» и «Продвинутый» в боте."""
+
+HUMAN_WORDS = re.compile(r"^\s*(катя|кате|человек|оператор|менеджер|живой человек)\s*[.!?]*\s*$", re.I)
+
+def _ai_answer(q):
+    msgs = [{"role": "system", "content": BOT_FACTS}, {"role": "user", "content": q[:1500]}]
+    payload = {"model": AI_MODEL, "messages": msgs, "max_tokens": 500, "temperature": 0.4}
+    if AI_KEY:
+        url, headers = AI_URL or "https://openrouter.ai/api/v1/chat/completions", {"Authorization": f"Bearer {AI_KEY}"}
+        payload["max_completion_tokens"] = payload.pop("max_tokens")
+    else:
+        url, headers = AI_URL, {"x-relay-secret": AI_SECRET}
+    if not url:
+        return ""
+    r = httpx.post(url, json=payload, headers=headers, timeout=60)
+    data = r.json()
+    text = ((data.get("choices") or [{}])[0].get("message") or {}).get("content") or ""
+    return text.replace("—", ",").replace("–", "-").strip()
+
+def bot_send(uid, text):
+    """Сообщение человеку в бот: через PuzzleBot (быстро из РФ), иначе напрямую Bot API."""
+    if PB_TOKEN:
+        return pb_call("tg.sendMessage", chat_id=uid, text=text, disable_web_page_preview="true")
+    return tg_send(text, uid)
+
+def handle_ask(uid, q):
+    """Вопрос человека в боте → ответ ИИ-ассистента (в фоне). «Катя» → передаём админам."""
+    q = (q or "").strip()
+    if not q:
+        return
+    with _conn() as c:
+        day = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=1)).replace(tzinfo=None).isoformat(timespec="seconds")
+        n = c.execute("SELECT COUNT(*) FROM bot_asks WHERE tg_uid=? AND ts>=?", (uid, day)).fetchone()[0]
+        human = bool(HUMAN_WORDS.match(q))
+        aid = c.execute("INSERT INTO bot_asks(ts,tg_uid,q,human) VALUES(?,?,?,?)", (_now_iso(), uid, q[:2000], int(human))).lastrowid
+    if human or n >= ASK_PER_DAY:
+        last = ""
+        with _conn() as c:
+            r = c.execute("SELECT q FROM bot_asks WHERE tg_uid=? AND human=0 ORDER BY id DESC LIMIT 1", (uid,)).fetchone()
+            last = r["q"] if r else ""
+        notify_all(f"🙋 Человек просит Катю в боте\nTelegram ID: {uid}\nПоследний вопрос: {last[:500] or '—'}")
+        bot_send(uid, "Твой вопрос ушёл Кате, она ответит тебе здесь лично 🖤")
+        return
+    try:
+        a = _ai_answer(q)
+    except Exception as e:
+        log.warning("ask ai failed: %s", e)
+        a = ""
+    if not a:
+        a = "Не получилось ответить прямо сейчас. Напиши «Катя», и вопрос получит автор курса."
+    with _conn() as c:
+        c.execute("UPDATE bot_asks SET a=? WHERE id=?", (a[:4000], aid))
+    bot_send(uid, a + "\n\n🤖 Ответил ИИ-ассистент NEUROFANS. Нужен человек: напиши «Катя».")
+
+@app.route("/bot/ask", methods=["GET", "POST"])
+def bot_ask():
+    """PuzzleBot «Отправить запрос» на любое сообщение: ?uid={{USER_ID_TEXT}}&q=<текст>&key=<INGEST_TOKEN>.
+    Отвечаем сразу 200, а ответ ИИ уходит человеку в фоне через API PuzzleBot."""
+    if not INGEST_TOKEN or not hmac.compare_digest(request.values.get("key", ""), INGEST_TOKEN):
+        abort(403)
+    try:
+        uid = int(re.sub(r"\D", "", request.values.get("uid") or "")[:15] or 0)
+    except ValueError:
+        uid = 0
+    q = (request.values.get("q") or request.values.get("text") or "")[:2000]
+    if uid and q.strip() and not q.strip().startswith("/"):
+        bg(handle_ask, uid, q)
+        return jsonify(ok=True)
+    return jsonify(ok=False)
 
 # ── Воронка бота (27.11.2026): из стартов за период — сколько дошли до каждого шага ──────────────
 FUNNEL_STEPS = [("start", "Старт в боте"), ("examples", "Примеры"), ("sim", "Симулятор"), ("site", "Сайт"),
