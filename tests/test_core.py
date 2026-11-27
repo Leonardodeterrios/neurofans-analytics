@@ -485,4 +485,12 @@ assert app.run_weekly_report(_mon.replace(hour=12)) and not app.run_weekly_repor
 assert not app.run_weekly_report(_mon.replace(day=1, hour=12))       # не понедельник
 app.notify_all=_onot; app.ADMIN_IDS=_oadm
 print(txt.split("\n")[0], "— еженедельный отчёт ✅")
+# реферал ученика: ?start=ref_<код> → при оплате кабинету уходит код с подписью
+r=app.record_start("ref_abc12x5", 515151); assert r["label"]=="ref_abc12x5" and not r["scored"]
+assert app.start_source(r)==("ref","ref_abc12x5") and app.ref_of_uid(515151)=="abc12x5" and app.ref_of_uid(909090)==""
+_fw=[]; _obg=app.bg; app.bg=lambda fn,*a: _fw.append((fn.__name__,a)); app.TRIBUTE_FORWARD="http://lab"
+trib({"name":"new_digital_product","payload":{"telegram_user_id":515151,"product_id":5,"product_name":"NEUROFANS Базовый"}})
+app.bg=_obg; app.TRIBUTE_FORWARD=""
+fwd=[a for n,a in _fw if n=="_tribute_forward"]; assert fwd and fwd[0][2]=="abc12x5", _fw
+print("реферальные ссылки учеников ✅")
 print("\nВСЕ ПРОВЕРКИ ПРОШЛИ ✅")

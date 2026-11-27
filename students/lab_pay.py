@@ -9,6 +9,9 @@
 Товар up — доплата с Базового до Продвинутого. Настройка: TRIBUTE_COURSE="111:base,222:adv,333:up".
 Здесь только функции над базой — без сети. Отправку сообщений делают lab.py и lab_notify.py.
 """
+import datetime as dt
+import hashlib
+import hmac
 import secrets
 
 KINDS = ("base", "adv", "up")
@@ -19,8 +22,10 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS purchases(ref TEXT PRIMARY KEY, tg_id INTEGER, product_id INTEGER, kind TEXT,
   created TEXT, refunded TEXT, test INTEGER DEFAULT 0);
 CREATE INDEX IF NOT EXISTS ix_purchases_tg ON purchases(tg_id);
+CREATE TABLE IF NOT EXISTS referrals(buyer_tg INTEGER PRIMARY KEY, ref_uid INTEGER, purchase TEXT, kind TEXT,
+  created TEXT, refunded TEXT, pro_days INTEGER);
 """
-USER_COLS = (("course", "TEXT"), ("course_admin", "TEXT"))
+USER_COLS = (("course", "TEXT"), ("course_admin", "TEXT"), ("ref_code", "TEXT"))
 INVITE_COLS = (("tg_id", "INTEGER"),)
 
 
@@ -163,3 +168,69 @@ def kind_by_name(title):
         return "base"
     return None
 
+
+
+# ---------- рефералы: ученик приводит друга, за каждую покупку курса — Pro на REF_PRO_DAYS ----------
+# Ссылка ученика ведёт в бота продаж: t.me/<бот>?start=ref_<код> (или сайт ?ref=<код> → кнопка бота несёт тот же код).
+# Трекер видит первый «Старт» покупателя с ref_<код> и при оплате пересылает кабинету код, подписанный HMAC.
+B36 = "0123456789abcdefghijklmnopqrstuvwxyz"
+
+
+def _b36(n):
+    s = ""
+    while True:
+        n, r = divmod(n, 36)
+        s = B36[r] + s
+        if not n:
+            return s
+
+
+def ref_code(c, uid, secret):
+    """Личный код ученика: стабильный, без ника и без порядкового номера в открытом виде."""
+    r = c.execute("SELECT ref_code FROM users WHERE id=?", (uid,)).fetchone()
+    if r and r[0]:
+        return r[0]
+    code = (hmac.new(secret.encode() if isinstance(secret, str) else secret, f"ref{uid}".encode(), hashlib.sha256)
+            .hexdigest()[:5] + _b36(uid))
+    c.execute("UPDATE users SET ref_code=? WHERE id=?", (code, uid))
+    return code
+
+
+def ref_sig(key, raw, code):
+    return hmac.new(key.encode(), raw + b"|" + code.encode(), hashlib.sha256).hexdigest()
+
+
+def credit_ref(c, code, buyer_tg, purchase, kind, now, days):
+    """Покупка курса по коду ученика → Pro на days дней пригласившему. Один покупатель — одно начисление.
+    Себя пригласить нельзя. Возвращает строку ученика-пригласившего или None."""
+    u = c.execute("SELECT id, nick, tg_chat_id FROM users WHERE ref_code=? AND blocked=0", (code,)).fetchone()
+    if not u or (u["tg_chat_id"] and int(u["tg_chat_id"]) == int(buyer_tg)):
+        return None
+    cur = c.execute("INSERT OR IGNORE INTO referrals(buyer_tg, ref_uid, purchase, kind, created, pro_days) "
+                    "VALUES(?,?,?,?,?,?)", (int(buyer_tg), u["id"], str(purchase), kind, now.isoformat(timespec="seconds"), days))
+    if not cur.rowcount:
+        return None
+    if days:
+        last = c.execute("SELECT MAX(until) FROM pro WHERE uid=? OR (tg_id IS NOT NULL AND tg_id=?)",
+                         (u["id"], u["tg_chat_id"] or -1)).fetchone()[0]
+        base = max(now, dt.datetime.fromisoformat(last)) if last else now
+        c.execute("INSERT INTO pro(uid,until,source,ref,created) VALUES(?,?,?,?,?)",
+                  (u["id"], (base + dt.timedelta(days=days)).isoformat(timespec="seconds"), "ref", f"ref:{purchase}",
+                   now.isoformat(timespec="seconds")))
+    return u
+
+
+def refund_ref(c, buyer_tg, now):
+    """Возврат покупки друга: снимаем начисленный Pro и помечаем приглашение."""
+    r = c.execute("SELECT purchase FROM referrals WHERE buyer_tg=? AND refunded IS NULL", (int(buyer_tg),)).fetchone()
+    if not r:
+        return False
+    c.execute("UPDATE referrals SET refunded=? WHERE buyer_tg=?", (now.isoformat(timespec="seconds"), int(buyer_tg)))
+    c.execute("DELETE FROM pro WHERE ref=?", (f"ref:{r[0]}",))
+    return True
+
+
+def ref_stats(c, uid):
+    rows = c.execute("SELECT kind, refunded, pro_days FROM referrals WHERE ref_uid=?", (uid,)).fetchall()
+    live = [r for r in rows if not r["refunded"]]
+    return {"bought": len(live), "pro_days": sum(r["pro_days"] or 0 for r in live)}

@@ -470,6 +470,25 @@ N3.handle_update(cc, {"update_id": 52, "message": {"text": "Супер, так �
 assert any(p.get("chat_id") == 7171 and "Куратор" in p["text"] for m, p in calls), calls
 assert [r["nick"] for r in lab_care.admin_list(cc)][0] == "care1"
 print("забота: план недели, отзывы с согласием, связь с куратором: OK")
+# реферал: ученик care1 приглашает друга, тот покупает → +30 дней Pro
+rc = lab_pay.ref_code(cc, cuid, lab.SECRET); cc.commit()
+assert rc == lab_pay.ref_code(cc, cuid, lab.SECRET) and len(rc) >= 6
+def trbr(payload, code, sig=None):
+    b = json.dumps({"name": "new_digital_product", "payload": payload}).encode()
+    h = {**LAB, "trbt-signature": _h.new(b"trbkey", b, _hl.sha256).hexdigest(), "Content-Type": "application/json",
+         "x-nf-ref": code + ":" + (sig or lab_pay.ref_sig("trbkey", b, code))}
+    return J(c.post("/api/tribute/webhook", data=b, headers=h))
+assert trbr({"product_id": 111, "purchase_id": 9101, "telegram_user_id": 8181}, rc, sig="bad")["course"] == "paid"
+assert lab.db().execute("SELECT COUNT(*) FROM referrals").fetchone()[0] == 0          # поддельная подпись — не считаем
+assert trbr({"product_id": 111, "purchase_id": 9102, "telegram_user_id": 8282}, rc)["course"] == "paid"
+assert trbr({"product_id": 222, "purchase_id": 9103, "telegram_user_id": 8282}, rc)["course"] == "paid"   # тот же друг ещё раз — одно начисление
+assert trbr({"product_id": 111, "purchase_id": 9104, "telegram_user_id": 7171}, rc)["course"] == "paid"   # сам себя — нет
+cx = lab.db(); assert lab_pay.ref_stats(cx, cuid) == {"bought": 1, "pro_days": lab.REF_PRO_DAYS}
+assert cx.execute("SELECT COUNT(*) FROM pro WHERE uid=? AND source='ref'", (cuid,)).fetchone()[0] == 1
+b = json.dumps({"name": "digital_product_refund", "payload": {"product_id": 111, "purchase_id": 9102, "telegram_user_id": 8282}}).encode()
+c.post("/api/tribute/webhook", data=b, headers={**LAB, "trbt-signature": _h.new(b"trbkey", b, _hl.sha256).hexdigest(), "Content-Type": "application/json"})
+cx = lab.db(); assert lab_pay.ref_stats(cx, cuid)["bought"] == 0 and cx.execute("SELECT COUNT(*) FROM pro WHERE source='ref'").fetchone()[0] == 0
+print("рефералы: Pro за покупку друга, подпись, возврат: OK")
 # прямой OpenAI-совместимый API (OpenRouter): Bearer-ключ вместо секрета ретранслятора
 import threading as _th
 from http.server import BaseHTTPRequestHandler as _B, HTTPServer as _S

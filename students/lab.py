@@ -53,6 +53,9 @@ AI_SECRET = _env("LAB_AI_SECRET").strip().strip("\"'")                   # об�
 AI_MODEL = _env("LAB_AI_MODEL", "gpt-4o-mini")
 TRIBUTE_KEY = _env("TRIBUTE_API_KEY")               # API-ключ Tribute: им подписаны вебхуки (trbt-signature)
 TRIBUTE_PRO_URL = _env("TRIBUTE_PRO_URL")           # ссылка на подписку/товар Pro в Tribute
+REF_PRO_DAYS = int(_env("REF_PRO_DAYS", "30") or 30)               # Pro пригласившему за каждую покупку друга
+SALES_BOT = _env("SALES_BOT_USERNAME", "AccessGrantedGuide_bot")   # бот продаж курса (PuzzleBot)
+SITE_URL = _env("SITE_URL", "https://neurofans.ru")
 TRIBUTE_TEST_IDS = {int(x) for x in re.findall(r"\d+", _env("TRIBUTE_TEST_IDS", ""))}  # id тестовых товаров (или «тест» в названии)
 TRIBUTE_PRODUCTS = ai.parse_products(_env("TRIBUTE_PRODUCTS"))   # "id:дней,…" для разовых товаров
 TRIBUTE_COURSE = pay.parse_course(_env("TRIBUTE_COURSE"))        # "id:base,id:adv,id:up" — товары курса → доступ в кабинет
@@ -1291,6 +1294,16 @@ def api_admin_overview():
     return jsonify({"ok": True, "users": users, "invites": invites, "totals": tot, "week": wk, "funnel": funnel,
                     "reviews": reviews, "tg_enabled": bool(LAB_BOT_TOKEN), "ai_ready": AI_READY, "pay_ready": bool(TRIBUTE_KEY), "stuck": stuck, "backups": backups, "consent": consent, "sales": sales})
 
+@app.route("/api/ref")
+def api_ref():
+    """Личная ссылка «Пригласи друга» и сколько по ней купили."""
+    u = need_user()
+    with _wlock, closing(db()) as c:
+        code = pay.ref_code(c, u["id"], SECRET); c.commit()
+        st = pay.ref_stats(c, u["id"])
+    return jsonify({"ok": True, "code": code, "days": REF_PRO_DAYS, **st,
+                    "bot": f"https://t.me/{SALES_BOT}?start=ref_{code}", "site": f"{SITE_URL}/?ref={code}"})
+
 @app.route("/api/admin/reviews/<int:rid>", methods=["PATCH"])
 def api_admin_review(rid):
     """Скрыть/вернуть отзыв в админке (на сайт отзыв ставится вручную и только с согласием ученика)."""
@@ -1720,14 +1733,39 @@ def api_tribute():
             u = pay.user_by_tg(c, tg)
             if u:
                 pay.sync_user(c, u["id"])
+        # реферал: трекер прислал код пригласившего (подпись HMAC на ключе Tribute) — Pro ученику
+        referrer = None
+        rh = request.headers.get("x-nf-ref", "")
+        code, _, rsig = rh.partition(":")
+        if course and course[0] == "paid" and not test and code and hmac.compare_digest(rsig, pay.ref_sig(TRIBUTE_KEY, raw, code)):
+            referrer = pay.credit_ref(c, code, tg, p.get("purchase_id") or key, cmap.get(pid), now_utc(), REF_PRO_DAYS)
+        elif course and course[0] == "refund":
+            pay.refund_ref(c, tg, now_utc())
         c.commit()
     if course:
         _bg(_course_news, int(tg), *course)
+    if referrer:
+        _bg(_ref_news, referrer["id"])
     return jsonify({"ok": True, **({"course": course[0]} if course else {})})
 
 
 def _bg(fn, *a):
     threading.Thread(target=fn, args=a, daemon=True).start()
+
+def _ref_news(uid):
+    N = notifier()
+    if not N.enabled:
+        return
+    with closing(db()) as c:
+        u = c.execute("SELECT tg_chat_id, nick FROM users WHERE id=?", (uid,)).fetchone()
+        admin = kv_get(c, "admin_chat")
+    try:
+        if u and u["tg_chat_id"]:
+            N._send(u["tg_chat_id"], f"🎉 По твоей ссылке купили курс! Тебе +{REF_PRO_DAYS} дней Pro в кабинете. Спасибо, что делишься.")
+        if admin:
+            N._send(int(admin), f"🤝 Покупка по реферальной ссылке ученика {u['nick'] if u else uid}: ему +{REF_PRO_DAYS} дней Pro.")
+    except Exception as e:
+        log.warning("ref news failed: %s", e)
 
 COURSE_KIND = {"base": "Базовый", "adv": "Продвинутый", "up": "доплата до Продвинутого"}
 

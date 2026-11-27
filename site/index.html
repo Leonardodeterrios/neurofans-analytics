@@ -1348,7 +1348,11 @@ gal.querySelectorAll("img").forEach(img => {
   const EP = "https://go.ai-creators.ru/site/ev";
   let vid = ""; try { vid = localStorage.getItem("nf_v") || ""; if (!vid) { vid = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2) + Date.now()).replace(/[^a-z0-9]/gi, "").slice(0, 32); localStorage.setItem("nf_v", vid); } } catch (e) { vid = String(Math.random()).slice(2, 20) + "x" + Date.now(); }
   /* сквозная воронка: в кнопку бота кладём номер браузера — трекер свяжет визит на сайте со «Стартом» и оплатой */
-  if (/^[a-z0-9]{8,40}$/i.test(vid)) document.querySelectorAll('a[href*="AccessGrantedGuide_bot?start="]').forEach(a => { a.href = a.href.replace(/start=(site|guide|prompts|gallery)(?![_\w])/, "start=$1_" + vid); });
+  /* приглашение ученика (?ref=<код>): помним 30 дней, кнопка бота несёт ref_<код> — ученику начислится Pro */
+  let ref = (new URLSearchParams(location.search).get("ref") || "").toLowerCase();
+  try { if (/^[a-z0-9]{6,12}$/.test(ref)) localStorage.setItem("nf_ref", ref + ":" + Date.now()); else { const [r, t] = (localStorage.getItem("nf_ref") || "").split(":"); ref = r && Date.now() - +t < 30 * 864e5 ? r : ""; } } catch (e) { if (!/^[a-z0-9]{6,12}$/.test(ref)) ref = ""; }
+  document.querySelectorAll('a[href*="AccessGrantedGuide_bot?start="]').forEach(a => { a.href = ref ? a.href.replace(/start=[\w-]+/, "start=ref_" + ref)
+    : /^[a-z0-9]{8,40}$/i.test(vid) ? a.href.replace(/start=(site|guide|prompts|gallery)(?![_\w])/, "start=$1_" + vid) : a.href; });
   const q = new URLSearchParams(location.search);
   let src = q.get("utm_source") || q.get("from") || q.get("ref") || "";
   if (!src && document.referrer) { try { const h = new URL(document.referrer).hostname.replace(/^www\./, ""); if (!/neurofans\.ru$/.test(h)) src = h; } catch (e) {} }

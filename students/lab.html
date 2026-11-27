@@ -545,7 +545,7 @@ label.f em.fn{display:block;margin-top:4px}
   <button class="cmdk" id="cmdk"><svg class="i"><use href="#i-search"/></svg><span>Найти или сделать…</span><kbd id="kbdK">⌘K</kbd></button>
   <div class="me"><button id="meBtn" aria-haspopup="true"><span class="ava" id="meAva">?</span><span class="nk" id="meNick"></span></button>
    <div class="menu hide" id="menu">
-    <button data-m="tariff"><svg class="i"><use href="#i-spark"/></svg>Тариф и лимиты</button><button data-m="card"><svg class="i"><use href="#i-img"/></svg>Карточка недели</button><button data-m="tg"><svg class="i"><use href="#i-bell"/></svg>Уведомления в Telegram</button>
+    <button data-m="tariff"><svg class="i"><use href="#i-spark"/></svg>Тариф и лимиты</button><button data-m="card"><svg class="i"><use href="#i-img"/></svg>Карточка недели</button><button data-m="tg"><svg class="i"><use href="#i-bell"/></svg>Уведомления в Telegram</button><button data-m="ref"><svg class="i"><use href="#i-share"/></svg>Пригласи друга</button>
     <button data-m="priv"><svg class="i"><use href="#i-shield"/></svg>Приватность</button><button data-m="app"><svg class="i"><use href="#i-phone"/></svg>Установить приложение</button>
     <hr><button data-m="pw"><svg class="i"><use href="#i-key"/></svg>Сменить пароль</button><button data-m="out"><svg class="i"><use href="#i-out"/></svg>Выйти</button></div></div>
  </div></header>
@@ -714,7 +714,7 @@ $$("[data-p]").forEach(b=>b.onclick=()=>go(b.dataset.p));
 document.addEventListener("click",e=>{const g=e.target.closest("[data-go]");if(g)go(g.dataset.go);const c=e.target.closest("[data-card]");if(c)openCard(c.dataset.card||undefined)});
 $("#meBtn").onclick=e=>{e.stopPropagation();$("#menu").classList.toggle("hide")};
 document.addEventListener("click",()=>$("#menu").classList.add("hide"));
-const MENU={tariff:()=>openTariff(),out:async()=>{await api("/api/logout",{method:"POST",body:{}});location.href="/"},pw:()=>openPw(),tg:()=>openTg(),card:()=>openCard(),priv:()=>openPrivacy(),app:()=>installApp()};
+const MENU={tariff:()=>openTariff(),out:async()=>{await api("/api/logout",{method:"POST",body:{}});location.href="/"},pw:()=>openPw(),tg:()=>openTg(),ref:()=>openRef(),card:()=>openCard(),priv:()=>openPrivacy(),app:()=>installApp()};
 $("#menu").onclick=e=>{const m=e.target.closest("button")?.dataset.m;if(m)MENU[m]()};
 $("#addModel").onclick=()=>openModel();$("#stTariff").onclick=()=>openTariff();
 $("#kbdK").textContent=IS_MAC?"⌘K":"Ctrl K";$("#cmdk").onclick=()=>openPalette();
@@ -912,6 +912,13 @@ function openCard(mid){const ms=activeModels();if(!ms.length){toast("Снача�
   $("#cdN").onchange=e=>{st.nick=e.target.checked;upd()};
   $("#cdShare").onclick=async()=>{try{const blob=await(await fetch(url(),{credentials:"same-origin"})).blob(),file=new File([blob],"neurofans-week.png",{type:"image/png"});
     if(navigator.canShare&&navigator.canShare({files:[file]}))await navigator.share({files:[file],title:"Моя неделя в NeuroFans Lab"});else{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="neurofans-week.png";a.click();toast("Сохранено")}}catch(e){}};upd()}
+async function openRef(){let r;try{r=await api("/api/ref")}catch(e){return}
+  const row=(t,u,id)=>`<label class="f"><span>${t}</span><div style="display:flex;gap:8px"><input class="in mono" readonly value="${esc(u)}" id="${id}" style="flex:1"><button class="btn gh s ic" data-cp="${id}" aria-label="Скопировать">${ic("i-copy")}</button></div></label>`;
+  modal(MH("Пригласи друга")+`<div class="pn-b"><p class="mu" style="margin:0 0 14px">Если друг купит курс по твоей ссылке, тебе +${r.days} дней Pro в кабинете за каждую покупку. Ссылка засчитывается, когда друг заходит в бота и нажимает «Старт».</p>
+    ${row("Ссылка в бота (надёжнее всего)",r.bot,"rfB")}${row("Ссылка на сайт курса",r.site,"rfS")}
+    <div class="strip pn" style="margin-top:12px"><div><div class="l">Купили по ссылке</div><div class="v">${fmt(r.bought)}</div></div><div><div class="l">Получено Pro</div><div class="v">${fmt(r.pro_days)} дн.</div></div></div>
+    <p class="mu sm" style="margin:12px 0 0">Ничего не обещай за курс от себя: просто расскажи, что делаешь сам. Себя пригласить нельзя.</p></div>`);
+  $$("#modalBox [data-cp]").forEach(b=>b.onclick=()=>copy($("#"+b.dataset.cp).value,"Ссылка скопирована"))}
 async function openTg(){let t;try{t=await api("/api/tg")}catch(e){return}
   if(!t.enabled){modal(MH("Уведомления в Telegram")+`<div class="pn-b"><p class="mu" style="margin:0">Скоро здесь можно будет подключить бота: первый человек по ссылке, места в лиге, ачивки и итоги недели.</p></div>`);return}
   const modes=[["all","Все события","первый человек, круглые числа, места, ачивки, итоги"],["digest","Только итоги недели","воскресный дайджест и итоги в понедельник"],["off","Выключены",""]];
@@ -926,7 +933,7 @@ async function openTg(){let t;try{t=await api("/api/tg")}catch(e){return}
     const iv=setInterval(async()=>{n++;try{const s=await api("/api/tg");if(s.linked){clearInterval(iv);closeModal();celebrate("Telegram подключён");refreshMe()}}catch(e){}if(n>60)clearInterval(iv)},3000)}catch(x){$("#tgWait").textContent=x.message}}}
 
 function palItems(){const it=[["Навигация","Эфир","i-ov",()=>go("ov")],["Навигация","Студия","i-studio",()=>go("st")],["Навигация","Модели и ссылки","i-lk",()=>go("lk")],["Студия","Написать план недели","i-cast",()=>{ST.tab="plan";go("st")}],["Студия","Чаттер: ответить фанату","i-chat",()=>{ST.tab="chat";go("st")}],["Студия","Паспорт модели","i-user",()=>{ST.tab="pass";go("st")}],["Студия","Тариф и лимиты","i-spark",()=>openTariff()],["Навигация","Лига недели","i-lg",()=>go("lg")],
-  ["Действия","Добавить модель","i-plus",()=>openModel()],["Действия","Карточка недели","i-img",()=>openCard()],["Действия","Уведомления в Telegram","i-bell",()=>openTg()],["Действия","Приватность","i-shield",()=>openPrivacy()],["NF Core","Сцена: пульс","i-ov",()=>{go("ov");setScene("pulse",true)}],["NF Core","Сцена: орбиты","i-orbit",()=>{go("ov");setScene("orbit",true)}],["NF Core","Сцена: прогноз","i-cast",()=>{go("ov");setScene("cast",true)}],["NF Core","Автопоказ сцен","i-auto",()=>{go("ov");CORE.auto=true;CORE.autoT=performance.now();coreChrome()}],["NF Core","На весь экран","i-fs",()=>{go("ov");setTimeout(()=>$("#coreFs").click(),80)}]];
+  ["Действия","Добавить модель","i-plus",()=>openModel()],["Действия","Карточка недели","i-img",()=>openCard()],["Действия","Уведомления в Telegram","i-bell",()=>openTg()],["Действия","Пригласи друга","i-share",()=>openRef()],["Действия","Приватность","i-shield",()=>openPrivacy()],["NF Core","Сцена: пульс","i-ov",()=>{go("ov");setScene("pulse",true)}],["NF Core","Сцена: орбиты","i-orbit",()=>{go("ov");setScene("orbit",true)}],["NF Core","Сцена: прогноз","i-cast",()=>{go("ov");setScene("cast",true)}],["NF Core","Автопоказ сцен","i-auto",()=>{go("ov");CORE.auto=true;CORE.autoT=performance.now();coreChrome()}],["NF Core","На весь экран","i-fs",()=>{go("ov");setTimeout(()=>$("#coreFs").click(),80)}]];
   activeModels().forEach(m=>{if(m.links.length>1)it.push(["Действия","Сравнить ссылки · "+m.name,"i-cmp",()=>openCompare(m.id)])});
   activeModels().forEach(m=>m.links.filter(l=>!l.archived).forEach(l=>it.push(["Скопировать ссылку",`${m.name} · ${l.ch_name}${l.note?" · "+l.note:""}`,"ch-"+(["threads","instagram","tiktok","youtube","telegram","x","reddit"].includes(l.ch)?l.ch:"other"),()=>copy(l.url,"Ссылка скопирована"),l.slug])));return it}
 function openPalette(){if(!S.me)return;const all=palItems();let sel=0,list=all;

@@ -1434,11 +1434,22 @@ SITE_LABELS = {"site", "guide", "prompts", "gallery"}       # ?start=… с са
 PB_FROM_VAR = os.getenv("PB_FROM_VAR", "nf_from")           # откуда пришёл: threads / video / site / partner / direct
 PB_PARTNER_VAR = os.getenv("PB_PARTNER_VAR", "nf_partner")  # метка партнёра (leo07…) или пусто
 
+REF_LABEL = re.compile(r"ref_([a-z0-9]{6,12})")   # реферальная ссылка ученика кабинета: ?start=ref_<код>
+
+def ref_of_uid(uid):
+    """Код ученика, если человек впервые пришёл в бота по его реферальной ссылке."""
+    with _conn() as c:
+        r = c.execute("SELECT label FROM starts WHERE tg_uid=? ORDER BY id LIMIT 1", (uid,)).fetchone()
+    m = REF_LABEL.fullmatch(r["label"] or "") if r else None
+    return m.group(1) if m else ""
+
 def start_source(res):
     """Откуда человек пришёл в бота — по результату record_start."""
     label, ch = res.get("label") or "direct", res.get("ch") or ""
     if label in SITE_LABELS:
         return "site", ""
+    if REF_LABEL.fullmatch(label):
+        return "ref", label
     ch = {"t": "threads", "v": "video"}.get(ch, ch)   # в базе канал хранится буквой: t / v
     if ch in ("threads", "video"):
         return ch, label
@@ -1446,7 +1457,7 @@ def start_source(res):
         return "partner", label
     return "direct", ""
 
-FROM_TEXT = {"threads": "Threads", "video": "видео (Reels/Shorts/TikTok)", "site": "сайт", "partner": "партнёр", "direct": "напрямую"}
+FROM_TEXT = {"ref": "приглашение ученика", "threads": "Threads", "video": "видео (Reels/Shorts/TikTok)", "site": "сайт", "partner": "партнёр", "direct": "напрямую"}
 
 def uid_source_text(uid):
     """«Threads, партнёр leo07» — по первому старту человека (для уведомлений админам)."""
@@ -1461,9 +1472,12 @@ def _pb_source(uid, src, partner):
     pb_call("variableChange", variable=PB_FROM_VAR, expression=src, user_id=uid)
     pb_call("variableChange", variable=PB_PARTNER_VAR, expression=partner or "-", user_id=uid)
 
-def _tribute_forward(raw, sig):
+def _tribute_forward(raw, sig, ref=""):
+    h = {"trbt-signature": sig, "content-type": "application/json"}
+    if ref and TRIBUTE_KEY:     # кабинет начислит Pro пригласившему ученику; подпись — чтобы заголовок нельзя было подделать
+        h["x-nf-ref"] = ref + ":" + hmac.new(TRIBUTE_KEY.encode(), raw + b"|" + ref.encode(), hashlib.sha256).hexdigest()
     try:
-        httpx.post(TRIBUTE_FORWARD, content=raw, headers={"trbt-signature": sig, "content-type": "application/json"}, timeout=10)
+        httpx.post(TRIBUTE_FORWARD, content=raw, headers=h, timeout=10)
     except Exception as e:
         log.info("tribute forward failed: %s", e)
 
@@ -1480,7 +1494,12 @@ def tribute_webhook():
         ev = {}
     test = is_test_buy(ev)
     if TRIBUTE_FORWARD and not (test and ev.get("name") in PAID_EVENTS):
-        bg(_tribute_forward, raw, sig)
+        try:
+            _p = ev.get("payload") or {}
+            ref = ref_of_uid(int(_p.get("telegram_user_id") or 0)) if ev.get("name") in PAID_EVENTS else ""
+        except (TypeError, ValueError):
+            ref = ""
+        bg(_tribute_forward, raw, sig, ref)
     try:
         what = tribute_event(ev)
         if "paid" in what and test:

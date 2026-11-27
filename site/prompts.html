@@ -128,6 +128,8 @@ try{await navigator.clipboard.writeText(t)}catch(e){const a=document.createEleme
 b.textContent="Скопировано";b.classList.add("ok");setTimeout(()=>{b.textContent="Скопировать";b.classList.remove("ok")},1600)});
 </script>
 <script>/* сквозная воронка: номер браузера с главной (если был) — в кнопку бота */
-try { const v = localStorage.getItem("nf_v") || ""; if (/^[a-z0-9]{8,40}$/i.test(v)) document.querySelectorAll('a[href*="AccessGrantedGuide_bot?start="]').forEach(a => { a.href = a.href.replace(/start=(site|guide|prompts|gallery)(?![_\w])/, "start=$1_" + v); }); } catch (e) {}</script>
+try { const v = localStorage.getItem("nf_v") || "", [r, t] = (localStorage.getItem("nf_ref") || "").split(":"), ref = r && Date.now() - +t < 30 * 864e5 ? r : "";
+  document.querySelectorAll('a[href*="AccessGrantedGuide_bot?start="]').forEach(a => { a.href = ref ? a.href.replace(/start=[\w-]+/, "start=ref_" + ref)
+    : /^[a-z0-9]{8,40}$/i.test(v) ? a.href.replace(/start=(site|guide|prompts|gallery)(?![_\w])/, "start=$1_" + v) : a.href; }); } catch (e) {}</script>
 </body>
 </html>
