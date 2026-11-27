@@ -337,4 +337,9 @@ assert app.get_stats()["action_points"]==b
 assert app.tribute_sig_ok(b"x", _b64.b64encode(_h.new(b"trbkey",b"x",_hl.sha256).digest()).decode())  # base64-подпись тоже
 flask.request.headers=flask._Headers()
 print("оплата клуба: +1000 по вебхуку Tribute, один раз, возврат снимает ✅")
+F=app.funnel(0,"ch"); allr=F["rows"][0]
+assert allr["group"]=="Все" and allr["steps"]["start"]>0 and allr["steps"]["examples"]<=allr["steps"]["start"]
+assert allr["steps"]["pay_open"]>=1 and "clicks" in allr
+assert app.funnel(0,"label")["rows"][0]["group"]=="Все" and app.funnel(1,"team")["rows"]
+print(f"воронка бота: стартов {allr['steps']['start']}, открыли оплату {allr['steps']['pay_open']} ✅")
 print("\nВСЕ ПРОВЕРКИ ПРОШЛИ ✅")

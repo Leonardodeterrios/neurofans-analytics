@@ -1548,6 +1548,95 @@ def index():
     _need(admin=True)
     return Response(PAGE, mimetype="text/html")
 
+# ── Воронка бота (27.11.2026): из стартов за период — сколько дошли до каждого шага ──────────────
+FUNNEL_STEPS = [("start", "Старт в боте"), ("examples", "Примеры"), ("sim", "Симулятор"), ("site", "Сайт"),
+                ("program", "Программа"), ("intent", "Хочу результат"), ("pay_open", "Открыл оплату"),
+                ("paid", "Оплатил")]
+CH_NAMES = {"t": "Threads", "v": "Видео (Shorts/Reels/TikTok)", "": "Без канала"}
+
+def funnel(days=7, by="ch"):
+    """Когорта = люди, впервые стартовавшие за последние `days` дней (0 — за всё время).
+    Для каждого — какие шаги сделал (за всё время после старта). Плюс клики → старт по каналу."""
+    since = ((dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=days)).replace(tzinfo=None)
+             .isoformat(timespec="seconds")) if days else "0"
+    with _conn() as c:
+        first = {}
+        for r in c.execute("SELECT tg_uid, MIN(ts) ts, label, ch FROM starts WHERE tg_uid IS NOT NULL "
+                           "GROUP BY tg_uid HAVING MIN(ts)>=?", (since,)):
+            first[r["tg_uid"]] = (r["label"] or "", r["ch"] or "")
+        acts = {}
+        for r in c.execute("SELECT tg_uid, act FROM actions WHERE tg_uid IN (SELECT tg_uid FROM starts WHERE ts>=?)", (since,)):
+            a = "pay_open" if r["act"] in ("checkout", "checkout_base") else r["act"]
+            acts.setdefault(r["tg_uid"], set()).add(a)
+        clicks = {}
+        for r in c.execute("SELECT ch, COUNT(DISTINCT vid) n FROM clicks WHERE ts>=? AND (scored=1 OR why='desktop') GROUP BY ch", (since,)):
+            clicks[r["ch"] or ""] = r["n"]
+    def key(uid):
+        lab, ch = first[uid]
+        if by == "label": return lab or "—"
+        if by == "team": return TEAMS[team_of(lab)][0] if team_of(lab) else "—"
+        return CH_NAMES.get(ch, ch or "Без канала")
+    groups = {"Все": list(first)}
+    for uid in first:
+        groups.setdefault(key(uid), []).append(uid)
+    rows = []
+    for g, uids in groups.items():
+        n = len(uids)
+        steps = {"start": n}
+        for k, _ in FUNNEL_STEPS[1:]:
+            steps[k] = sum(1 for u in uids if k in acts.get(u, ()))
+        row = {"group": g, "steps": steps}
+        if by == "ch":
+            cl = sum(clicks.values()) if g == "Все" else next((v for ch, v in clicks.items() if CH_NAMES.get(ch, ch) == g), None)
+            row["clicks"] = cl
+        rows.append(row)
+    rows.sort(key=lambda r: (r["group"] != "Все", -r["steps"]["start"]))
+    return {"days": days, "by": by, "steps": FUNNEL_STEPS, "rows": rows}
+
+@app.route("/api/funnel")
+def api_funnel():
+    _need(admin=True)
+    try:
+        days = max(0, min(365, int(request.args.get("days", 7))))
+    except ValueError:
+        days = 7
+    by = request.args.get("by", "ch")
+    return jsonify(funnel(days, by if by in ("ch", "label", "team") else "ch"))
+
+@app.route("/funnel")
+def funnel_page():
+    _need(admin=True)
+    return Response(FUNNEL_PAGE, mimetype="text/html")
+
+FUNNEL_PAGE = r"""<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><title>Воронка бота</title><style>
+body{margin:0;background:#04050c;color:#e9edf8;font:15px/1.5 system-ui,-apple-system,sans-serif;padding:20px}
+h1{font-size:22px;margin:0 0 4px}p.s{color:#8a93ae;margin:0 0 16px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}.bar button{background:#0a0e1c;border:1px solid #283255;color:#c4cade;border-radius:10px;padding:8px 12px;cursor:pointer}
+.bar button.on{border-color:#2ee6d6;color:#fff;background:rgba(46,230,214,.12)}
+.wrap{overflow-x:auto}table{border-collapse:collapse;min-width:760px;width:100%}th,td{padding:9px 10px;border-bottom:1px solid #1b2238;text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}th{color:#8a93ae;font-weight:600;font-size:13px}td b{font-size:16px}td i{display:block;font-style:normal;font-size:12px;color:#8a93ae}
+td.lo i{color:#ff7d6e}td.hi i{color:#2ee6d6}tr.all td{background:rgba(46,230,214,.05)}.note{color:#8a93ae;font-size:13px;margin-top:14px;max-width:760px}
+</style></head><body><h1>Воронка бота</h1><p class="s">Люди, впервые нажавшие «Старт» за период, и сколько из них дошли до каждого шага. Процент под числом: от старта (и от прошлого шага).</p>
+<div class="bar" id="d"></div><div class="bar" id="b"></div><div class="wrap"><table id="t"></table></div>
+<p class="note">«Открыл оплату» — нажал любую кнопку оплаты (Базовый или Продвинутый). «Оплатил» — пришёл вебхук Tribute. Клики — уникальные люди по ссылкам за период (с телефона, без сканеров). Шаги считаются один раз на человека.</p>
+<script>
+const Q=new URLSearchParams(location.search),tok=Q.get("token")||"";let days=+(Q.get("days")||7),by=Q.get("by")||"ch";
+const D=[[1,"Сутки"],[7,"7 дней"],[30,"30 дней"],[0,"Всё время"]],B=[["ch","По каналам"],["team","По командам"],["label","По партнёрам"]];
+function bar(id,list,cur,set){document.getElementById(id).innerHTML=list.map(([v,n])=>`<button class="${v==cur?'on':''}" data-v="${v}">${n}</button>`).join("");
+ document.getElementById(id).onclick=e=>{const b=e.target.closest("button");if(b){set(b.dataset.v);load()}}}
+const pct=(a,b)=>b?Math.round(a*1000/b)/10+"%":"—";
+async function load(){bar("d",D,days,v=>days=+v);bar("b",B,by,v=>by=v);
+ const r=await fetch(`/api/funnel?token=${encodeURIComponent(tok)}&days=${days}&by=${by}`);const j=await r.json();
+ const hasC=by==="ch";let h=`<tr><th>${by==="label"?"Партнёр":by==="team"?"Команда":"Канал"}</th>${hasC?"<th>Клики</th>":""}`+j.steps.map(s=>`<th>${s[1]}</th>`).join("")+"</tr>";
+ for(const row of j.rows){const st=row.steps,n=st.start;h+=`<tr class="${row.group==="Все"?"all":""}"><td>${row.group}</td>`;
+  if(hasC)h+=`<td><b>${row.clicks??"—"}</b><i>→ старт ${row.clicks?pct(n,row.clicks):"—"}</i></td>`;
+  let prev=n;j.steps.forEach(([k],i)=>{const v=st[k];const p=n?v/n:0;const cls=i&&n>=10?(p<.05?"lo":p>.3?"hi":""):"";
+   h+=`<td class="${cls}"><b>${v}</b><i>${i?pct(v,n)+" ("+pct(v,prev)+")":""}</i></td>`;prev=v||prev});h+="</tr>"}
+ document.getElementById("t").innerHTML=h}
+load();
+</script></body></html>"""
+
 @app.route("/healthz")
 def healthz():
     return "ok"
