@@ -171,11 +171,11 @@ ACT_LINKS = {
     "examples": "https://gallery.lukaflow.shop/",          # галерея 18+ на зарубежном сервере (27.11.2026)
     "guide":    "https://ai-creators.ru/guide-model",
     "prompts":  "https://ai-creators.ru/prompts",
-    "sim":      "https://ai-creators.ru/simulator",
+    "sim":      "https://new.neurofans.ru/#sim",                # симулятор на новом сайте
     "channel":  "https://t.me/+X-AXokWU0zswZTFi",
-    "reviews":  "https://t.me/+X-AXokWU0zswZTFi",
+    "reviews":  "https://new.neurofans.ru/#cases",              # кейсы и пруфы на новом сайте
     "site":     "https://new.neurofans.ru/",
-    "program":  "https://new.neurofans.ru/#price",
+    "program":  "https://new.neurofans.ru/#program",
     "intent":   "https://new.neurofans.ru/#price",
     "checkout": "https://t.me/tribute/app?startapp=hLUB",       # Продвинутый 14 900 ₽
     "checkout_base": "https://t.me/tribute/app?startapp=hLUy",  # Базовый 3 900 ₽
