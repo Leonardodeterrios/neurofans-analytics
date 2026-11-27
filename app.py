@@ -2079,7 +2079,7 @@ def _ai_answer(q):
 def bot_send(uid, text):
     """Сообщение человеку в бот: через PuzzleBot (быстро из РФ), иначе напрямую Bot API."""
     if PB_TOKEN:
-        return pb_call("tg.sendMessage", chat_id=uid, text=text, disable_web_page_preview="true")
+        return pb_call("tg.sendMessage", chat_id=uid, text=text, disable_web_page_preview="true", protect_content="true")
     return tg_send(text, uid)
 
 def handle_ask(uid, q):
