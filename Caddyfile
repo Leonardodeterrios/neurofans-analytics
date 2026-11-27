@@ -254,6 +254,22 @@ loradaily.shop, lyravibe.shop, linaflow.shop, loranotes.shop, lanavibe.shop, liz
 			header_up X-Real-IP {remote_host}
 		}
 	}
+	# аккаунты из таблицы NeuroFans_Accounts: /t01…/t99 → Threads, метка th_l_NN; /r01…/r99 → видео, метка rk_k_NN
+	# (на любом из доменов: метку задаёт путь, а не домен)
+	@acct_t path_regexp acct_t ^/t([0-9]{2})/?$
+	handle @acct_t {
+		rewrite * /t/th_l_{re.acct_t.1}
+		reverse_proxy app:8080 {
+			header_up X-Real-IP {remote_host}
+		}
+	}
+	@acct_r path_regexp acct_r ^/r([0-9]{2})/?$
+	handle @acct_r {
+		rewrite * /v/rk_k_{re.acct_r.1}
+		reverse_proxy app:8080 {
+			header_up X-Real-IP {remote_host}
+		}
+	}
 	# любой другой путь (/wp-login.php, /.env… — так ходят сканеры) — 404, в клики не попадает
 	handle {
 		respond 404

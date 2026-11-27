@@ -82,6 +82,12 @@ TEAM_A_COLOR  = _str("TEAM_A_COLOR", "#19d3c5")
 TEAM_B_NAME   = _str("TEAM_B_NAME", "Команда Кати")
 TEAM_B_PREFIX = _str("TEAM_B_PREFIX", "kate").lower()
 TEAM_B_COLOR  = _str("TEAM_B_COLOR", "#ff4f8b")
+# аккаунты из таблицы NeuroFans_Accounts (28.11.2026): th_l_01…48 — Threads (команда A), rk_k_01…15 — видео (B).
+# Ссылки вида https://<домен>.shop/t01 и /r01 (Caddyfile). Формат: "префикс:сколько,…", первый — команды A.
+TEAM_A_EXTRA = [x.strip().lower() for x in _str("TEAM_A_EXTRA", "th_l_").split(",") if x.strip()]
+TEAM_B_EXTRA = [x.strip().lower() for x in _str("TEAM_B_EXTRA", "rk_k_").split(",") if x.strip()]
+EXTRA_LABELS = [f"{p}{i:02d}" for part in _str("EXTRA_LABELS", "th_l_:48,rk_k_:15").split(",") if ":" in part
+                for p, n in [part.strip().split(":", 1)] for i in range(1, int(n or 0) + 1)]
 TEAMS = {"A": (TEAM_A_NAME, TEAM_A_PREFIX, TEAM_A_COLOR),
          "B": (TEAM_B_NAME, TEAM_B_PREFIX, TEAM_B_COLOR)}
 TEAM_EMOJI = {"A": "🌊", "B": "🌺"}
@@ -284,6 +290,8 @@ def team_of(source):
     s = (source or "").lower()
     if TEAM_A_PREFIX and s.startswith(TEAM_A_PREFIX): return "A"
     if TEAM_B_PREFIX and s.startswith(TEAM_B_PREFIX): return "B"
+    if any(s.startswith(p) for p in TEAM_A_EXTRA): return "A"
+    if any(s.startswith(p) for p in TEAM_B_EXTRA): return "B"
     return None
 
 def clean_label(raw):
@@ -1487,7 +1495,7 @@ def _partner_auth(label):
     abort(401)
 
 def all_labels():
-    return [f"{pref}{i:02d}" for _k, (_n, pref, _c) in TEAMS.items() for i in range(1, PER_TEAM + 1)]
+    return [f"{pref}{i:02d}" for _k, (_n, pref, _c) in TEAMS.items() for i in range(1, PER_TEAM + 1)] + EXTRA_LABELS
 
 @app.route("/api/partner/<label>")
 def api_partner(label):
