@@ -379,6 +379,10 @@ n0=len(calls); assert app.run_followups()==2
 got=[(p["platform_chat_id"],p["command_name"]) for m,p in calls[n0:] if m=="sendCommand"]
 assert (8001,"Не купил → Догон 1") in got and (8002,"Не купил → Догон 2") in got and all(u not in (8003,8004) for u,_ in got)
 assert app.run_followups()==0                                      # второй раз не шлём
+assert app.start_source({"label":"leo07","ch":"t"})==("threads","leo07") and app.start_source({"label":"leo07","ch":"threads"})==("threads","leo07") and app.start_source({"label":"kate02","ch":"video"})==("video","kate02")
+assert app.start_source({"label":"site","ch":""})==("site","") and app.start_source({"label":"direct","ch":""})==("direct","") and app.start_source({"label":"leo09","ch":""})==("partner","leo09")
+app._pb_source(9001,"threads","leo07"); assert ("variableChange",{"variable":"nf_from","expression":"threads","user_id":9001}) in calls and ("variableChange",{"variable":"nf_partner","expression":"leo07","user_id":9001}) in calls
+assert app.uid_source_text(8001).startswith("Threads, партнёр leo01") and app.uid_source_text(123456789)=="неизвестно"
 B=app.bot_stats(0); assert B["count"]["f1"]>=1 and B["count"]["upgrade"]>=1 and B["count"]["asks"]>=3 and B["count"]["human"]>=1 and B["asks"][0]["q"]
 assert app.bot_stats(1)["cfg"]["pb"] is True and "BOT_PAGE" in dir(app)
 app.bg=_bgsave; app.notify_all=_na; app.PB_TOKEN=""

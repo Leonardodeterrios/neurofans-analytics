@@ -1187,11 +1187,45 @@ def bot_start():
     except ValueError:
         uid = 0
     res = record_start(raw, uid)
+    res["from"], partner = start_source(res)
+    if PB_TOKEN and uid:                         # пишем в карточку человека в PuzzleBot (в фоне, редирект не ждёт)
+        bg(_pb_source, uid, res["from"], partner)
     if res["scored"]:
         notify_start(res["label"], res["ch"])
         push_sheet({"type": "start", "source": res["label"], "channel": res["ch"]})
     log.info("start label=%s cid=%s scored=%s", res["label"], res["click_id"], res["scored"])
     return jsonify(ok=True, **res)
+
+SITE_LABELS = {"site", "guide", "prompts", "gallery"}       # ?start=… с сайта, гайда, мануала и галереи
+PB_FROM_VAR = os.getenv("PB_FROM_VAR", "nf_from")           # откуда пришёл: threads / video / site / partner / direct
+PB_PARTNER_VAR = os.getenv("PB_PARTNER_VAR", "nf_partner")  # метка партнёра (leo07…) или пусто
+
+def start_source(res):
+    """Откуда человек пришёл в бота — по результату record_start."""
+    label, ch = res.get("label") or "direct", res.get("ch") or ""
+    if label in SITE_LABELS:
+        return "site", ""
+    ch = {"t": "threads", "v": "video"}.get(ch, ch)   # в базе канал хранится буквой: t / v
+    if ch in ("threads", "video"):
+        return ch, label
+    if label != "direct":
+        return "partner", label
+    return "direct", ""
+
+FROM_TEXT = {"threads": "Threads", "video": "видео (Reels/Shorts/TikTok)", "site": "сайт", "partner": "партнёр", "direct": "напрямую"}
+
+def uid_source_text(uid):
+    """«Threads, партнёр leo07» — по первому старту человека (для уведомлений админам)."""
+    with _conn() as c:
+        r = c.execute("SELECT label, ch FROM starts WHERE tg_uid=? ORDER BY id LIMIT 1", (uid,)).fetchone()
+    if not r:
+        return "неизвестно"
+    src, partner = start_source({"label": r["label"], "ch": r["ch"]})
+    return FROM_TEXT.get(src, src) + (f", партнёр {partner}" if partner else "")
+
+def _pb_source(uid, src, partner):
+    pb_call("variableChange", variable=PB_FROM_VAR, expression=src, user_id=uid)
+    pb_call("variableChange", variable=PB_PARTNER_VAR, expression=partner or "-", user_id=uid)
 
 def _tribute_forward(raw, sig):
     try:
@@ -1776,7 +1810,7 @@ def handle_ask(uid, q):
         with _conn() as c:
             r = c.execute("SELECT q FROM bot_asks WHERE tg_uid=? AND human=0 ORDER BY id DESC LIMIT 1", (uid,)).fetchone()
             last = r["q"] if r else ""
-        notify_all(f"🙋 Человек просит Катю в боте\nTelegram ID: {uid}\nПоследний вопрос: {last[:500] or '—'}")
+        notify_all(f"🙋 Человек просит Катю в боте\nTelegram ID: {uid}\nПришёл: {uid_source_text(uid)}\nПоследний вопрос: {last[:500] or '—'}")
         bot_send(uid, "Твой вопрос ушёл Кате, она ответит тебе здесь лично 🖤")
         return
     try:
@@ -2052,6 +2086,8 @@ def bot_stats(days=7):
         cnt["waiting"] = one("SELECT COUNT(*) FROM bot_people WHERE pay_open_ts>=? AND paid_ts IS NULL", hi)
         asks = [dict(r) for r in c.execute(
             "SELECT ts, tg_uid, q, a, human FROM bot_asks ORDER BY id DESC LIMIT 40")]
+    for a in asks:
+        a["from"] = uid_source_text(a["tg_uid"]) if a.get("tg_uid") else "неизвестно"
     cfg = {"pb": bool(PB_TOKEN), "ai": bool(AI_KEY or (AI_URL and AI_SECRET)), "tg": bool(BOT_TOKEN),
            "tribute": bool(TRIBUTE_KEY), "quiet": _quiet_now()}
     return {"days": days, "count": cnt, "cfg": cfg, "asks": asks}
@@ -2120,7 +2156,7 @@ async function load(){
   box(c.asks,"вопросов ИИ от "+c.askers+" чел."),
   box(c.human,"попросили Катю","g")].join("");
  document.getElementById("t").innerHTML="<tr><th>Когда</th><th>Вопрос</th><th>Ответ</th></tr>"+(j.asks.length?j.asks.map(a=>
-  `<tr><td class="t">${esc((a.ts||"").replace("T"," ").slice(0,16))}<br>id ${esc(a.tg_uid)}</td><td>${a.human?'<span class="h">ПОЗВАЛИ КАТЮ</span><br>':''}${esc(a.q)}</td><td class="a">${esc(a.a)}</td></tr>`).join(""):'<tr><td colspan="3" class="t">Пока вопросов нет</td></tr>');
+  `<tr><td class="t">${esc((a.ts||"").replace("T"," ").slice(0,16))}<br>id ${esc(a.tg_uid)}<br>${esc(a.from||"")}</td><td>${a.human?'<span class="h">ПОЗВАЛИ КАТЮ</span><br>':''}${esc(a.q)}</td><td class="a">${esc(a.a)}</td></tr>`).join(""):'<tr><td colspan="3" class="t">Пока вопросов нет</td></tr>');
 }
 load();
 </script></body></html>"""
