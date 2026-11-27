@@ -102,6 +102,20 @@ h2{font:800 clamp(26px,3vw,40px)/1.14 var(--disp);margin:0 0 14px;letter-spacing
 h3{font:800 20px/1.3 var(--body);margin:0 0 8px}
 .note{color:var(--di);font-size:13px;margin-top:14px}
 
+
+/* ритм страницы: чередование «полос» с подсветкой */
+.band{position:relative;background:linear-gradient(180deg,rgba(9,13,28,.92),rgba(6,8,18,.92));isolation:isolate}
+.band:before,.band:after{content:"";position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--bc,rgba(46,230,214,.45)),transparent)}
+.band:before{top:0}.band:after{bottom:0}
+.band>.wrap:before{content:"";position:absolute;z-index:-1;inset:0;pointer-events:none;background:radial-gradient(900px 420px at var(--bx,15%) 0%,var(--bg1,rgba(46,230,214,.10)),transparent 70%)}
+.band.mg{--bc:rgba(255,79,139,.5);--bg1:rgba(255,79,139,.10);--bx:85%}
+.band.hi{--bg1:rgba(46,230,214,.16);background:linear-gradient(180deg,#0a1224,#060914)}
+.band.hi>.wrap:after{content:"";position:absolute;z-index:-1;inset:auto 0 0;height:60%;pointer-events:none;background:radial-gradient(700px 300px at 50% 100%,rgba(255,79,139,.10),transparent 70%)}
+.sh h2:before{content:"";display:block;width:44px;height:3px;border-radius:2px;margin:0 0 18px;background:linear-gradient(90deg,var(--cy),var(--mg))}
+.sh.c h2:before{margin-left:auto;margin-right:auto}
+.final{position:relative;overflow:hidden}
+.final:before{content:"";position:absolute;z-index:-1;left:50%;top:50%;width:900px;height:900px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(46,230,214,.14),rgba(255,79,139,.06) 45%,transparent 70%)}
+
 /* ниша */
 .niche{display:grid;grid-template-columns:1.2fr 1fr;gap:48px;align-items:start}
 .niche p{color:var(--tx2);margin:0 0 16px}
@@ -477,7 +491,10 @@ footer p{margin:6px 0 0;max-width:48em}
   .cta .btn{flex:1 1 100%}
   .proof{grid-template-columns:1fr 1fr;gap:16px 20px}
   .proof b{font-size:26px}
-  section{padding:64px 0}
+  section{padding:76px 0}
+  h2{font-size:29px}
+  .sh{margin-bottom:30px}
+  .pane.shot .shb img{aspect-ratio:780/1120;object-fit:cover;object-position:top}
   .stage{min-height:0;display:flex;flex-direction:column;gap:12px}
   .stage .tag{position:static}
   .fv,.lb,.toast{position:relative;inset:auto;width:100%;animation:none}
@@ -673,7 +690,7 @@ footer p{margin:6px 0 0;max-width:48em}
   </div>
 </section>
 
-<section id="cases">
+<section id="cases" class="band mg">
   <div class="wrap">
     <div class="sh">
       <h2>Кейсы учеников</h2>
@@ -724,7 +741,7 @@ footer p{margin:6px 0 0;max-width:48em}
   </div>
 </section>
 
-<section id="soft" class="soft">
+<section id="soft" class="soft band">
   <div class="wrap">
     <div class="sh">
       <h2>Софт, которого нет у других курсов</h2>
@@ -740,16 +757,16 @@ footer p{margin:6px 0 0;max-width:48em}
     <div class="app">
       <div class="scr">
         <div class="pane shot on" id="p1" role="tabpanel" aria-labelledby="t1">
-          <button type="button" class="shb" data-full="soft/d-core.webp" data-full-m="soft/m-core.webp" data-cap="Эфир кабинета: NF Core, люди за последний час, сигналы всплеска по каждой ссылке и прогноз к воскресенью"><picture><source media="(max-width:760px)" srcset="soft/m-core.webp" width="780" height="1440"><img src="soft/d-core.webp" width="1320" height="646" alt="Скриншот кабинета. Эфир кабинета: NF Core, люди за последний час, сигналы всплеска по каждой ссылке и прогноз к воскресенью" loading="lazy" decoding="async"></picture><span class="demo">пример данных</span><span class="zm">открыть крупно</span></button>
+          <button type="button" class="shb" data-full="soft/d-core.webp" data-full-m="soft/m-core.webp" data-cap="Эфир кабинета: NF Core, люди за последний час, сигналы всплеска по каждой ссылке и прогноз к воскресенью"><picture><source media="(max-width:760px)" srcset="soft/m-core.webp" width="780" height="1120"><img src="soft/d-core.webp" width="1320" height="646" alt="Скриншот кабинета. Эфир кабинета: NF Core, люди за последний час, сигналы всплеска по каждой ссылке и прогноз к воскресенью" loading="lazy" decoding="async"></picture><span class="demo">пример данных</span><span class="zm">открыть крупно</span></button>
         </div>
         <div class="pane shot" id="p2" role="tabpanel" aria-labelledby="t2" hidden>
-          <button type="button" class="shb" data-full="soft/d-plan.webp" data-full-m="soft/m-plan.webp" data-cap="ИИ-Студия: сюжет недели и посты на каждый день под Threads, Instagram и Telegram со ссылкой для био"><picture><source media="(max-width:760px)" srcset="soft/m-plan.webp" width="780" height="1440"><img src="soft/d-plan.webp" width="1320" height="870" alt="Скриншот кабинета. ИИ-Студия: сюжет недели и посты на каждый день под Threads, Instagram и Telegram со ссылкой для био" loading="lazy" decoding="async"></picture><span class="demo">пример данных</span><span class="zm">открыть крупно</span></button>
+          <button type="button" class="shb" data-full="soft/d-plan.webp" data-full-m="soft/m-plan.webp" data-cap="ИИ-Студия: сюжет недели и посты на каждый день под Threads, Instagram и Telegram со ссылкой для био"><picture><source media="(max-width:760px)" srcset="soft/m-plan.webp" width="780" height="1120"><img src="soft/d-plan.webp" width="1320" height="870" alt="Скриншот кабинета. ИИ-Студия: сюжет недели и посты на каждый день под Threads, Instagram и Telegram со ссылкой для био" loading="lazy" decoding="async"></picture><span class="demo">пример данных</span><span class="zm">открыть крупно</span></button>
         </div>
         <div class="pane shot" id="p3" role="tabpanel" aria-labelledby="t3" hidden>
-          <button type="button" class="shb" data-full="soft/d-chat.webp" data-full-m="soft/m-chat.webp" data-cap="Нейро-чаттер: переписка с фанатом, этап воронки и три варианта ответа с переводом"><picture><source media="(max-width:760px)" srcset="soft/m-chat.webp" width="780" height="1440"><img src="soft/d-chat.webp" width="1320" height="943" alt="Скриншот кабинета. Нейро-чаттер: переписка с фанатом, этап воронки и три варианта ответа с переводом" loading="lazy" decoding="async"></picture><span class="demo">пример данных</span><span class="zm">открыть крупно</span></button>
+          <button type="button" class="shb" data-full="soft/d-chat.webp" data-full-m="soft/m-chat.webp" data-cap="Нейро-чаттер: переписка с фанатом, этап воронки и три варианта ответа с переводом"><picture><source media="(max-width:760px)" srcset="soft/m-chat.webp" width="780" height="1120"><img src="soft/d-chat.webp" width="1320" height="943" alt="Скриншот кабинета. Нейро-чаттер: переписка с фанатом, этап воронки и три варианта ответа с переводом" loading="lazy" decoding="async"></picture><span class="demo">пример данных</span><span class="zm">открыть крупно</span></button>
         </div>
         <div class="pane shot" id="p4" role="tabpanel" aria-labelledby="t4" hidden>
-          <button type="button" class="shb" data-full="soft/d-league.webp" data-full-m="soft/m-league.webp" data-cap="Лига недели: места моделей учеников, «Рывок недели» и победители прошлой недели"><picture><source media="(max-width:760px)" srcset="soft/m-league.webp" width="780" height="1440"><img src="soft/d-league.webp" width="1320" height="943" alt="Скриншот кабинета. Лига недели: места моделей учеников, «Рывок недели» и победители прошлой недели" loading="lazy" decoding="async"></picture><span class="demo">пример данных</span><span class="zm">открыть крупно</span></button>
+          <button type="button" class="shb" data-full="soft/d-league.webp" data-full-m="soft/m-league.webp" data-cap="Лига недели: места моделей учеников, «Рывок недели» и победители прошлой недели"><picture><source media="(max-width:760px)" srcset="soft/m-league.webp" width="780" height="1120"><img src="soft/d-league.webp" width="1320" height="943" alt="Скриншот кабинета. Лига недели: места моделей учеников, «Рывок недели» и победители прошлой недели" loading="lazy" decoding="async"></picture><span class="demo">пример данных</span><span class="zm">открыть крупно</span></button>
         </div>
         <div class="pane nt" id="p5" role="tabpanel" aria-labelledby="t5" hidden>
           <div class="bar"><b>TELEGRAM · NEUROFANS LAB</b><span class="demo">пример данных</span></div>
@@ -813,7 +830,7 @@ footer p{margin:6px 0 0;max-width:48em}
 </section>
 
 
-<section id="price">
+<section id="price" class="band hi">
   <div class="wrap">
     <div class="sh">
       <h2>Тарифы</h2>
@@ -911,7 +928,7 @@ footer p{margin:6px 0 0;max-width:48em}
   </div>
 </section>
 
-<section id="free">
+<section id="free" class="band">
   <div class="wrap">
     <div class="sh"><h2>Начни бесплатно</h2><p>Материалы, чтобы попробовать нишу до покупки.</p></div>
     <div class="free">
