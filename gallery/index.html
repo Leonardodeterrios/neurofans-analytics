@@ -268,6 +268,7 @@ const DESC = {
   "Модель H": "Одно лицо в разных образах, ракурсах и местах.",
   "Модель G": "Приватный сет: то, что продаётся в платных постах и кастомах."
 };
+const FIRST = ["Видео", "Модель G"];   /* что показывать первым: видео и модель с татуировками (больше всего цепляют) */
 let SITE = "https://neurofans.ru/", ALL = [], view = [], cur = "Все", lbI = -1;
 
 function adult() { try { return localStorage.getItem("nf18") === "1"; } catch (e) { return false; } }
@@ -285,7 +286,11 @@ async function load() {
     const d = await r.json();
     if (d.site) { SITE = d.site; links(); }
     if (d.groups) Object.assign(DESC, d.groups);
-    ALL = (d.items || []).map((x, i) => ({ ...x, i, type: x.type || (/\.(mp4|webm|mov)$/i.test(x.src) ? "video" : "photo") }));
+    const items = (d.items || []).map(x => ({ ...x, type: x.type || (/\.(mp4|webm|mov)$/i.test(x.src) ? "video" : "photo") }));
+    /* сверху: видео, потом серии из FIRST (в media.json можно задать своё "first": [...]); остальное в исходном порядке */
+    const first = Array.isArray(d.first) ? d.first : FIRST;
+    const rank = x => { const k = first.indexOf(x.type === "video" ? "Видео" : x.group); return k < 0 ? first.length : k; };
+    ALL = items.map((x, n) => ({ x, n })).sort((a, b) => rank(a.x) - rank(b.x) || a.n - b.n).map(({ x }, i) => ({ ...x, i }));
   } catch (e) { ALL = []; }
   chips(); render(); fan();
 }
