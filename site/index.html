@@ -196,13 +196,6 @@ h3{font:800 20px/1.3 var(--body);margin:0 0 8px}
 .vs td:last-child{color:var(--tx)}
 
 /* галерея */
-.gal{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-.gal figure{margin:0;position:relative;border-radius:var(--r);overflow:hidden;border:1px solid var(--line);aspect-ratio:3/4;background:linear-gradient(110deg,var(--panel) 30%,var(--panel2) 50%,var(--panel) 70%);background-size:200% 100%;animation:shim 1.4s linear infinite}
-.gal figure.ok{animation:none;background:var(--panel)}
-.gal img{width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .4s}
-.gal figure.ok img{opacity:1}
-@keyframes shim{to{background-position:-200% 0}}
-.gal figcaption{position:absolute;left:10px;bottom:10px;font-size:11px;color:var(--tx);background:rgba(4,5,12,.7);border:1px solid var(--line2);border-radius:999px;padding:3px 9px;backdrop-filter:blur(6px)}
 .galf{display:flex;gap:16px;align-items:center;justify-content:space-between;margin-top:18px;color:var(--mu);font-size:15px}
 
 /* симулятор */
@@ -303,6 +296,120 @@ footer nav a:hover{color:var(--tx)}
 footer p{margin:6px 0 0;max-width:48em}
 .age{display:inline-block;border:1px solid var(--line2);border-radius:6px;padding:1px 7px;color:var(--mu);font:600 12px var(--num);margin-right:8px}
 
+
+/* якоря не прячутся под шапкой */
+[id]{scroll-margin-top:84px}
+
+/* логика «зачем софт» */
+.flow{margin-top:28px;border:1px solid var(--line);border-radius:20px;background:var(--panel);padding:26px}
+.flow h3{margin:0 0 6px}
+.flow>p{color:var(--mu);margin:0 0 20px;font-size:15px;max-width:52em}
+.fl{display:grid;grid-template-columns:repeat(4,1fr);gap:0;list-style:none;margin:0;padding:0;counter-reset:f}
+.fl li{position:relative;padding:16px 18px 16px 0;counter-increment:f}
+.fl li+li{padding-left:18px;border-left:1px dashed var(--line2)}
+.fl li:after{content:"";position:absolute;right:-6px;top:28px;width:10px;height:10px;border-top:2px solid var(--cy);border-right:2px solid var(--cy);transform:rotate(45deg);z-index:1;background:var(--panel)}
+.fl li:last-child:after{display:none}
+.fl b{display:block;font:800 16px/1.3 var(--body);margin-bottom:4px}
+.fl b:before{content:counter(f);font:600 13px var(--num);color:var(--cy);margin-right:8px}
+.fl p{margin:0 0 8px;color:var(--tx2);font-size:14px}
+.fl em{font-style:normal;font-size:12px;color:var(--cy);border:1px solid rgba(46,230,214,.35);border-radius:999px;padding:2px 9px;display:inline-block}
+.fl small{display:block;color:var(--di);font-size:12px;margin-top:8px}
+
+/* модули: какую задачу решают */
+.jobs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}
+.jobs div{border:1px solid var(--line);border-radius:16px;padding:18px;background:var(--panel)}
+.jobs b{display:block;font:800 15px var(--body);margin-bottom:6px}
+.jobs p{margin:0 0 10px;color:var(--tx2);font-size:14px}
+.jobs span{display:block;color:var(--cy);font-size:13px}
+
+/* сквозной сценарий */
+.story{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;counter-reset:st}
+.sc{border:1px solid var(--line);border-radius:20px;background:var(--panel);overflow:hidden;display:flex;flex-direction:column;counter-increment:st}
+.sc .vis{padding:16px;background:#070a16;border-bottom:1px solid var(--line);min-height:168px;font-size:13px}
+.sc .tx{padding:20px}
+.sc .tx h3:before{content:"Шаг " counter(st);display:block;font:600 12px var(--num);color:var(--cy);margin-bottom:6px;letter-spacing:.03em}
+.sc .tx p{margin:0;color:var(--tx2);font-size:15px}
+.sc .tag{display:inline-block;margin-top:12px;font-size:12px;color:var(--mu)}
+.ev{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:9px 10px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:var(--panel)}
+.ev i{width:8px;height:8px;border-radius:50%;background:var(--cy);box-shadow:0 0 10px var(--cy)}
+.ev b{font-weight:800}
+.ev em{font:600 13px var(--num);font-style:normal;color:var(--cy)}
+.ev.dim{opacity:.55}
+.pp{border:1px solid rgba(46,230,214,.35);border-radius:12px;padding:12px;background:rgba(46,230,214,.05)}
+.pp small{display:block;color:var(--mu);font-size:11px;margin-bottom:4px}
+.pp b{display:block;font-weight:800;margin-bottom:4px}
+.pp p{margin:0;color:var(--tx2)}
+.mini .q{padding:8px 11px;border-radius:12px;background:var(--panel2);border:1px solid var(--line);margin-bottom:8px;max-width:88%}
+.mini .o{padding:8px 11px;border-radius:12px;border:1px solid rgba(46,230,214,.5);background:rgba(46,230,214,.06);margin-left:auto;max-width:88%}
+.mini .paid{margin-top:8px;padding:8px 11px;border-radius:12px;border:1px solid rgba(245,200,107,.45);background:rgba(245,200,107,.08);color:var(--gd);font:600 13px var(--num)}
+
+/* галерея: карточки с подписями */
+.gal{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.gc{margin:0;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:var(--panel);display:flex;flex-direction:column}
+.gc .ph{position:relative;aspect-ratio:4/5;background:linear-gradient(110deg,var(--panel) 30%,var(--panel2) 50%,var(--panel) 70%);background-size:200% 100%;animation:shim 1.4s linear infinite}
+.gc.ok .ph{animation:none}
+.gc img{width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .4s}
+.gc.ok img{opacity:1}
+.gc .ai{position:absolute;left:12px;top:12px;font:600 11px var(--num);color:var(--tx);background:rgba(4,5,12,.72);border:1px solid var(--line2);border-radius:999px;padding:3px 9px;backdrop-filter:blur(6px)}
+.gc figcaption{padding:16px 18px}
+.gc figcaption b{display:block;font:800 16px var(--body);margin-bottom:4px}
+.gc figcaption span{color:var(--mu);font-size:14px}
+.gc ul{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.gc li{font-size:12px;color:var(--tx2);border:1px solid var(--line2);border-radius:999px;padding:2px 9px}
+@keyframes shim{to{background-position:-200% 0}}
+
+/* симулятор */
+.simx{display:grid;grid-template-columns:.9fr 1.1fr;gap:40px;align-items:start}
+.simx .side p{color:var(--tx2);margin:0 0 16px}
+.simx .rules2{list-style:none;margin:0;padding:0}
+.simx .rules2 li{padding:10px 0 10px 24px;border-top:1px solid var(--line);position:relative;color:var(--tx2);font-size:15px}
+.simx .rules2 li:before{content:"";position:absolute;left:2px;top:18px;width:9px;height:9px;border-radius:3px;background:var(--mg)}
+.chatbox{border:1px solid var(--line2);border-radius:22px;background:#070a16;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.chatbox .hd{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.chatbox .hd .av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font:800 13px var(--body);background:linear-gradient(135deg,rgba(46,230,214,.3),rgba(255,79,139,.3))}
+.chatbox .hd b{display:block;font-size:14px}
+.chatbox .hd span{color:var(--mu);font-size:12px}
+.chatbox .hd .rs{margin-left:auto;font-size:12px;color:var(--mu);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;background:none;cursor:pointer}
+.chatbox .hd .rs:hover{color:var(--tx)}
+.stg{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:12px 18px 0}
+.stg div{font-size:11px;color:var(--di);text-align:center}
+.stg div:before{content:"";display:block;height:4px;border-radius:2px;background:var(--line2);margin-bottom:6px}
+.stg div.done:before{background:var(--cy)}
+.stg div.now{color:var(--tx)}
+.stg div.now:before{background:linear-gradient(90deg,var(--cy),var(--mg))}
+.msgs{padding:14px 18px;height:320px;overflow-y:auto;scroll-behavior:smooth;display:flex;flex-direction:column;gap:8px}
+.msgs .m{max-width:82%;padding:10px 13px;border-radius:14px;font-size:14px;line-height:1.45;animation:fi .3s ease}
+.msgs .f{background:var(--panel2);border:1px solid var(--line);border-bottom-left-radius:4px}
+.msgs .me{margin-left:auto;background:rgba(255,79,139,.12);border:1px solid rgba(255,79,139,.3);border-bottom-right-radius:4px}
+.msgs .fb{align-self:center;max-width:94%;font-size:12px;border-radius:10px;padding:8px 11px;border:1px solid var(--line2);color:var(--tx2);background:var(--panel)}
+.msgs .fb.good{border-color:rgba(46,230,214,.45)}
+.msgs .fb.bad{border-color:rgba(255,125,110,.5)}
+.msgs .fb b{color:var(--cy)}
+.msgs .fb.bad b{color:var(--co)}
+.msgs .pay{align-self:center;border:1px solid rgba(245,200,107,.5);background:rgba(245,200,107,.08);border-radius:14px;padding:12px 16px;text-align:center;font-size:13px;color:var(--tx2)}
+.msgs .pay b{display:block;font:600 22px var(--num);color:var(--gd)}
+.opts{padding:12px 18px 18px;border-top:1px solid var(--line);display:grid;gap:8px}
+.opts .hint{font-size:12px;color:var(--mu)}
+.opts button{text-align:left;font:500 14px/1.45 var(--body);color:var(--tx);background:var(--panel);border:1px solid var(--line2);border-radius:12px;padding:11px 13px;cursor:pointer;display:grid;grid-template-columns:auto 1fr;gap:10px;transition:border-color .15s,background .15s}
+.opts button:hover,.opts button:focus-visible{border-color:rgba(46,230,214,.55);background:rgba(46,230,214,.05)}
+.opts button i{font:600 12px/1.6 var(--num);font-style:normal;color:var(--cy)}
+.opts button small{display:block;color:var(--mu);font-size:12px;margin-top:2px}
+
+/* сравнение тарифов */
+.cmp{margin-top:22px;border:1px solid var(--line);border-radius:20px;overflow:hidden}
+.cmp table{width:100%;border-collapse:collapse;font-size:15px}
+.cmp th,.cmp td{padding:13px 18px;border-top:1px solid var(--line);text-align:left;vertical-align:top}
+.cmp thead th{border-top:0;background:var(--panel);font:800 14px var(--body);color:var(--mu)}
+.cmp thead th:nth-child(3){color:var(--mg)}
+.cmp td:first-child{color:var(--tx2)}
+.cmp td:nth-child(2),.cmp td:nth-child(3){width:22%}
+.cmp .y{color:var(--cy);font-weight:800}
+.cmp .n{color:var(--di)}
+.cmp tr.grp td{background:rgba(255,255,255,.015);color:var(--mu);font-size:13px;padding:9px 18px}
+.who{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}
+.who>div{border:1px dashed var(--line2);border-radius:16px;padding:16px 18px;color:var(--tx2);font-size:15px}
+.who>div>b{display:block;margin-bottom:4px}
+
 @media (max-width:1020px){
   .hero .wrap,.niche,.sim,.prog,.app{grid-template-columns:1fr}
   .stage{min-height:500px;max-width:560px;width:100%;justify-self:center}
@@ -315,6 +422,11 @@ footer p{margin:6px 0 0;max-width:48em}
   .nav{display:none}
   .top .btn{margin-left:auto}
   .free{grid-template-columns:1fr}
+  .fl,.jobs{grid-template-columns:1fr 1fr}
+  .fl li:nth-child(3){padding-left:0;border-left:0}
+  .fl li:nth-child(2):after{display:none}
+  .story,.simx{grid-template-columns:1fr}
+  .gal{grid-template-columns:repeat(3,1fr)}
   .steps{grid-template-columns:1fr 1fr;row-gap:24px}
   .steps li:nth-child(2):after{display:none}
 }
@@ -350,7 +462,6 @@ footer p{margin:6px 0 0;max-width:48em}
   .app .txt{padding:22px 18px}
   .vs th:nth-child(2),.vs td:nth-child(2){display:none}
   .vs th,.vs td{padding:12px 14px;font-size:14px}
-  .gal{grid-template-columns:1fr 1fr;gap:10px}
   .galf{flex-direction:column;align-items:flex-start}
   .mods,.cases,.stats,.tar{grid-template-columns:1fr}
   .pc,.tc{padding:22px}
@@ -362,6 +473,19 @@ footer p{margin:6px 0 0;max-width:48em}
   footer .wrap{grid-template-columns:1fr}
   footer nav{justify-content:flex-start}
   .top .wrap{height:60px}
+  [id]{scroll-margin-top:72px}
+  .fl,.jobs{grid-template-columns:1fr}
+  .fl li,.fl li+li{padding:14px 0;border-left:0;border-top:1px dashed var(--line2)}
+  .fl li:first-child{border-top:0}
+  .fl li:after{display:none}
+  .flow{padding:20px}
+  .gal{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;margin-right:-18px;padding-right:18px;scrollbar-width:none}
+  .gal::-webkit-scrollbar{display:none}
+  .gc{flex:0 0 78%;scroll-snap-align:start}
+  .msgs{height:300px}
+  .cmp th,.cmp td{padding:11px 12px;font-size:14px}
+  .cmp td:nth-child(2),.cmp td:nth-child(3){width:auto;text-align:center}
+  div.who{grid-template-columns:1fr}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
 </style>
@@ -374,6 +498,8 @@ footer p{margin:6px 0 0;max-width:48em}
     <nav class="nav" aria-label="Разделы">
       <a href="#math">Математика</a>
       <a href="#soft">Софт</a>
+      <a href="#flow">Как работает</a>
+      <a href="#sim">Симулятор</a>
       <a href="#program">Программа</a>
       <a href="#cases">Кейсы</a>
       <a href="#price">Тарифы</a>
@@ -459,6 +585,16 @@ footer p{margin:6px 0 0;max-width:48em}
       <div class="tot"><div class="k">Одна модель</div><div class="v">≈ $2 155</div><p>в месяц, примерно 1,5–2 часа работы в день</p></div>
     </div>
     <div class="scale"><span>Следующий шаг: сетка из 3 моделей и чаттеры, которые ведут переписку за процент от кассы. Именно так выходят на уровень лучших кейсов учеников.</span><b>$5 400 – $6 800</b></div>
+    <div class="flow">
+      <h3>Зачем здесь софт</h3>
+      <p>Доход модели складывается из четырёх шагов. Когда каждый шаг виден в цифрах, ты понимаешь, где просадка, и чинишь именно её, а не переделываешь всё подряд.</p>
+      <ol class="fl">
+        <li><b>Ссылка в био</b><p>Своя ссылка под каждый канал и пост.</p><em>Ссылки кабинета</em><small>Просадка: ссылка не работает или стоит не там</small></li>
+        <li><b>Живые переходы</b><p>Сколько людей пришло, откуда и когда. Без ботов.</p><em>Эфир и NF Core</em><small>Просадка: канал «молчит», а ты продолжаешь в него вкладываться</small></li>
+        <li><b>Контент по плану</b><p>Посты под каналы, которые реально приводят людей.</p><em>ИИ-Студия</em><small>Просадка: нет идей, публикации раз в неделю</small></li>
+        <li><b>Дожим в переписке</b><p>Ответы по этапам воронки до покупки.</p><em>Нейро-чаттер</em><small>Просадка: фанаты пишут, но не покупают</small></li>
+      </ol>
+    </div>
   </div>
 </section>
 
@@ -557,29 +693,77 @@ footer p{margin:6px 0 0;max-width:48em}
   </div>
 </section>
 
+<section id="flow">
+  <div class="wrap">
+    <div class="sh">
+      <h2>Как обучение и софт работают вместе</h2>
+      <p>Уроки объясняют, что делать. Кабинет показывает, сработало ли, и подсказывает следующий шаг. Вот один день работы на примере.</p>
+    </div>
+    <div class="story">
+      <article class="sc">
+        <div class="vis" aria-hidden="true">
+          <div class="ev"><i></i><span><b>Threads</b> · anna-t · Лос-Анджелес</span><em>+1</em></div>
+          <div class="ev"><i></i><span><b>Threads</b> · anna-t · Майами</span><em>+1</em></div>
+          <div class="ev dim"><i style="background:var(--mu);box-shadow:none"></i><span><b>TikTok</b> · anna-tt · тишина 2 дня</span><em style="color:var(--mu)">0</em></div>
+        </div>
+        <div class="tx"><h3>Клик отразился в Эфире</h3><p>Человек нажал ссылку в био Threads, и через секунду он в Эфире: город, приложение, время. Видно, что Threads выстреливает, а TikTok молчит.</p><span class="tag">Урок: трафик и прогрев · Модуль: Эфир</span></div>
+      </article>
+      <article class="sc">
+        <div class="vis" aria-hidden="true">
+          <div class="pp"><small>Студия · Чт 19:00 · Threads</small><b>Личная история</b><p>Короткий тезис о том, как прошёл съёмочный день, и вопрос подписчикам. Ссылка для био: anna-t</p></div>
+        </div>
+        <div class="tx"><h3>Студия подсказала пост</h3><p>Раз Threads работает, Студия ставит туда больше постов в голосе модели и даёт ссылку для био. Не нужно гадать, что и когда публиковать.</p><span class="tag">Урок: паспорт модели · Модуль: ИИ-Студия</span></div>
+      </article>
+      <article class="sc">
+        <div class="vis mini" aria-hidden="true">
+          <div class="q">loved your post today. got anything more personal?</div>
+          <div class="o">glad you liked it! I have a set that didn't make my feed, want a peek?</div>
+          <div class="paid">Сет куплен: $25 · пример</div>
+        </div>
+        <div class="tx"><h3>Чаттер довёл до продажи</h3><p>Фанат написал в личку. Нейро-чаттер предложил три ответа под этап «предложение», ты выбрал и отправил. Продажа без давления и обмана.</p><span class="tag">Урок: чаттинг · Модуль: Нейро-чаттер</span></div>
+      </article>
+    </div>
+    <div class="jobs">
+      <div><b>Аналитика и Эфир</b><p>Видно реальные переходы по каждому каналу, без ботов.</p><span>Перестаёшь сливать время в «мёртвые» каналы</span></div>
+      <div><b>ИИ-Студия</b><p>План постов на неделю под каналы и голос модели.</p><span>Нет ступора «что публиковать сегодня»</span></div>
+      <div><b>Нейро-чаттер</b><p>Три варианта ответа по этапу воронки.</p><span>Меньше ошибок в переписке, быстрее ответ</span></div>
+      <div><b>Лига и уведомления</b><p>Ранги, ачивки и итоги недели в Telegram.</p><span>Держит ритм, когда мотивация падает</span></div>
+    </div>
+  </div>
+</section>
+
 <section id="real">
   <div class="wrap">
     <div class="sh">
       <h2>Реалистичный ИИ-контент</h2>
-      <p>Новички палятся на «пластиковой» коже. Внутри курса учим живую текстуру кожи, свет и ракурсы. Все модели на фото вымышленные и созданы ИИ.</p>
+      <p>Новички палятся на «пластиковой» коже. Внутри курса учим живую текстуру кожи, свет и ракурсы. Все модели на фото вымышленные и созданы ИИ, откровенные примеры только в закрытой галерее.</p>
     </div>
-    <div class="gal" id="gal" tabindex="0" aria-label="Примеры генераций, листаются вбок"></div>
+    <div class="gal" id="gal" aria-label="Примеры генераций">
+      <figure class="gc"><div class="ph"><img data-src="https://ai-creators.ru/P1.jpg" alt="ИИ-модель в светлом платье на ночной лестнице" referrerpolicy="no-referrer"><span class="ai">100% ИИ</span></div><figcaption><b>Вечерний город</b><span>Тёплые фонари, живой свет на коже, одна модель в разных сценах.</span><ul><li>Свет</li><li>Кожа</li><li>Образ</li></ul></figcaption></figure>
+      <figure class="gc"><div class="ph"><img data-src="https://ai-creators.ru/P4.jpg" alt="ИИ-модель за ужином в ресторане" referrerpolicy="no-referrer"><span class="ai">100% ИИ</span></div><figcaption><b>Ужин в ресторане</b><span>Лайфстайл-кадр «как с iPhone»: смешанный свет, детали интерьера.</span><ul><li>Сцена</li><li>Свет</li><li>Реализм</li></ul></figcaption></figure>
+      <figure class="gc"><div class="ph"><img data-src="https://ai-creators.ru/P7.jpg" alt="ИИ-модель в шёлковой пижаме" referrerpolicy="no-referrer"><span class="ai">100% ИИ</span></div><figcaption><b>Утро дома</b><span>Мягкий дневной свет, ткань и текстура кожи без «пластика».</span><ul><li>Текстура</li><li>Ткань</li><li>Образ</li></ul></figcaption></figure>
+    </div>
     <div class="galf"><span>Ещё 30+ примеров фото и видео 18+, за которые фанаты платят больше всего, в закрытой галерее.</span><a class="btn gh" href="https://ai-creators.ru/primery" target="_blank" rel="noopener">Смотреть примеры 18+</a></div>
   </div>
 </section>
 
 <section id="sim">
-  <div class="wrap sim">
-    <div>
-      <h2>Сможешь продать фанату пак за $100 в переписке?</h2>
-      <p style="color:var(--tx2);margin:0 0 24px">Основные деньги на Fanvue делаются не на подписках, а в личных сообщениях. Мы собрали симулятор чаттера на основе реальных диалогов с фанатами из США. Попробуй довести фаната до покупки.</p>
-      <a class="btn pr" href="https://ai-creators.ru/simulator" target="_blank" rel="noopener">Запустить симулятор</a>
+  <div class="wrap simx">
+    <div class="side">
+      <h2>Симулятор переписки: доведи фаната до покупки</h2>
+      <p>Основные деньги на Fanvue приходят не с подписок, а из личных сообщений. Пройди пять этапов воронки: на каждом выбери ответ и посмотри разбор.</p>
+      <ul class="rules2">
+        <li>Модель честно остаётся ИИ-персонажем: на вопрос «ты настоящая?» не врёт</li>
+        <li>Не продавай на первом сообщении: сначала контакт, потом предложение</li>
+        <li>Без давления и скидок от паники: фанат платит за внимание, а не за уговоры</li>
+      </ul>
+      <p class="note">Цифры в симуляторе для примера. В кабинете нейро-чаттер так же предлагает три ответа под этап, но уже в голосе твоей модели.</p>
     </div>
-    <div class="phone" aria-label="Пример переписки с фанатом">
-      <div class="ph"><b>James_TX, USA</b><span>Fanvue Direct</span></div>
-      <div class="m a">Hey gorgeous. Are you real? You look way too good to be true...</div>
-      <div class="m b">I'm an AI creator, and yes, everything here is made with love and a lot of work. Want to see the set that didn't make it to my feed?</div>
-      <div class="gift"><b>$100.00 gift</b>«Hope that made your day»</div>
+    <div class="chatbox" id="simx">
+      <div class="hd"><span class="av">J</span><div><b>James_TX</b><span>Fanvue · личные сообщения</span></div><button class="rs" id="simReset" type="button">Начать заново</button></div>
+      <div class="stg" id="stg"><div>Знакомство</div><div>Флирт</div><div>Прогрев</div><div>Предложение</div><div>Продажа</div></div>
+      <div class="msgs" id="msgs" aria-live="polite"></div>
+      <div class="opts" id="opts"></div>
     </div>
   </div>
 </section>
@@ -659,7 +843,7 @@ footer p{margin:6px 0 0;max-width:48em}
   <div class="wrap">
     <div class="sh">
       <h2>Тарифы</h2>
-      <p>Оплата разовая. Кабинет и софт входят в оба тарифа.</p>
+      <p>Оплата разовая. Софт кабинета открыт в обоих тарифах: разница в том, чему учат уроки. Базовый даёт быстрый старт и контент, Продвинутый весь путь до продаж и масштаба.</p>
     </div>
     <div class="tar">
       <div class="tc">
@@ -673,7 +857,7 @@ footer p{margin:6px 0 0;max-width:48em}
           <li>Модель с уникальной внешностью и первые 100 фото</li>
           <li>Референсы, кастомы, фотосеты</li>
           <li>Библиотека готовых промптов</li>
-          <li class="sw">Кабинет: аналитика ссылок, лига, ИИ-Студия</li>
+          <li class="sw">Кабинет целиком: аналитика, ИИ-Студия, нейро-чаттер, лига</li>
         </ul>
         <a class="btn gh" data-buy="base" href="#">Купить Базовый</a>
       </div>
@@ -688,10 +872,33 @@ footer p{margin:6px 0 0;max-width:48em}
           <li>Fanvue: профиль, цены, платные посты, вывод денег</li>
           <li>Прогрев соцсетей и Telegram-каналы модели</li>
           <li>Чаттинг, масштаб на 2–3 модели, закрытый чат</li>
-          <li class="sw">Кабинет: аналитика, ИИ-Студия и нейро-чаттер</li>
+          <li class="sw">Кабинет целиком плюс уроки, как выжать из него максимум</li>
         </ul>
         <a class="btn pr" data-buy="adv" href="#">Купить Продвинутый</a>
       </div>
+    </div>
+    <div class="cmp">
+      <table>
+        <thead><tr><th></th><th>Базовый</th><th>Продвинутый</th></tr></thead>
+        <tbody>
+          <tr class="grp"><td colspan="3">Контент</td></tr>
+          <tr><td>Своя модель, 18+ фото, кастомы и сеты</td><td class="y">Да</td><td class="y">Да</td></tr>
+          <tr><td>Видео-генерация 18+, 199 примеров с промптами</td><td class="n">Нет</td><td class="y">Да</td></tr>
+          <tr class="grp"><td colspan="3">Продажи</td></tr>
+          <tr><td>Fanvue: профиль, цены, платные посты, вывод денег</td><td class="n">Нет</td><td class="y">Да</td></tr>
+          <tr><td>Трафик: прогрев соцсетей, Telegram-каналы модели</td><td class="n">Нет</td><td class="y">Да</td></tr>
+          <tr><td>Чаттинг по этапам воронки и масштаб на 2–3 модели</td><td class="n">Нет</td><td class="y">Да</td></tr>
+          <tr class="grp"><td colspan="3">Софт и поддержка</td></tr>
+          <tr><td>Кабинет: аналитика, Эфир, ИИ-Студия, нейро-чаттер, лига</td><td class="y">Да</td><td class="y">Да</td></tr>
+          <tr><td>Уроки, как связать софт с продажами</td><td class="n">Нет</td><td class="y">Да</td></tr>
+          <tr><td>Закрытый чат участников</td><td class="n">Нет</td><td class="y">Да</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">ИИ-функции кабинета (Студия и нейро-чаттер) в обоих тарифах работают с дневными лимитами, первые 14 дней лимиты выше. Больше генераций даёт отдельная подписка Pro.</p>
+    <div class="who">
+      <div><b>Базовый подойдёт, если</b>хочешь сначала научиться делать контент и проверить нишу без больших вложений.</div>
+      <div><b>Продвинутый подойдёт, если</b>готов вести модель как бизнес: площадки, трафик, переписка, вывод денег.</div>
     </div>
     <div class="up">
       <span>Уже на Базовом? Переход на Продвинутый: доплата разницы <b>11 000 ₽</b>, без новой регистрации.</span>
@@ -811,6 +1018,65 @@ let inView = false;
 if ("IntersectionObserver" in window) new IntersectionObserver(e => inView = e[0].isIntersecting, {threshold: .35}).observe(soft);
 if (!reduce) setInterval(() => { if (auto && inView && !document.hidden) show((cur + 1) % tabs.length); }, 6000);
 
+/* Симулятор переписки */
+(() => {
+  const S = [
+    {fan: "hey gorgeous 😍 are you real? you look way too good to be true", o: [
+      {t: "haha thank you! I'm an AI creator, a virtual girl made with a lot of care. but the chat is real and I love talking 😊", k: 2, fb: "Честно и тепло. Фанат знает, с кем говорит, и остаётся в диалоге: доверие дороже иллюзии."},
+      {t: "of course I'm real, babe 😘 100% real girl", k: 0, fb: "Обман. Это против правил площадки и против нашей позиции: при первой проверке теряешь фаната и рискуешь аккаунтом."},
+      {t: "real enough 😏 my private set is $50, want it?", k: 0, fb: "Слишком рано. На первом сообщении продажа отпугивает: фанат ещё не понял, зачем ему платить."}]},
+    {fan: "haha ok that's honestly cool. so what are you up to tonight?", o: [
+      {t: "just wrapped a photoshoot and finally chilling 🙈 what about you, long day?", k: 2, fb: "Лёгкий флирт и встречный вопрос. Фанат начинает рассказывать о себе: так рождается контакт."},
+      {t: "nothing. you?", k: 1, fb: "Сухо. Диалог не умер, но фанату не за что зацепиться."},
+      {t: "thinking about you buying my content 💸", k: 0, fb: "Давление на этапе флирта. Продажи здесь рано."}]},
+    {fan: "long day at work lol. you're actually fun to talk to", o: [
+      {t: "aww then you deserve something nice 😌 the shoot today had a few shots that were too personal for my feed…", k: 2, fb: "Прогрев: интерес к закрытой части без прямого «купи». Фанат сам захочет спросить."},
+      {t: "thanks! anyway, check out my page", k: 1, fb: "Вежливо, но разрывает момент. Лучше держать разговор на себе."},
+      {t: "fun costs money babe 😂", k: 0, fb: "Грубо. Фанат чувствует, что его «доят», и уходит."}]},
+    {fan: "too personal? now I'm curious 👀", o: [
+      {t: "it's a little set I keep for people I actually chat with 🙈 want me to send it?", k: 2, fb: "Мягкое предложение: личное, без цены в лоб. Фанат соглашается сам."},
+      {t: "it's $80, pay first", k: 0, fb: "Сухой прайс без контекста. Конверсия падает сильнее всего именно здесь."},
+      {t: "maybe later", k: 1, fb: "Упустил момент, когда фанат сам подогрелся."}]},
+    {fan: "yes please. how much?", o: [
+      {t: "$25 for the full set, and I'll add one pic just for you 💌", k: 2, fb: "Понятная цена и маленький бонус. Покупка без торга."},
+      {t: "whatever you want to pay lol", k: 1, fb: "Неуверенность. Фанат заплатит минимум или отложит."},
+      {t: "$25 but if you don't buy now I'll give it to someone else", k: 0, fb: "Фейковая срочность. Может сработать раз, но фанат больше не вернётся."}]}
+  ];
+  const msgs = document.getElementById("msgs"), opts = document.getElementById("opts"), stg = [...document.querySelectorAll("#stg div")];
+  let i = 0, score = 0;
+  const add = (cls, html) => { const d = document.createElement("div"); d.className = cls; d.innerHTML = html; msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight; return d; };
+  const esc = t => t.replace(/[&<>]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;"})[c]);
+  function stage() {
+    stg.forEach((d, k) => { d.className = k < i ? "done" : k === i ? "now" : ""; });
+    if (i >= S.length) return finish();
+    add("m f", esc(S[i].fan));
+    opts.innerHTML = `<div class="hint">Этап ${i + 1} из 5: выбери ответ</div>` + S[i].o.map((o, k) => `<button type="button" data-k="${k}"><i>${k + 1}</i><span>${esc(o.t)}</span></button>`).join("");
+    opts.querySelectorAll("button").forEach(b => b.onclick = () => pick(+b.dataset.k));
+  }
+  function pick(k) {
+    const o = S[i].o[k];
+    opts.innerHTML = "";
+    add("m me", esc(o.t));
+    setTimeout(() => {
+      add("fb " + (o.k === 2 ? "good" : o.k === 0 ? "bad" : ""), `<b>${o.k === 2 ? "Сильный ход." : o.k === 0 ? "Ошибка." : "Так себе."}</b> ${o.fb}`);
+      score += o.k;
+      if (o.k === 0 && i > 0) { i = S.length; score = -1; return setTimeout(finish, 500); }
+      i++; setTimeout(stage, 650);
+    }, 350);
+  }
+  function finish() {
+    stg.forEach((d, k) => d.className = score >= 0 && k < S.length ? "done" : (k < i ? "done" : ""));
+    if (score >= 9) add("pay", `<b>$25 + $10 чаевых</b>Фанат купил сет и оставил чаевые. Пример расчёта, не обещание.`);
+    else if (score >= 6) add("pay", `<b>$25</b>Покупка состоялась. Пара ответов была слабее: в кабинете чаттер подскажет сильнее.`);
+    else add("fb bad", `<b>Фанат ушёл.</b> Ошибка на одном этапе обнуляет переписку. Попробуй ещё раз: верные ходы держат контакт, а не давят.`);
+    opts.innerHTML = `<button type="button" id="again"><i>↻</i><span>Пройти ещё раз</span></button>`;
+    document.getElementById("again").onclick = reset;
+  }
+  function reset() { i = 0; score = 0; msgs.innerHTML = ""; stage(); }
+  document.getElementById("simReset").onclick = reset;
+  reset();
+})();
+
 /* Живой демо-эфир в первой вкладке: пульс, счётчики, детектор всплеска */
 (() => {
   const N = 40, pts = [], clk = [];
@@ -848,17 +1114,14 @@ if (!reduce) setInterval(() => { if (auto && inView && !document.hidden) show((c
 
 /* Галерея: фото со старого сайта (все модели созданы ИИ) */
 const gal = document.getElementById("gal");
-/* только кадры без откровенности: открытая витрина */
-for (const i of [1, 4, 7, 3]) {
-  const f = document.createElement("figure");
-  f.innerHTML = `<img src="https://ai-creators.ru/P${i}.jpg" alt="Пример генерации ИИ-модели" loading="lazy" decoding="async" referrerpolicy="no-referrer"><figcaption>100% ИИ</figcaption>`;
-  const img = f.querySelector("img");
-  img.onload = () => f.classList.add("ok");
-  img.onerror = () => { f.remove(); if (!gal.children.length) document.getElementById("real").hidden = true; };
-  gal.appendChild(f);
-}
-/* если картинки так и не пришли за 12 с, пустые места убираем */
-setTimeout(() => { gal.querySelectorAll("figure:not(.ok)").forEach(f => f.remove()); if (!gal.children.length) document.getElementById("real").hidden = true; }, 12000);
+/* галерея: картинки со старого сайта, только закрытые кадры (P1, P4, P7) */
+gal.querySelectorAll("img").forEach(img => {
+  const card = img.closest(".gc");
+  img.onload = () => card.classList.add("ok");
+  img.onerror = () => { card.remove(); if (!gal.children.length) document.getElementById("real").hidden = true; };
+  img.loading = "lazy"; img.decoding = "async"; img.src = img.dataset.src;
+});
+setTimeout(() => { gal.querySelectorAll(".gc:not(.ok)").forEach(c => c.remove()); if (!gal.children.length) document.getElementById("real").hidden = true; }, 12000);
 </script>
 </body>
 </html>
