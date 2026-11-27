@@ -262,6 +262,20 @@ h2{font-size:clamp(28px,3.6vw,48px)}
 .aus div:first-child b{color:var(--cy)}.aus div.w b{color:#ff8db3}
 .aus span{color:var(--mu);font-size:14px}
 @media(max-width:900px){.au{grid-template-columns:1fr;padding:24px;gap:24px}.au blockquote p{font-size:17px}.aus b{font-size:28px}}
+.week{padding-top:40px}
+.wk{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(7,1fr);gap:10px}
+.wk li{position:relative;padding:18px 16px 16px;border-radius:18px;background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--cy);display:flex;flex-direction:column}
+.wk li.a{border-top-color:var(--mg);background:linear-gradient(180deg,rgba(255,79,139,.07),var(--panel) 55%)}
+.wk em{font:600 12px var(--num);font-style:normal;color:var(--cy);letter-spacing:.04em}
+.wk li.a em{color:#ff8db3}
+.wk b{display:block;font:800 16px/1.25 var(--body);margin:6px 0 6px}
+.wk p{margin:0 0 12px;color:var(--mu);font-size:13px;line-height:1.45;flex:1}
+.wk span{font-size:12px;font-weight:800;color:var(--tx2);padding-top:10px;border-top:1px solid var(--line);min-height:3.6em}
+.wkn{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:16px 0 0;color:var(--mu);font-size:13px}
+.wkn span{display:inline-flex;align-items:center;gap:8px;margin-right:14px}
+.wkn i{display:inline-block;flex:none;width:18px;height:3px;border-radius:2px;background:var(--cy)}.wkn i.a{background:var(--mg)}
+@media(max-width:1100px){.wk{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:760px){.wk{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;margin-right:-18px;padding-right:18px;scrollbar-width:none}.wk::-webkit-scrollbar{display:none}.wk li{flex:0 0 72%;scroll-snap-align:start}}
 /* ниша */
 .niche{display:grid;grid-template-columns:1.2fr 1fr;gap:48px;align-items:start}
 .niche p{color:var(--tx2);margin:0 0 16px}
@@ -995,6 +1009,22 @@ footer p{margin:6px 0 0;max-width:48em}
 </section>
 
 
+<section id="week" class="week">
+  <div class="wrap">
+    <div class="sh"><h2>Твоя первая неделя</h2><p>Примерный план по урокам: что у тебя будет готово к концу каждого дня. Темп свой, все уроки открываются сразу после оплаты.</p></div>
+    <ol class="wk">
+      <li><em>День 1</em><b>Старт и сервисы</b><p>Знакомство с планом, оплата нейросетей из России без иностранной карты.</p><span>Готово: доступ ко всем сервисам</span></li>
+      <li><em>День 2</em><b>Своя модель</b><p>Внешность и характер, первые 100 фото одного и того же лица.</p><span>Готово: модель и 100 фото</span></li>
+      <li><em>День 3</em><b>18+ с живой кожей</b><p>Откровенные фото без эффекта пластика.</p><span>Готово: первые 18+ кадры</span></li>
+      <li><em>День 4</em><b>Референсы</b><p>Позы и сцены по референсу, референс плюс промпт.</p><span>Готово: кадры под любой запрос</span></li>
+      <li><em>День 5</em><b>Кастомы и сеты</b><p>Заказ под фаната и готовый фотосет на продажу.</p><span>Готово: первый сет</span></li>
+      <li class="a"><em>День 6</em><b>Fanvue</b><p>Профиль, BIO, цены, платные посты и автосообщения.</p><span>Готово: страница модели</span></li>
+      <li class="a"><em>День 7</em><b>Трафик и ссылки</b><p>Прогрев соцсетей по плану, ссылки из кабинета в био.</p><span>Готово: модель видят люди</span></li>
+    </ol>
+    <p class="wkn"><span><i class="b"></i>Базовый: дни 1–5</span><span><i class="a"></i>Продвинутый: вся неделя и дальше: видео, чаттинг, Telegram-каналы, масштаб</span></p>
+  </div>
+</section>
+
 <section id="price" class="band hi">
   <div class="wrap">
     <div class="sh">
@@ -1312,6 +1342,21 @@ gal.querySelectorAll("img").forEach(img => {
     if (!j || !j.ready || !j.models_active) return;
     el.querySelector("span").innerHTML = `Сейчас в работе <b>${nf(j.models_active)}</b> моделей учеников` + (j.people_week ? `, за эту неделю по их ссылкам пришло <b>${nf(j.people_week)}</b> человек` : "");
     el.hidden = false; }).catch(() => {}); })();
+
+/* Яндекс Метрика: впиши номер счётчика в YM_ID — код и цели включатся сами */
+const YM_ID = "";
+(() => { if (!YM_ID) return;
+  (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=1*new Date();
+    k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+    (window,document,"script","https://mc.yandex.ru/metrika/tag.js","ym");
+  ym(+YM_ID, "init", {clickmap: true, trackLinks: true, accurateTrackBounce: true, webvisor: true});
+  const goal = g => { try { ym(+YM_ID, "reachGoal", g); } catch (e) {} };
+  document.addEventListener("click", e => { const a = e.target.closest("a"); if (!a) return;
+    if (a.dataset.buy) goal("buy_" + a.dataset.buy);
+    else if (/AccessGrantedGuide_bot/.test(a.href)) goal("bot");
+    else if (/gallery\.lukaflow/.test(a.href)) goal("gallery");
+    else if (/\/guide$|\/prompts$/.test(a.pathname)) goal("free");
+    else if (a.getAttribute("href") === "#price") goal("to_price"); }, true); })();
 </script>
 </body>
 </html>
