@@ -413,6 +413,10 @@ def init_db():
         for col in ("paid_kind", "upg_ts", "f1_ts", "f2_ts", "f3_ts"):  # что купил, апгрейд, догоны после цепочки
             if col not in bp:
                 c.execute(f"ALTER TABLE bot_people ADD COLUMN {col} TEXT")
+        # своя аналитика сайта neurofans.ru (вместо Яндекс Метрики): анонимный id браузера, без IP
+        c.execute("""CREATE TABLE IF NOT EXISTS site_ev(
+            id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT, vid TEXT, ev TEXT, src TEXT, dev TEXT)""")
+        c.execute("CREATE INDEX IF NOT EXISTS ix_site_ev ON site_ev(ts)")
         c.execute("""CREATE TABLE IF NOT EXISTS bot_asks(
             id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT, tg_uid INTEGER, q TEXT, a TEXT, human INTEGER DEFAULT 0)""")
         c.execute("""CREATE TABLE IF NOT EXISTS alerts(
@@ -2199,6 +2203,76 @@ async function load(){bar("d",D,days,v=>days=+v);bar("b",B,by,v=>by=v);
 load();
 </script></body></html>"""
 
+
+# ---------- аналитика сайта neurofans.ru ----------
+SITE_SECTIONS = [("hero", "Первый экран"), ("niche", "Почему ИИ-модели"), ("real", "Примеры"), ("cases", "Кейсы"),
+                 ("author", "Кто ведёт курс"), ("math", "Математика"), ("soft", "Софт"), ("program", "Программа"),
+                 ("week", "Первая неделя"), ("price", "Тарифы"), ("sim", "Симулятор"), ("free", "Начни бесплатно"),
+                 ("faq", "Вопросы"), ("final", "Финал")]
+SITE_GOALS = {"buy_base": "нажали «Купить Базовый»", "buy_adv": "нажали «Купить Продвинутый»",
+              "buy_up": "нажали «Доплатить» (апгрейд)", "to_price": "нажали «Выбрать тариф»", "bot": "перешли в бота",
+              "gallery": "открыли галерею примеров", "free": "открыли гайд или мануал", "calc": "крутили калькулятор",
+              "sim": "играли в симулятор", "shot": "открывали скриншоты"}
+_SITE_EV = re.compile(r"^(view|sec:[a-z]{2,12}|goal:[a-z_]{2,12})$")
+_site_rl = {}
+
+@app.route("/site/ev", methods=["POST", "OPTIONS"])
+def site_event():
+    """События с сайта (navigator.sendBeacon, text/plain): {"v": id браузера, "s": откуда, "m": 1 телефон, "e": [...]}."""
+    h = {"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type"}
+    if request.method == "OPTIONS":
+        return Response("", 204, h)
+    ua = (request.headers.get("User-Agent", "") or "")[:300]
+    if not ua.strip() or BOT_UA.search(ua):
+        return Response("", 204, h)
+    ip = _client_ip() or "-"
+    now = time.time()
+    lst = [t for t in _site_rl.get(ip, []) if now - t < 600]
+    if len(lst) >= 120:
+        return Response("", 204, h)
+    lst.append(now); _site_rl[ip] = lst
+    if len(_site_rl) > 5000:
+        _site_rl.clear()
+    try:
+        d = json.loads(request.get_data(cache=False, as_text=True)[:4000] or "{}")
+        vid = str(d.get("v", ""))[:40]
+        evs = [str(e)[:24] for e in (d.get("e") or [])][:20]
+    except Exception:
+        return Response("", 204, h)
+    if not re.fullmatch(r"[A-Za-z0-9]{8,40}", vid):
+        return Response("", 204, h)
+    src = re.sub(r"[^a-z0-9._\-]", "", str(d.get("s", "")).lower())[:40] or "direct"
+    dev = "m" if d.get("m") else "d"
+    ts = _now_iso()
+    rows = [(ts, vid, e, src, dev) for e in evs if _SITE_EV.match(e)]
+    if rows:
+        with _conn() as c:
+            c.executemany("INSERT INTO site_ev(ts, vid, ev, src, dev) VALUES(?,?,?,?,?)", rows)
+    return Response("", 204, h)
+
+def site_stats(days=7):
+    since = (dt.datetime.now(dt.timezone.utc).replace(tzinfo=None) - dt.timedelta(days=days)).isoformat(timespec="seconds") if days else "0"
+    with _conn() as c:
+        one = lambda q, *a: (c.execute(q, a).fetchone() or [0])[0] or 0
+        vis = one("SELECT COUNT(DISTINCT vid) FROM site_ev WHERE ev='view' AND ts>=?", since)
+        views = one("SELECT COUNT(*) FROM site_ev WHERE ev='view' AND ts>=?", since)
+        mob = one("SELECT COUNT(DISTINCT vid) FROM site_ev WHERE ev='view' AND dev='m' AND ts>=?", since)
+        reach = {r[0][4:]: r[1] for r in c.execute(
+            "SELECT ev, COUNT(DISTINCT vid) FROM site_ev WHERE ev LIKE 'sec:%' AND ts>=? GROUP BY ev", (since,))}
+        goals = {r[0][5:]: r[1] for r in c.execute(
+            "SELECT ev, COUNT(DISTINCT vid) FROM site_ev WHERE ev LIKE 'goal:%' AND ts>=? GROUP BY ev", (since,))}
+        srcs = [{"src": r[0], "people": r[1]} for r in c.execute(
+            "SELECT src, COUNT(DISTINCT vid) n FROM site_ev WHERE ev='view' AND ts>=? GROUP BY src ORDER BY n DESC LIMIT 12", (since,))]
+        buyers = one("SELECT COUNT(DISTINCT vid) FROM site_ev WHERE ev IN ('goal:buy_base','goal:buy_adv','goal:buy_up') AND ts>=?", since)
+        d0 = (dt.datetime.now(dt.timezone.utc).replace(tzinfo=None) - dt.timedelta(days=13)).date()
+        per = {r[0]: r[1] for r in c.execute(
+            "SELECT substr(ts,1,10) d, COUNT(DISTINCT vid) FROM site_ev WHERE ev='view' AND ts>=? GROUP BY d", (d0.isoformat(),))}
+    daily = [{"d": (d0 + dt.timedelta(days=i)).isoformat(), "n": per.get((d0 + dt.timedelta(days=i)).isoformat(), 0)} for i in range(14)]
+    sections = [{"id": k, "name": n, "people": vis if k == "hero" else reach.get(k, 0)} for k, n in SITE_SECTIONS]
+    return {"visitors": vis, "views": views, "mobile": mob, "buyers": buyers, "sections": sections,
+            "goals": [{"id": k, "name": SITE_GOALS[k], "people": goals.get(k, 0)} for k in SITE_GOALS],
+            "sources": srcs, "daily": daily}
+
 def bot_stats(days=7):
     """Сводка автоматики бота для админа: что настроено, что сработало за период, последние вопросы ИИ."""
     since = (dt.datetime.now(dt.timezone.utc).replace(tzinfo=None) - dt.timedelta(days=days)).isoformat(timespec="seconds") if days else "0"
@@ -2242,7 +2316,8 @@ def bot_stats(days=7):
         a["from"] = uid_source_text(a["tg_uid"]) if a.get("tg_uid") else "неизвестно"
     cfg = {"pb": bool(PB_TOKEN), "ai": bool(AI_KEY or (AI_URL and AI_SECRET)), "tg": bool(BOT_TOKEN),
            "tribute": bool(TRIBUTE_KEY), "quiet": _quiet_now()}
-    return {"days": days, "count": cnt, "cfg": cfg, "asks": asks, "sources": sources, "partners": partners}
+    return {"days": days, "count": cnt, "cfg": cfg, "asks": asks, "sources": sources, "partners": partners,
+            "site": site_stats(days)}
 
 @app.route("/api/bot")
 def api_bot():
@@ -2263,7 +2338,7 @@ def bot_page():
     return Response(page, mimetype="text/html")
 
 BOT_PAGE = r"""<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex"><title>Бот: автоматика</title><style>
+<meta name="robots" content="noindex"><title>Бот и сайт</title><style>
 body{margin:0;background:#04050c;color:#e9edf8;font:15px/1.5 system-ui,-apple-system,sans-serif;padding:20px;max-width:1100px}
 h1{font-size:22px;margin:0 0 4px}h2{font-size:17px;margin:26px 0 10px}p.s{color:#8a93ae;margin:0 0 16px}a{color:#2ee6d6}
 .bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}.bar button{background:#0a0e1c;border:1px solid #283255;color:#c4cade;border-radius:10px;padding:8px 12px;cursor:pointer}
@@ -2277,9 +2352,17 @@ h1{font-size:22px;margin:0 0 4px}h2{font-size:17px;margin:26px 0 10px}p.s{color:
 .wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:640px}th,td{padding:9px 10px;border-bottom:1px solid #1b2238;text-align:left;vertical-align:top}
 th{color:#8a93ae;font-weight:600;font-size:13px}td.t{white-space:nowrap;color:#8a93ae;font-size:13px}td.a{color:#c4cade;font-size:14px;max-width:460px}
 span.t{color:#8a93ae;font-size:13px;margin-left:4px}.h{color:#ff4f8b;font-weight:700;font-size:12px}.note{color:#8a93ae;font-size:13px;margin-top:10px}
-</style></head><body><h1>Бот: автоматика</h1><p class="s">Что настроено, что бот сделал сам и о чём спрашивают люди. <a id="fl" href="/funnel">Воронка бота →</a></p>
-<h2>Настройки</h2><div class="cfg" id="cfg"></div>
-<h2>Что сработало</h2><div class="bar" id="d"></div><div class="k" id="k"></div>
+.sbar{display:grid;grid-template-columns:190px 1fr 96px;gap:10px;align-items:center;padding:6px 0;font-size:14px}
+.sbar i{display:block;height:12px;border-radius:6px;background:linear-gradient(90deg,#2ee6d6,#ff4f8b)}.sbar s{display:block;height:12px;border-radius:6px;background:#141a30;text-decoration:none}
+.sbar b{text-align:right;font-weight:600;white-space:nowrap}.sp{display:flex;gap:4px;align-items:flex-end;height:60px;margin:8px 0 4px}.sp i{flex:1;background:#2ee6d6;border-radius:3px 3px 0 0;min-height:2px;opacity:.85}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:24px}@media(max-width:800px){.two{grid-template-columns:1fr}.sbar{grid-template-columns:118px 1fr 84px}}
+</style></head><body><h1>Бот и сайт</h1><p class="s">Кто заходит на сайт и что там нажимает, что настроено в боте, что бот сделал сам и о чём спрашивают люди. <a id="fl" href="/funnel">Воронка бота →</a></p>
+<h2>Сайт neurofans.ru</h2><div class="bar" id="d"></div><div class="k" id="sk"></div>
+<div class="sp" id="sd" title="посетители по дням, 14 дней"></div><p class="note" id="sdn"></p>
+<div class="two"><div><h2>До какого блока долистали</h2><div id="ss"></div></div><div><h2>Что нажимали</h2><div id="sg"></div><h2>Откуда пришли на сайт</h2><div class="wrap"><table id="so"></table></div></div></div>
+<p class="note">Считаем сами, без Яндекса и Google: анонимный номер браузера, без IP и имён. Боты и превью ссылок не считаются. Человек = браузер: если зашёл с телефона и с компьютера, это два человека.</p>
+<h2>Настройки бота</h2><div class="cfg" id="cfg"></div>
+<h2>Что сработало в боте</h2><div class="k" id="k"></div>
 <p class="note">Догоны и апгрейд бот шлёт сам с 10:00 до 22:00 по Москве. Купившим продающие сообщения не приходят.</p>
 <h2>Откуда пришли</h2><div class="wrap"><table id="src"></table></div>
 <h2>Аккаунты и партнёры, которые привели людей</h2><div class="wrap"><table id="prt"></table></div>
@@ -2313,6 +2396,16 @@ async function load(){
   box(c.upgrade,"предложений апгрейда"),
   box(c.asks,"вопросов ИИ от "+c.askers+" чел."),
   box(c.human,"попросили Катю","g")].join("");
+ const S=j.site||{};const V=S.visitors||0;
+ document.getElementById("sk").innerHTML=[box(V,"человек зашли на сайт"),box(S.views||0,"просмотров страницы"),
+  box(pct(S.mobile||0,V)||"0%","с телефона"),box((S.sections||[]).find(x=>x.id=="price")?.people||0,"долистали до тарифов "+pct((S.sections||[]).find(x=>x.id=="price")?.people||0,V)),
+  box(S.buyers||0,"нажали «Купить» "+pct(S.buyers||0,V),"g")].join("");
+ const mx=Math.max(1,...(S.daily||[]).map(x=>x.n));document.getElementById("sd").innerHTML=(S.daily||[]).map(x=>`<i style="height:${Math.max(3,x.n/mx*100)}%" title="${x.d}: ${x.n}"></i>`).join("");
+ document.getElementById("sdn").textContent="Посетители по дням за 14 дней, сегодня "+((S.daily||[]).slice(-1)[0]?.n||0);
+ const bars=(arr)=>arr.map(x=>`<div class="sbar"><span>${esc(x.name)}</span><span><s><i style="width:${V?Math.round(x.people*100/V):0}%"></i></s></span><b>${x.people} <span class="t">${pct(x.people,V)}</span></b></div>`).join("");
+ document.getElementById("ss").innerHTML=V?bars(S.sections||[]):'<p class="t">Пока никто не заходил за этот период</p>';
+ document.getElementById("sg").innerHTML=V?bars(S.goals||[]):'<p class="t">Пока нет нажатий</p>';
+ document.getElementById("so").innerHTML="<tr><th>Откуда</th><th>Людей</th></tr>"+((S.sources||[]).length?S.sources.map(x=>`<tr><td>${esc(x.src=="direct"?"напрямую / из приложения":x.src)}</td><td><b>${x.people}</b> <span class="t">${pct(x.people,V)}</span></td></tr>`).join(""):'<tr><td colspan="2" class="t">Пока пусто</td></tr>');
  const row3=(n,x)=>`<td><b>${x.people}</b></td><td>${x.pay_open} <span class="t">${pct(x.pay_open,x.people)}</span></td><td>${x.paid} <span class="t">${pct(x.paid,x.people)}</span></td>`;
  document.getElementById("src").innerHTML="<tr><th>Откуда</th><th>Новых людей</th><th>Открыли оплату</th><th>Оплатили</th></tr>"+((j.sources||[]).length?j.sources.map(x=>`<tr><td>${esc(x.name)}</td>${row3(0,x)}</tr>`).join(""):'<tr><td colspan="4" class="t">Пока никого за этот период</td></tr>');
  document.getElementById("prt").innerHTML="<tr><th>Аккаунт</th><th>Новых людей</th><th>Открыли оплату</th><th>Оплатили</th></tr>"+((j.partners||[]).length?j.partners.map(x=>`<tr><td>${esc(x.name||x.key)}${x.name?`<br><span class="t">${esc(x.key)}</span>`:""}</td>${row3(0,x)}</tr>`).join(""):'<tr><td colspan="4" class="t">Пока никого за этот период</td></tr>');
@@ -2361,7 +2454,7 @@ th{color:var(--mut);font-weight:600}
 .rk{width:34px;font-weight:700}.mut{color:var(--mut)}
 .foot{color:var(--mut);font-size:12px;margin-top:14px}
 </style></head><body>
-<h1>🏆 NeuroFans — соревнование команд &nbsp;<a id="arenaLink" href="/arena" style="font-size:14px">🥊 Открыть арену</a> &nbsp;<a id="funnelLink" href="/funnel" style="font-size:14px">📈 Воронка бота</a> &nbsp;<a id="botLink" href="/bot" style="font-size:14px">🤖 Бот</a></h1>
+<h1>🏆 NeuroFans — соревнование команд &nbsp;<a id="arenaLink" href="/arena" style="font-size:14px">🥊 Открыть арену</a> &nbsp;<a id="funnelLink" href="/funnel" style="font-size:14px">📈 Воронка бота</a> &nbsp;<a id="botLink" href="/bot" style="font-size:14px">🤖 Бот и сайт</a></h1>
 <p class="sub" id="updated">загрузка…</p>
 <div class="teams" id="teams"></div>
 <div class="bar"><i id="barA" style="width:50%"></i></div>

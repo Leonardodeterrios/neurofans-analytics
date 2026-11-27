@@ -1343,20 +1343,34 @@ gal.querySelectorAll("img").forEach(img => {
     el.querySelector("span").innerHTML = `Сейчас в работе <b>${nf(j.models_active)}</b> моделей учеников` + (j.people_week ? `, за эту неделю по их ссылкам пришло <b>${nf(j.people_week)}</b> человек` : "");
     el.hidden = false; }).catch(() => {}); })();
 
-/* Яндекс Метрика: впиши номер счётчика в YM_ID — код и цели включатся сами */
-const YM_ID = "";
-(() => { if (!YM_ID) return;
-  (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=1*new Date();
-    k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
-    (window,document,"script","https://mc.yandex.ru/metrika/tag.js","ym");
-  ym(+YM_ID, "init", {clickmap: true, trackLinks: true, accurateTrackBounce: true, webvisor: true});
-  const goal = g => { try { ym(+YM_ID, "reachGoal", g); } catch (e) {} };
-  document.addEventListener("click", e => { const a = e.target.closest("a"); if (!a) return;
-    if (a.dataset.buy) goal("buy_" + a.dataset.buy);
-    else if (/AccessGrantedGuide_bot/.test(a.href)) goal("bot");
-    else if (/gallery\.lukaflow/.test(a.href)) goal("gallery");
-    else if (/\/guide$|\/prompts$/.test(a.pathname)) goal("free");
-    else if (a.getAttribute("href") === "#price") goal("to_price"); }, true); })();
+/* Своя аналитика: события уходят в трекер и видны на дашборде («Бот и сайт»). Без IP и имён: случайный номер браузера */
+(() => {
+  const EP = "https://go.ai-creators.ru/site/ev";
+  let vid = ""; try { vid = localStorage.getItem("nf_v") || ""; if (!vid) { vid = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2) + Date.now()).replace(/[^a-z0-9]/gi, "").slice(0, 32); localStorage.setItem("nf_v", vid); } } catch (e) { vid = String(Math.random()).slice(2, 20) + "x" + Date.now(); }
+  const q = new URLSearchParams(location.search);
+  let src = q.get("utm_source") || q.get("from") || q.get("ref") || "";
+  if (!src && document.referrer) { try { const h = new URL(document.referrer).hostname.replace(/^www\./, ""); if (!/neurofans\.ru$/.test(h)) src = h; } catch (e) {} }
+  const mob = matchMedia("(max-width:760px)").matches || /Mobi|Android|iPhone/.test(navigator.userAgent);
+  let buf = [], t = null; const sent = new Set();
+  const flush = () => { if (!buf.length) return; const body = JSON.stringify({v: vid, s: src || "direct", m: mob ? 1 : 0, e: buf}); buf = [];
+    try { if (!navigator.sendBeacon || !navigator.sendBeacon(EP, new Blob([body], {type: "text/plain"}))) fetch(EP, {method: "POST", body, keepalive: true, mode: "no-cors"}); } catch (e) {} };
+  const ev = (e, once) => { if (once && sent.has(e)) return; sent.add(e); buf.push(e); clearTimeout(t); t = setTimeout(flush, 1500); };
+  ev("view");
+  addEventListener("pagehide", flush); document.addEventListener("visibilitychange", () => { if (document.hidden) flush(); });
+  if ("IntersectionObserver" in window) { const io = new IntersectionObserver(es => es.forEach(x => { if (x.isIntersecting) { ev("sec:" + x.target.dataset.sec, true); io.unobserve(x.target); } }), {threshold: .25});
+    document.querySelectorAll("main section[id], section[id], section.final").forEach(el => { const id = el.id || "final"; if (id === "hero") return; el.dataset.sec = id; io.observe(el); }); }
+  document.addEventListener("click", e => { const a = e.target.closest("a,button"); if (!a) return;
+    const h = a.getAttribute("href") || "";
+    if (a.dataset.buy) ev("goal:buy_" + a.dataset.buy);
+    else if (/AccessGrantedGuide_bot/.test(h)) ev("goal:bot");
+    else if (/gallery\.lukaflow/.test(h)) ev("goal:gallery");
+    else if (/^\/(guide|prompts)$/.test(h)) ev("goal:free");
+    else if (h === "#price") ev("goal:to_price");
+    else if (a.closest(".shb,.pg")) ev("goal:shot", true);
+    else if (a.closest("#sim")) ev("goal:sim", true);
+    if (a.dataset.buy || /^https?:/.test(h)) flush(); }, true);
+  ["cF", "cP"].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener("change", () => ev("goal:calc", true)); });
+})();
 </script>
 </body>
 </html>

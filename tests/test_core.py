@@ -432,4 +432,21 @@ ks=a["@ksenia.daily.ai"]; assert ks["never"] and ks["runs"]==0 and ks["team"]=="
 assert rep["registry"]==2 and app.label_from_url("https://go.ai-creators.ru/t/leo07")=="leo07"
 print("таблица аккаунтов: реестр, связка с AdsPower и трекером ✅")
 
+
+# аналитика сайта: события с сайта → сводка на странице «Бот и сайт»
+def site(body, ua="Mozilla/5.0 (iPhone) Safari"):
+    flask.request.method="POST"; flask.request.data=json.dumps(body).encode()
+    flask.request.headers=H({"User-Agent":ua,"CF-Connecting-IP":"10.9.9.9"})
+    r=app.site_event(); flask.request.method="GET"; return r
+site({"v":"abcdef123456","s":"threads.net","m":1,"e":["view","sec:cases","sec:price","goal:buy_adv","sec:EVIL;drop","bad"]})
+site({"v":"zzzzzzzz9999","s":"","m":0,"e":["view","sec:cases"]})
+site({"v":"botbotbot123","e":["view"]}, ua="facebookexternalhit/1.1")
+site({"v":"x","e":["view"]})
+st=app.site_stats(7)
+assert st["visitors"]==2 and st["mobile"]==1 and st["buyers"]==1, st
+sec={x["id"]:x["people"] for x in st["sections"]}; assert sec["hero"]==2 and sec["cases"]==2 and sec["price"]==1, sec
+assert {x["src"] for x in st["sources"]}=={"threads.net","direct"}
+assert [g for g in st["goals"] if g["id"]=="buy_adv"][0]["people"]==1
+assert "site" in app.bot_stats(7)
+print("аналитика сайта: OK")
 print("\nВСЕ ПРОВЕРКИ ПРОШЛИ ✅")

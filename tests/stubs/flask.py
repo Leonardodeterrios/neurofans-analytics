@@ -14,7 +14,7 @@ class _Headers(dict):
     def get(self, k, d=''): return dict.get(self, k, d)
 class _Req:
     def __init__(self): self.args={}; self.values={}; self.headers=_Headers(); self.remote_addr='1.2.3.4'; self.cookies={}; self.method='GET'; self.data=b''
-    def get_data(self): return self.data
+    def get_data(self, cache=True, as_text=False): return self.data.decode() if as_text and isinstance(self.data,bytes) else self.data
 request=_Req()
 class Flask:
     def __init__(self, name): pass
