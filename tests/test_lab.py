@@ -424,6 +424,17 @@ trb("new_digital_product", {"product_id": 222, "purchase_id": 9005, "telegram_us
 uid3 = cn2.execute("SELECT id FROM users WHERE nick=?", (me(c3)["nick"],)).fetchone()[0]
 sent.clear(); bot(31337, "/start " + N2.new_link_code(cn2, uid3, now2))
 assert me(c3)["course"] == "adv" and "Продвинутый" in sent[-1]["text"], sent
+# id товара нет в .env: тариф узнаётся по названию товара и запоминается (возврат тоже работает)
+assert lab_pay.kind_by_name("NEUROFANS Апгрейд: с Базового на Продвинутый") == "up"
+assert lab_pay.kind_by_name("NEUROFANS Продвинутый: полный запуск") == "adv"
+assert lab_pay.kind_by_name("NEUROFANS Базовый: 18+ фото ИИ-модели") == "base"
+assert lab_pay.kind_by_name("Pro подписка") is None
+assert trb("new_digital_product", {"product_id": 777, "product_name": "NEUROFANS Базовый: 18+ фото ИИ-модели",
+                                   "purchase_id": 9010, "telegram_user_id": 6060})["course"] == "paid"
+assert lab.course_map(lab.db())[777] == "base"
+assert trb("new_digital_product", {"product_id": 777, "purchase_id": 9011, "telegram_user_id": 6061})["course"] == "paid"  # уже без названия
+assert "course" not in trb("new_digital_product", {"product_id": 778, "product_name": "Стикеры", "purchase_id": 9012, "telegram_user_id": 6062})
+assert trb("digital_product_refund", {"product_id": 777, "purchase_id": 9010, "telegram_user_id": 6060})["course"] == "refund"
 print("оплата курса → кабинет: OK")
 # прямой OpenAI-совместимый API (OpenRouter): Bearer-ключ вместо секрета ретранслятора
 import threading as _th

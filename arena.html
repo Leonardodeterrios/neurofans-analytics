@@ -961,8 +961,9 @@ const ACT={examples:{pts:8,txt:'смотрит примеры генераций
   site:{pts:8,txt:'перешёл на сайт',tag:'НА САЙТЕ',fx:'shock'},
   program:{pts:10,txt:'смотрит программу клуба',tag:'КРИТ · программа',fx:'crit'},
   intent:{pts:12,txt:'хочет такие же результаты',tag:'хочет в клуб',fx:'robot'},
-  checkout:{pts:20,txt:'открыл оплату клуба',tag:'ОПЛАТА',fx:'shock'},
-  paid:{pts:1000,txt:'оплатил клуб',tag:'ДЖЕКПОТ',fx:'jackpot'}};
+  checkout:{pts:20,txt:'открыл оплату Продвинутого',tag:'ОПЛАТА',fx:'shock'},
+  checkout_base:{pts:15,txt:'открыл оплату Базового',tag:'ОПЛАТА',fx:'shock'},
+  paid:{pts:1000,txt:'оплатил курс',tag:'ДЖЕКПОТ',fx:'jackpot'}};
 const evPts=ev=>ev.kind==='start'?SP:ev.kind==='hit'?1:(ev.points||(ACT[ev.kind]||{pts:1}).pts);
 /* приёмы под действия: у Лёни (A) катана, у Кати (B) два клинка */
 Object.assign(MOVES.A,{
@@ -1689,7 +1690,7 @@ function showTag(team,label,kind){
   $('tags').querySelectorAll('.tag:not(.big)').forEach(o=>{if(!big)o.style.marginTop=(parseFloat(o.style.marginTop||0)-26)+'px'});
   if(kind==='start')d.innerHTML=`<b>+${SP}</b><span class="tx"><span>${esc(label)} · АППЕРКОТ</span><small>новый человек в боте</small></span>`;
   else if(kind==='examples')d.innerHTML=`<b>+${pts}</b><span class="tx"><span>РАКЕТНЫЙ ЗАЛП</span><small>${esc(label)} · смотрит примеры генераций</small></span>`;
-  else if(kind==='checkout')d.innerHTML=`<b>+${pts}</b><span class="tx"><span>ОПЛАТА</span><small>${esc(label)} · открыл оплату клуба</small></span>`;
+  else if(kind==='checkout'||kind==='checkout_base')d.innerHTML=`<b>+${pts}</b><span class="tx"><span>ОПЛАТА</span><small>${esc(label)} · ${ACT[kind].txt}</small></span>`;
   else if(kind==='site')d.innerHTML=`<b>+${pts}</b><span class="tx"><span>НА САЙТЕ</span><small>${esc(label)} · перешёл на сайт</small></span>`;
   else d.innerHTML=`<b>+${pts}</b>${esc(label)}${ACT[kind]?` <em>${esc(ACT[kind].tag)}</em>`:''}`;
   $('tags').appendChild(d);setTimeout(()=>d.remove(),big?2300:1600);

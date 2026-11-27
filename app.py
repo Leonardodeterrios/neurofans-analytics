@@ -159,24 +159,26 @@ ACTIONS = {
     # ближе к покупке — больше очков (согласовано с Лёней 22.11.2026)
     "program":  (10, "смотрит программу клуба"),
     "intent":   (12, "хочет такие же результаты"),
-    "checkout": (20, "открыл оплату клуба"),
+    "checkout": (20, "открыл оплату Продвинутого"),
+    "checkout_base": (15, "открыл оплату Базового"),
     # настоящая оплата клуба — приходит вебхуком от Tribute, кнопкой её не получить (не в ACT_LINKS)
-    "paid":     (1000, "оплатил клуб"),
+    "paid":     (1000, "оплатил курс"),
 }
 # Кнопки воронки в боте — это ссылки (мини-приложения ai-creators.ru, канал), PuzzleBot при нажатии
 # ничего не шлёт. Поэтому кнопка ведёт на наш переходник /a/<код>: он засчитывает действие и сразу
 # открывает настоящую страницу. Куда вести — только отсюда (никаких адресов из ссылки: не открытый редирект).
 ACT_LINKS = {
-    "examples": "https://ai-creators.ru/primery",
+    "examples": "https://gallery.lukaflow.shop/",          # галерея 18+ на зарубежном сервере (27.11.2026)
     "guide":    "https://ai-creators.ru/guide-model",
     "prompts":  "https://ai-creators.ru/prompts",
     "sim":      "https://ai-creators.ru/simulator",
     "channel":  "https://t.me/+X-AXokWU0zswZTFi",
     "reviews":  "https://t.me/+X-AXokWU0zswZTFi",
-    "site":     "https://ai-creators.ru/",
-    "program":  "https://ai-creators.ru/#tariff",
-    "intent":   "https://ai-creators.ru/#tariff",
-    "checkout": "https://t.me/tribute/app?startapp=s13fW",
+    "site":     "https://new.neurofans.ru/",
+    "program":  "https://new.neurofans.ru/#price",
+    "intent":   "https://new.neurofans.ru/#price",
+    "checkout": "https://t.me/tribute/app?startapp=hLUB",       # Продвинутый 14 900 ₽
+    "checkout_base": "https://t.me/tribute/app?startapp=hLUy",  # Базовый 3 900 ₽
 }
 for _kv in (os.getenv("ACT_LINKS") or "").split(","):        # переопределение в .env: ACT_LINKS=site=https://…,guide=https://…
     _k, _, _v = _kv.strip().partition("=")

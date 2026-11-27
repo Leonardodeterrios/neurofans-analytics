@@ -360,6 +360,16 @@ def kv_get(c, k, d=None):
 def kv_set(c, k, v):
     c.execute("INSERT OR REPLACE INTO kv(k,v) VALUES(?,?)", (k, str(v)))
 
+def course_map(c):
+    """Товары курса: TRIBUTE_COURSE из .env + выученные по названию товара (kv course_learned)."""
+    m = {}
+    try:
+        m = {int(k): v for k, v in json.loads(kv_get(c, "course_learned") or "{}").items()}
+    except (ValueError, TypeError):
+        pass
+    m.update(TRIBUTE_COURSE)
+    return m
+
 def need_json():
     """Защита от подделки запросов с чужих сайтов: изменения — только JSON-запросом с нашего адреса."""
     if not request.is_json:
@@ -1270,7 +1280,7 @@ def api_admin_overview():
             sales[k] = n
         sales["waiting"] = one("SELECT COUNT(DISTINCT p.tg_id) FROM purchases p WHERE p.refunded IS NULL "
                                "AND NOT EXISTS (SELECT 1 FROM users u WHERE u.tg_chat_id=p.tg_id)")
-        sales["ready"] = bool(TRIBUTE_COURSE)
+        sales["ready"] = bool(course_map(c))
     for i in invites:
         i["url"] = f"https://{LAB_HOST}/?invite={i['code']}"
     return jsonify({"ok": True, "users": users, "invites": invites, "totals": tot, "week": wk, "funnel": funnel,
@@ -1656,11 +1666,20 @@ def api_tribute():
         # курс: покупка → доступ; возврат → тариф пересчитывается (кабинет остаётся, уроки закроются)
         pid = int(p.get("product_id")) if str(p.get("product_id") or "").isdigit() else 0
         course = None
-        if tg and name == "new_digital_product" and pid in TRIBUTE_COURSE:
-            if pay.record(c, tg, pid, TRIBUTE_COURSE[pid], p.get("purchase_id") or key, iso()):
-                course = ("paid", TRIBUTE_COURSE[pid])
-        elif tg and "refund" in name.lower() and TRIBUTE_COURSE:
-            if pay.refund(c, tg, pid, p.get("purchase_id"), iso(), TRIBUTE_COURSE):
+        cmap = course_map(c)
+        if pid and name == "new_digital_product" and pid not in cmap:
+            # id товара ещё не в .env: узнаём тариф по названию («NEUROFANS Базовый…») и запоминаем id
+            kind = pay.kind_by_name(p.get("product_name") or p.get("product_title") or p.get("name") or p.get("title"))
+            if kind:
+                learned = {k: v for k, v in cmap.items() if k not in TRIBUTE_COURSE}
+                learned[pid] = kind
+                kv_set(c, "course_learned", json.dumps(learned))
+                cmap[pid] = kind
+        if tg and name == "new_digital_product" and pid in cmap:
+            if pay.record(c, tg, pid, cmap[pid], p.get("purchase_id") or key, iso()):
+                course = ("paid", cmap[pid])
+        elif tg and "refund" in name.lower() and cmap:
+            if pay.refund(c, tg, pid, p.get("purchase_id"), iso(), cmap):
                 course = ("refund", None)
         if course:
             u = pay.user_by_tg(c, tg)

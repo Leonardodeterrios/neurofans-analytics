@@ -140,3 +140,19 @@ def welcome(c, tg, lab_host, now_iso):
             "Уведомления сюда, в этот чат, подключатся сами.\n\n"
             "Уже есть кабинет? Не регистрируйся заново: войди в него и нажми меню → «Уведомления в Telegram» "
             "→ «Подключить», тариф подтянется сам.")
+
+
+def kind_by_name(title):
+    """Тариф курса по названию товара в Tribute, если его id ещё нет в TRIBUTE_COURSE.
+    «NEUROFANS Апгрейд…» → up, «…Продвинутый…» → adv, «…Базовый…» → base; другое → None."""
+    t = (title or "").lower()
+    if "neurofans" not in t:
+        return None
+    if "апгрейд" in t or "upgrade" in t:
+        return "up"
+    if "продвинут" in t:
+        return "adv"
+    if "базов" in t:
+        return "base"
+    return None
+
