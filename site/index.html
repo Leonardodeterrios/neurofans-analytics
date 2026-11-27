@@ -410,6 +410,22 @@ footer p{margin:6px 0 0;max-width:48em}
 .who>div{border:1px dashed var(--line2);border-radius:16px;padding:16px 18px;color:var(--tx2);font-size:15px}
 .who>div>b{display:block;margin-bottom:4px}
 
+
+/* пруфы автора */
+.prf{margin-top:36px}
+.prf h3{margin:0 0 6px}
+.prf>p{color:var(--mu);margin:0 0 18px;font-size:15px;max-width:52em}
+.pg{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+.pg button{all:unset;cursor:zoom-in;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--panel);transition:border-color .15s}
+.pg button:hover,.pg button:focus-visible{border-color:rgba(46,230,214,.5)}
+.pg img{width:100%;aspect-ratio:9/14;object-fit:cover;object-position:top;display:block}
+.pg span{padding:10px 12px;font-size:13px;color:var(--tx2);line-height:1.35}
+.pg span b{display:block;font:600 16px var(--num);color:var(--cy)}
+.lbx{position:fixed;inset:0;z-index:50;background:rgba(2,3,8,.92);display:none;align-items:center;justify-content:center;padding:20px;cursor:zoom-out}
+.lbx.on{display:flex}
+.lbx img{max-width:min(92vw,560px);max-height:88vh;border-radius:14px;border:1px solid var(--line2)}
+.lbx p{position:absolute;bottom:14px;left:0;right:0;text-align:center;color:var(--mu);font-size:13px;margin:0}
+
 @media (max-width:1020px){
   .hero .wrap,.niche,.sim,.prog,.app{grid-template-columns:1fr}
   .stage{min-height:500px;max-width:560px;width:100%;justify-self:center}
@@ -422,6 +438,7 @@ footer p{margin:6px 0 0;max-width:48em}
   .nav{display:none}
   .top .btn{margin-left:auto}
   .free{grid-template-columns:1fr}
+  .pg{grid-template-columns:repeat(3,1fr)}
   .fl,.jobs{grid-template-columns:1fr 1fr}
   .fl li:nth-child(3){padding-left:0;border-left:0}
   .fl li:nth-child(2):after{display:none}
@@ -473,6 +490,8 @@ footer p{margin:6px 0 0;max-width:48em}
   footer .wrap{grid-template-columns:1fr}
   footer nav{justify-content:flex-start}
   .top .wrap{height:60px}
+  .pg{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;margin-right:-18px;padding-right:18px;scrollbar-width:none}
+  .pg button{flex:0 0 44%;scroll-snap-align:start}
   [id]{scroll-margin-top:72px}
   .fl,.jobs{grid-template-columns:1fr}
   .fl li,.fl li+li{padding:14px 0;border-left:0;border-top:1px dashed var(--line2)}
@@ -832,6 +851,11 @@ footer p{margin:6px 0 0;max-width:48em}
         <p>В ИИ был полный ноль. По видеоурокам настроил всё за вечер со старого макбука. Английский не знаю вообще, выручает переводчик и шаблоны из курса. Вывел первые $840.</p>
       </article>
     </div>
+    <div class="prf">
+      <h3>Пруфы автора курса</h3>
+      <p>Скриншоты кабинета Fanvue и Telegram-канала ИИ-модели Кати, которая ведёт курс. Ники фанатов и названия аккаунтов скрыты. Это результаты автора, а не обещание дохода.</p>
+      <div class="pg"><button type="button" data-full="proofs/insights.jpg" data-cap="доход за апрель–июнь 2026, Fanvue"><img src="proofs/insights.jpg" alt="Скриншот: доход за апрель–июнь 2026, Fanvue" loading="lazy"><span><b>$12 676</b>доход за апрель–июнь 2026, Fanvue</span></button><button type="button" data-full="proofs/subs.jpg" data-cap="подписки и продления за 10 дней, Fanvue"><img src="proofs/subs.jpg" alt="Скриншот: подписки и продления за 10 дней, Fanvue" loading="lazy"><span><b>$200 · $600</b>подписки и продления за 10 дней, Fanvue</span></button><button type="button" data-full="proofs/tips.jpg" data-cap="покупки сообщений и чаевые за час, Fanvue"><img src="proofs/tips.jpg" alt="Скриншот: покупки сообщений и чаевые за час, Fanvue" loading="lazy"><span><b>$170 · $130</b>покупки сообщений и чаевые за час, Fanvue</span></button><button type="button" data-full="proofs/balance.jpg" data-cap="доступно к выводу, Fanvue"><img src="proofs/balance.jpg" alt="Скриншот: доступно к выводу, Fanvue" loading="lazy"><span><b>$1 437</b>доступно к выводу, Fanvue</span></button><button type="button" data-full="proofs/payouts.jpg" data-cap="выплаты на банковский счёт, Fanvue"><img src="proofs/payouts.jpg" alt="Скриншот: выплаты на банковский счёт, Fanvue" loading="lazy"><span><b>$677–913</b>выплаты на банковский счёт, Fanvue</span></button><button type="button" data-full="proofs/stars.jpg" data-cap="звёзды в Telegram-канале модели"><img src="proofs/stars.jpg" alt="Скриншот: звёзды в Telegram-канале модели" loading="lazy"><span><b>≈ $1 481</b>звёзды в Telegram-канале модели</span></button></div>
+    </div>
     <div class="stats">
       <div><b>380+</b><span>учеников в закрытом комьюнити</span></div>
       <div><b style="color:var(--cy)">$6 840</b><span>лучший заработок ученика за первый месяц</span></div>
@@ -947,6 +971,7 @@ footer p{margin:6px 0 0;max-width:48em}
   </div>
 </section>
 </main>
+<div class="lbx" id="lbx" role="dialog" aria-modal="true" aria-label="Скриншот"><img alt=""><p></p></div>
 
 <footer>
   <div class="wrap">
@@ -1017,6 +1042,14 @@ const soft = document.getElementById("soft");
 let inView = false;
 if ("IntersectionObserver" in window) new IntersectionObserver(e => inView = e[0].isIntersecting, {threshold: .35}).observe(soft);
 if (!reduce) setInterval(() => { if (auto && inView && !document.hidden) show((cur + 1) % tabs.length); }, 6000);
+
+/* Пруфы: просмотр крупно */
+(() => {
+  const lb = document.getElementById("lbx"), im = lb.querySelector("img"), cap = lb.querySelector("p");
+  document.querySelectorAll(".pg button").forEach(b => b.onclick = () => { im.src = b.dataset.full; im.alt = b.dataset.cap; cap.textContent = b.dataset.cap + ". Нажми, чтобы закрыть"; lb.classList.add("on"); });
+  const close = () => lb.classList.remove("on");
+  lb.onclick = close; addEventListener("keydown", e => { if (e.key === "Escape") close(); });
+})();
 
 /* Симулятор переписки */
 (() => {
