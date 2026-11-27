@@ -370,8 +370,8 @@ app.note_paid(7002, False); assert calls[-1]==("variableChange",{"variable":"nf_
 sentb=[]; app.bot_send=lambda u,t: sentb.append((u,t)); app._ai_answer=lambda q: "Ответ — про тарифы"; notes=[]; _na=app.notify_all; app.notify_all=lambda t: notes.append(t)
 app.handle_ask(7001,"сколько стоит?"); assert sentb[-1][0]==7001 and "ИИ-помощник" in sentb[-1][1] and "«Катя»" in sentb[-1][1]
 app.handle_ask(7001,"а видео есть?"); assert "ИИ-помощник" not in sentb[-1][1]          # представляется один раз в сутки
-app.handle_ask(7001,"Купить"); assert "/a/checkout_base?u=7001" in sentb[-1][1] and "/a/checkout?u=7001" in sentb[-1][1] and "neurofans.ru и выбери" not in sentb[-1][1]
 app.handle_ask(7001,"Катя"); assert notes and "7001" in notes[-1] and "видео есть" in notes[-1] and "Кате" in sentb[-1][1]
+app.handle_ask(7001,"Купить"); assert "/a/checkout_base?u=7001" in sentb[-1][1] and "/a/checkout?u=7001" in sentb[-1][1] and "neurofans.ru и выбери" not in sentb[-1][1]
 # купил Базовый → через 5 дней предложить апгрейд (один раз); купившему Продвинутый не предлагаем
 assert app.course_kind({"payload":{"product_name":"NEUROFANS Базовый"}})=="base" and app.course_kind({"payload":{"product_name":"NEUROFANS Апгрейд до Продвинутого"}})=="up"
 app.note_paid(7003, True, "base"); app.note_paid(7004, True, "base"); app.note_paid(7004, True, "up")
