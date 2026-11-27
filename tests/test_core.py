@@ -479,4 +479,10 @@ flask.request.args={"deep":"1"}; h=json.loads(app.healthz().content); flask.requ
 assert h["db"] is True and h["backup"] is not None and "sched_age" in h and h["tg_bad"] is False, h
 assert app.healthz()=="ok"
 print("резервные копии трекера и /healthz?deep=1 ✅")
+txt=app.weekly_report_text(); assert "Неделя NEUROFANS" in txt and "Сайт:" in txt and "Оплатили:" in txt, txt
+_oadm=app.ADMIN_IDS; app.ADMIN_IDS=["1"]; _q=[]; _onot=app.notify_all; app.notify_all=_q.append
+assert app.run_weekly_report(_mon.replace(hour=12)) and not app.run_weekly_report(_mon.replace(hour=13)) and len(_q)==1
+assert not app.run_weekly_report(_mon.replace(day=1, hour=12))       # не понедельник
+app.notify_all=_onot; app.ADMIN_IDS=_oadm
+print(txt.split("\n")[0], "— еженедельный отчёт ✅")
 print("\nВСЕ ПРОВЕРКИ ПРОШЛИ ✅")

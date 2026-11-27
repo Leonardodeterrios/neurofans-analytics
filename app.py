@@ -1090,6 +1090,64 @@ def run_backups(nowtz=None):
         if f:
             bg(_send_backup, f)
 
+# ---------- еженедельный отчёт владельцу ----------
+def _share(a, b):
+    return f"{round(a * 100 / b)}%" if b else "—"
+
+def _people(n):
+    return "человека" if n % 10 in (2, 3, 4) and n % 100 not in (12, 13, 14) else "человек"
+
+def _delta(cur, prev):
+    if not prev:
+        return ""
+    d = cur - prev
+    return f" ({'+' if d >= 0 else ''}{d} к прошлой)"
+
+def weekly_report_text():
+    """Одно сообщение за 7 дней: сайт, бот, оплаты, лучшие источники и аккаунты, где теряем людей."""
+    S, B = site_stats(7), bot_stats(7)
+    S14, B14 = site_stats(14), bot_stats(14)
+    v, bn, po, pd = S["visitors"], B["count"]["starts"], B["count"]["pay_open"], B["count"]["paid"]
+    v0, bn0, pd0 = S14["visitors"] - v, B14["count"]["starts"] - bn, B14["count"]["paid"] - pd
+    price = next((x["people"] for x in S["sections"] if x["id"] == "price"), 0)
+    with _conn() as c:
+        kinds = dict(c.execute("SELECT COALESCE(paid_kind,''), COUNT(*) FROM bot_people WHERE paid_ts>=? AND "
+                               "COALESCE(paid_kind,'')<>'test' GROUP BY 1",
+                               ((dt.datetime.now(dt.timezone.utc).replace(tzinfo=None) - dt.timedelta(days=7)).isoformat(timespec="seconds"),)).fetchall())
+    kt = ", ".join(f"{COURSE_TEXT.get(k, 'тариф не узнан')}: {n}" for k, n in kinds.items() if n) or "нет"
+    lines = ["📊 Неделя NEUROFANS (последние 7 дней)", "",
+             f"🌐 Сайт: {v} {_people(v)}{_delta(v, v0)}, до тарифов дошли {price} ({_share(price, v)}), нажали «Купить» {S['buyers']}",
+             f"🤖 Бот: новых людей {bn}{_delta(bn, bn0)}, открыли оплату {po} ({_share(po, bn)})",
+             f"💰 Оплатили: {pd}{_delta(pd, pd0)} — {kt}"]
+    src = [x for x in B["sources"] if x["people"]][:4]
+    if src:
+        lines += ["", "Откуда пришли в бота:"] + [f"• {x['name']}: {x['people']} → оплатили {x['paid']}" for x in src]
+    top = [x for x in B["partners"] if x["people"]][:3]
+    if top:
+        lines += ["", "Лучшие аккаунты:"] + [f"• {x['name'] or x['key']}: {x['people']} в бота, оплатили {x['paid']}" for x in top]
+    steps = [("сайт → тарифы", price, v), ("бот → открыли оплату", po, bn), ("открыли оплату → оплатили", pd, po)]
+    weak = [(n, a / b) for n, a, b in steps if b >= 10]
+    if weak:
+        n, r = min(weak, key=lambda x: x[1])
+        lines += ["", f"Больше всего теряем на шаге «{n}»: проходит {round(r * 100)}%."]
+    if B["count"]["human"]:
+        lines.append(f"🙋 Просили живого человека: {B['count']['human']} раз")
+    lines += ["", "Подробно: дашборд → «🤖 Бот и сайт»."]
+    return "\n".join(lines)
+
+def run_weekly_report(nowtz=None):
+    """По понедельникам после 11:00 (SUMMARY_TZ) — отчёт админам, один раз."""
+    nowtz = nowtz or dt.datetime.now(ZoneInfo(SUMMARY_TZ))
+    if not ADMIN_IDS or nowtz.weekday() != 0 or nowtz.hour < 11:
+        return False
+    day = nowtz.strftime("%Y-%m-%d")
+    with _conn() as c:
+        if (c.execute("SELECT v FROM meta WHERE k='weekly_sent'").fetchone() or [None])[0] == day:
+            return False
+        c.execute("INSERT INTO meta(k,v) VALUES('weekly_sent',?) ON CONFLICT(k) DO UPDATE SET v=excluded.v", (day,))
+    notify_all(weekly_report_text())
+    return True
+
 def round_card_png(which="last", label=None):
     """Карточка итогов раунда 9:16 (Pillow). which: last — закончившийся раунд, current — идущий."""
     try:
@@ -1237,6 +1295,10 @@ def scheduler_loop():
             run_followups()
         except Exception as e:
             log.error("nudges failed: %s", e)
+        try:
+            run_weekly_report()
+        except Exception as e:
+            log.error("weekly report failed: %s", e)
         try:
             run_backups()
         except Exception as e:
