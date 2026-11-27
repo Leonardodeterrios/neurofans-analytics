@@ -5,239 +5,205 @@
    "src": "media/R1.jpg",
    "type": "photo",
    "title": "Домашний лайфстайл #1",
-   "group": "Модель R",
-   "nsfw": true
+   "group": "Модель R"
   },
   {
    "src": "media/R2.jpg",
    "type": "photo",
    "title": "Домашний лайфстайл #2",
-   "group": "Модель R",
-   "nsfw": true
+   "group": "Модель R"
   },
   {
    "src": "media/R3.jpg",
    "type": "photo",
    "title": "Домашний лайфстайл #3",
-   "group": "Модель R",
-   "nsfw": true
+   "group": "Модель R"
   },
   {
    "src": "media/R4.jpg",
    "type": "photo",
    "title": "Домашний лайфстайл #4",
-   "group": "Модель R",
-   "nsfw": true
+   "group": "Модель R"
   },
   {
    "src": "media/R5.jpg",
    "type": "photo",
    "title": "Домашний лайфстайл #5",
-   "group": "Модель R",
-   "nsfw": true
+   "group": "Модель R"
   },
   {
    "src": "media/S1.jpg",
    "type": "photo",
    "title": "Фотореализм #1",
-   "group": "Модель S",
-   "nsfw": true
+   "group": "Модель S"
   },
   {
    "src": "media/S2.jpg",
    "type": "photo",
    "title": "Фотореализм #2",
-   "group": "Модель S",
-   "nsfw": true
+   "group": "Модель S"
   },
   {
    "src": "media/S3.jpg",
    "type": "photo",
    "title": "Фотореализм #3",
-   "group": "Модель S",
-   "nsfw": true
+   "group": "Модель S"
   },
   {
    "src": "media/S4.jpg",
    "type": "photo",
    "title": "Фотореализм #4",
-   "group": "Модель S",
-   "nsfw": true
+   "group": "Модель S"
   },
   {
    "src": "media/S5.jpg",
    "type": "photo",
    "title": "Фотореализм #5",
-   "group": "Модель S",
-   "nsfw": true
+   "group": "Модель S"
   },
   {
    "src": "media/S6.jpg",
    "type": "photo",
    "title": "Фотореализм #6",
-   "group": "Модель S",
-   "nsfw": true
+   "group": "Модель S"
   },
   {
    "src": "media/S7.jpg",
    "type": "photo",
    "title": "Фотореализм #7",
-   "group": "Модель S",
-   "nsfw": true
+   "group": "Модель S"
   },
   {
    "src": "media/J1.jpeg",
    "type": "photo",
    "title": "Текстура кожи #1",
-   "group": "Модель J",
-   "nsfw": true
+   "group": "Модель J"
   },
   {
    "src": "media/J2.jpeg",
    "type": "photo",
    "title": "Текстура кожи #2",
-   "group": "Модель J",
-   "nsfw": true
+   "group": "Модель J"
   },
   {
    "src": "media/J3.jpeg",
    "type": "photo",
    "title": "Текстура кожи #3",
-   "group": "Модель J",
-   "nsfw": true
+   "group": "Модель J"
   },
   {
    "src": "media/J4.jpeg",
    "type": "photo",
    "title": "Текстура кожи #4",
-   "group": "Модель J",
-   "nsfw": true
+   "group": "Модель J"
   },
   {
    "src": "media/J5.jpeg",
    "type": "photo",
    "title": "Текстура кожи #5",
-   "group": "Модель J",
-   "nsfw": true
+   "group": "Модель J"
   },
   {
    "src": "media/J6.jpeg",
    "type": "photo",
    "title": "Текстура кожи #6",
-   "group": "Модель J",
-   "nsfw": true
+   "group": "Модель J"
   },
   {
    "src": "media/H1.jpg",
    "type": "photo",
    "title": "Одно лицо, разные кадры #1",
-   "group": "Модель H",
-   "nsfw": true
+   "group": "Модель H"
   },
   {
    "src": "media/H2.jpg",
    "type": "photo",
    "title": "Одно лицо, разные кадры #2",
-   "group": "Модель H",
-   "nsfw": true
+   "group": "Модель H"
   },
   {
    "src": "media/H3.jpg",
    "type": "photo",
    "title": "Одно лицо, разные кадры #3",
-   "group": "Модель H",
-   "nsfw": true
+   "group": "Модель H"
   },
   {
    "src": "media/H4.jpg",
    "type": "photo",
    "title": "Одно лицо, разные кадры #4",
-   "group": "Модель H",
-   "nsfw": true
+   "group": "Модель H"
   },
   {
    "src": "media/H5.jpg",
    "type": "photo",
    "title": "Одно лицо, разные кадры #5",
-   "group": "Модель H",
-   "nsfw": true
+   "group": "Модель H"
   },
   {
    "src": "media/H6.jpg",
    "type": "photo",
    "title": "Одно лицо, разные кадры #6",
-   "group": "Модель H",
-   "nsfw": true
+   "group": "Модель H"
   },
   {
    "src": "media/H7.jpg",
    "type": "photo",
    "title": "Одно лицо, разные кадры #7",
-   "group": "Модель H",
-   "nsfw": true
+   "group": "Модель H"
   },
   {
    "src": "media/g1.jpeg",
    "type": "photo",
    "title": "Приватный сет #1",
-   "group": "Модель G",
-   "nsfw": true
+   "group": "Модель G"
   },
   {
    "src": "media/g2.jpeg",
    "type": "photo",
    "title": "Приватный сет #2",
-   "group": "Модель G",
-   "nsfw": true
+   "group": "Модель G"
   },
   {
    "src": "media/g3.jpeg",
    "type": "photo",
    "title": "Приватный сет #3",
-   "group": "Модель G",
-   "nsfw": true
+   "group": "Модель G"
   },
   {
    "src": "media/g4.jpeg",
    "type": "photo",
    "title": "Приватный сет #4",
-   "group": "Модель G",
-   "nsfw": true
+   "group": "Модель G"
   },
   {
    "src": "media/video1.mp4",
    "type": "video",
    "title": "Татуировки в движении",
-   "group": "Видео",
-   "nsfw": true
+   "group": "Видео"
   },
   {
    "src": "media/video2.mp4",
    "type": "video",
    "title": "Домашняя сцена",
-   "group": "Видео",
-   "nsfw": true
+   "group": "Видео"
   },
   {
    "src": "media/video3.mp4",
    "type": "video",
    "title": "Ракурс POV",
-   "group": "Видео",
-   "nsfw": true
+   "group": "Видео"
   },
   {
    "src": "media/video4_compross.mp4",
    "type": "video",
    "title": "Ракурс как с iPhone",
-   "group": "Видео",
-   "nsfw": true
+   "group": "Видео"
   },
   {
    "src": "media/video12_compross.mp4",
    "type": "video",
    "title": "Длинное видео",
-   "group": "Видео",
-   "nsfw": true
+   "group": "Видео"
   }
  ]
 }
