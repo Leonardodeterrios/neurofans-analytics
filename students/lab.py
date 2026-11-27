@@ -55,7 +55,7 @@ TRIBUTE_PRO_URL = _env("TRIBUTE_PRO_URL")           # ссылка на подп
 TRIBUTE_PRODUCTS = ai.parse_products(_env("TRIBUTE_PRODUCTS"))   # "id:дней,…" для разовых товаров
 TRIBUTE_COURSE = pay.parse_course(_env("TRIBUTE_COURSE"))        # "id:base,id:adv,id:up" — товары курса → доступ в кабинет
 PRO_PRICE = _env("PRO_PRICE", "")
-UPGRADE_URL = _env("TRIBUTE_UPGRADE_URL", "https://t.me/tribute/app?startapp=hLUF")  # доплата Базовый → Продвинутый
+UPGRADE_URL = _env("TRIBUTE_UPGRADE_URL", "https://web.tribute.tg/p/LYm")  # доплата Базовый → Продвинутый
 MAX_LINKS_PER_MODEL = 20
 STATIC_DIR = next((p for p in (os.path.join(HERE, "static"), os.path.join(HERE, "..", "static"))
                    if os.path.isdir(p)), os.path.join(HERE, "static"))

@@ -185,8 +185,8 @@ ACT_LINKS = {
     "site":     "https://neurofans.ru/",
     "program":  "https://neurofans.ru/#program",
     "intent":   "https://neurofans.ru/#price",
-    "checkout": "https://t.me/tribute/app?startapp=hLUB",       # Продвинутый 14 900 ₽
-    "checkout_base": "https://t.me/tribute/app?startapp=hLUy",  # Базовый 3 900 ₽
+    "checkout": "https://web.tribute.tg/p/LYl",       # Продвинутый 14 900 ₽
+    "checkout_base": "https://web.tribute.tg/p/LYg",  # Базовый 3 900 ₽
 }
 for _kv in (os.getenv("ACT_LINKS") or "").split(","):        # переопределение в .env: ACT_LINKS=site=https://…,guide=https://…
     _k, _, _v = _kv.strip().partition("=")

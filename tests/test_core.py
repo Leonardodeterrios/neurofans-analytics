@@ -308,8 +308,8 @@ assert json.loads(act("checkout",init=init_for(888)).content)["ok"]
 assert json.loads(act("intent",u="888").content)["ok"]
 assert not json.loads(act("checkout",u="888").content)["ok"]          # оплата — один раз на человека
 assert app.get_stats()["action_points"]==b+20+12
-assert app.ACTIONS["checkout_base"][0]==15 and "hLUy" in app.ACT_LINKS["checkout_base"] and "hLUB" in app.ACT_LINKS["checkout"]
-assert "hLUy" in act("checkout_base",method="GET").content
+assert app.ACTIONS["checkout_base"][0]==15 and "LYg" in app.ACT_LINKS["checkout_base"] and "LYl" in app.ACT_LINKS["checkout"]
+assert "LYg" in act("checkout_base",method="GET").content
 print("новые кнопки: программа +10, хочу +12, оплата +20 — один раз на человека ✅")
 
 # 14) настоящая оплата клуба: вебхук Tribute → +1000 партнёру, кнопкой не получить, возврат снимает
