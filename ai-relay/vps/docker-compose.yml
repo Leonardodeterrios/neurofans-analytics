@@ -14,7 +14,11 @@ services:
     ports: ["80:80", "443:443"]
     environment:
       RELAY_DOMAIN: ${RELAY_DOMAIN:-ai.neurofans.ru}
+      GALLERY_DOMAIN: ${GALLERY_DOMAIN:-gallery.localhost}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - ./caddy:/data
+      - ../../gallery:/srv/gallery:ro
+      - ../../static/fonts:/srv/fonts:ro
+      - /opt/nf-gallery:/srv/gallery-data:ro
     depends_on: [relay]

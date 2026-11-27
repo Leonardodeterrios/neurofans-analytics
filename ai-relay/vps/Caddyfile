@@ -2,3 +2,23 @@
 {$RELAY_DOMAIN} {
 	reverse_proxy relay:8080
 }
+
+# Галерея примеров генераций 18+ (gallery/setup.sh). Файлы — /opt/nf-gallery, страница — из репозитория.
+{$GALLERY_DOMAIN:gallery.localhost} {
+	header X-Robots-Tag "noindex, nofollow, noarchive"
+	header Referrer-Policy no-referrer
+	handle_path /fonts/* {
+		root * /srv/fonts
+		file_server
+	}
+	@data path /media.json /media/*
+	handle @data {
+		header Cache-Control "public, max-age=300"
+		root * /srv/gallery-data
+		file_server
+	}
+	handle {
+		root * /srv/gallery
+		file_server
+	}
+}
