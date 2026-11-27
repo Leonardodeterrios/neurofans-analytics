@@ -1,6 +1,16 @@
 # HTTPS для ретранслятора: сертификат Let's Encrypt на RELAY_DOMAIN (A-запись → IP этого сервера).
 {$RELAY_DOMAIN} {
-	reverse_proxy relay:8080
+	# Telegram Bot API для серверов в РФ (оттуда api.telegram.org недоступен): /tg/bot<токен>/<метод>
+	@tg path_regexp ^/tg/bot[0-9]+:[A-Za-z0-9_-]+/[A-Za-z]+$
+	handle @tg {
+		uri strip_prefix /tg
+		reverse_proxy https://api.telegram.org {
+			header_up Host api.telegram.org
+		}
+	}
+	handle {
+		reverse_proxy relay:8080
+	}
 }
 
 # Галерея примеров генераций 18+ (gallery/setup.sh). Файлы — /opt/nf-gallery, страница — из репозитория.

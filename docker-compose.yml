@@ -17,6 +17,7 @@ services:
       ROOT_HOST: ${LAB_ROOT:-neurofans.ru}
       LAB_BOT_TOKEN: ${LAB_BOT_TOKEN:-}     # отдельный бот кабинета для уведомлений; пусто — выключены
       LAB_BOT_USERNAME: ${LAB_BOT_USERNAME:-}
+      TG_API_BASE: ${TG_API_BASE:-}         # https://ai.neurofans.ru/tg — Telegram через сервер в Амстердаме
       LAB_AI_URL: ${LAB_AI_URL:-}           # ретранслятор ИИ на Vercel (ai-relay), напр. https://<проект>.vercel.app/api/chat
       LAB_AI_SECRET: ${LAB_AI_SECRET:-}     # тот же секрет, что в переменных Vercel-проекта
       LAB_AI_MODEL: ${LAB_AI_MODEL:-gpt-4o-mini}

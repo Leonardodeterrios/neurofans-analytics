@@ -26,6 +26,8 @@ import lab_game as game
 import lab_ops as ops
 import lab_pay as pay
 
+# Сервер в РФ не достаёт до api.telegram.org: ходим через свой сервер в Амстердаме (TG_API_BASE=https://ai.neurofans.ru/tg)
+TG_BASE = (os.environ.get("TG_API_BASE") or "https://api.telegram.org").strip().rstrip("/")
 log = logging.getLogger("lab.notify")
 
 DAILY_CAP = 4
@@ -62,7 +64,7 @@ class Notifier:
         return bool(self.token)
 
     def _http(self, method, payload, timeout=30):
-        req = urllib.request.Request(f"https://api.telegram.org/bot{self.token}/{method}",
+        req = urllib.request.Request(f"{TG_BASE}/bot{self.token}/{method}",
                                      data=json.dumps(payload).encode(), headers={"Content-Type": "application/json"})
         try:
             with urllib.request.urlopen(req, timeout=timeout) as r:
@@ -84,7 +86,7 @@ class Notifier:
         parts.append(f"--{b}\r\nContent-Disposition: form-data; name=\"document\"; filename=\"{os.path.basename(path)}\"\r\n"
                      f"Content-Type: application/gzip\r\n\r\n".encode() + data + b"\r\n")
         parts.append(f"--{b}--\r\n".encode())
-        req = urllib.request.Request(f"https://api.telegram.org/bot{self.token}/sendDocument", data=b"".join(parts),
+        req = urllib.request.Request(f"{TG_BASE}/bot{self.token}/sendDocument", data=b"".join(parts),
                                      headers={"Content-Type": f"multipart/form-data; boundary={b}"})
         try:
             with urllib.request.urlopen(req, timeout=120) as r:

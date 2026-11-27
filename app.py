@@ -93,7 +93,8 @@ TEAMS = {"A": (TEAM_A_NAME, TEAM_A_PREFIX, TEAM_A_COLOR),
 TEAM_EMOJI = {"A": "🌊", "B": "🌺"}
 CHANNEL_NAMES = {"threads": "Threads", "video": "Видео (Shorts/Reels/TikTok)", "": "Без канала"}
 
-TG_API = f"https://api.telegram.org/bot{BOT_TOKEN}"
+TG_BASE = (os.environ.get("TG_API_BASE") or "https://api.telegram.org").strip().rstrip("/")  # через Амстердам, если из РФ не достаёт
+TG_API = f"{TG_BASE}/bot{BOT_TOKEN}"
 # не люди: превью-краулеры соцсетей и мессенджеров, сканеры, скрипты, «безголовые» браузеры
 BOT_UA = re.compile(
     r"(?<!cu)bot\b|(?<!cu)bot/|crawler|spider|preview|facebookexternalhit|facebookcatalog|meta-externalagent|"
