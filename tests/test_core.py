@@ -385,6 +385,9 @@ app._pb_source(9001,"threads","leo07"); assert ("variableChange",{"variable":"nf
 assert app.uid_source_text(8001).startswith("Threads, партнёр leo01") and app.uid_source_text(123456789)=="неизвестно"
 assert app.team_of("th_l_07")=="A" and app.team_of("rk_k_15")=="B" and "th_l_48" in app.all_labels() and "rk_k_15" in app.all_labels()
 assert app.parse_payload("th_l_07-2s")[:2]==("th_l_07",100) and app.start_source({"label":"rk_k_03","ch":"v"})==("video","rk_k_03")
+import tempfile as _tf
+_nf=_tf.NamedTemporaryFile("w",suffix=".csv",delete=False,encoding="utf-8"); _nf.write("th_l_07,@lina.flow.ai\nrk_k_01,@ksenia.daily.ai\nмусор\n"); _nf.close()
+app.NAMES_FILE=_nf.name; app._stats_cache.clear(); assert app.partner_names()=={"th_l_07":"@lina.flow.ai","rk_k_01":"@ksenia.daily.ai"} and app.get_stats()["names"]["th_l_07"]=="@lina.flow.ai"
 B=app.bot_stats(0); assert B["count"]["f1"]>=1 and B["count"]["upgrade"]>=1 and B["count"]["asks"]>=3 and B["count"]["human"]>=1 and B["asks"][0]["q"]
 assert app.bot_stats(1)["cfg"]["pb"] is True and "BOT_PAGE" in dir(app)
 app.bg=_bgsave; app.notify_all=_na; app.PB_TOKEN=""

@@ -1718,17 +1718,17 @@ function showTag(team,label,kind){
   const d=document.createElement('div');d.className='tag'+(big?' big':'')+(kind==='site'?' huge':'')+(kind==='reviews'?' gold':'')+(ME&&label===ME?' me':'');d.style.setProperty('--c',kind==='reviews'?AMBER:COL[team]);
   d.style.left=clamp(x,big?150:70,CW-(big?150:70))+'px';d.style.top=Math.max(y,portrait?175:200)+'px';
   $('tags').querySelectorAll('.tag:not(.big)').forEach(o=>{if(!big)o.style.marginTop=(parseFloat(o.style.marginTop||0)-26)+'px'});
-  if(kind==='start')d.innerHTML=`<b>+${SP}</b><span class="tx"><span>${esc(label)} · АППЕРКОТ</span><small>новый человек в боте</small></span>`;
-  else if(kind==='examples')d.innerHTML=`<b>+${pts}</b><span class="tx"><span>РАКЕТНЫЙ ЗАЛП</span><small>${esc(label)} · смотрит примеры генераций</small></span>`;
-  else if(kind==='checkout'||kind==='checkout_base')d.innerHTML=`<b>+${pts}</b><span class="tx"><span>ОПЛАТА</span><small>${esc(label)} · ${ACT[kind].txt}</small></span>`;
-  else if(kind==='site')d.innerHTML=`<b>+${pts}</b><span class="tx"><span>НА САЙТЕ</span><small>${esc(label)} · перешёл на сайт</small></span>`;
-  else d.innerHTML=`<b>+${pts}</b>${esc(label)}${ACT[kind]?` <em>${esc(ACT[kind].tag)}</em>`:''}`;
+  if(kind==='start')d.innerHTML=`<b>+${SP}</b><span class="tx"><span>${esc(nm(label))} · АППЕРКОТ</span><small>новый человек в боте</small></span>`;
+  else if(kind==='examples')d.innerHTML=`<b>+${pts}</b><span class="tx"><span>РАКЕТНЫЙ ЗАЛП</span><small>${esc(nm(label))} · смотрит примеры генераций</small></span>`;
+  else if(kind==='checkout'||kind==='checkout_base')d.innerHTML=`<b>+${pts}</b><span class="tx"><span>ОПЛАТА</span><small>${esc(nm(label))} · ${ACT[kind].txt}</small></span>`;
+  else if(kind==='site')d.innerHTML=`<b>+${pts}</b><span class="tx"><span>НА САЙТЕ</span><small>${esc(nm(label))} · перешёл на сайт</small></span>`;
+  else d.innerHTML=`<b>+${pts}</b>${esc(nm(label))}${ACT[kind]?` <em>${esc(ACT[kind].tag)}</em>`:''}`;
   $('tags').appendChild(d);setTimeout(()=>d.remove(),big?2300:1600);
 }
 // оплата клуба: золотой джекпот — монетный дождь, вспышки по всей арене, крупная плашка +1000
 function showJackpot(team,label){
   const j=$('jack');j.style.setProperty('--tc',COL[team]);
-  $('jkS').innerHTML=(label?`<b>${esc(label)}</b> · `:'')+esc(teamName(team))+(ME&&label===ME?' · ЭТО ТЫ!':'');
+  $('jkS').innerHTML=(label?`<b>${esc(nm(label))}</b> · `:'')+esc(teamName(team))+(ME&&label===ME?' · ЭТО ТЫ!':'');
   const C=$('jkC');C.innerHTML=REDUCED?'':Array.from({length:Q===0?24:60},()=>`<i style="left:${rand(0,100).toFixed(1)}%;animation-duration:${rand(1.6,3.4).toFixed(2)}s;animation-delay:${rand(0,1.6).toFixed(2)}s;transform:scale(${rand(.6,1.3).toFixed(2)})"></i>`).join('');
   j.classList.remove('on');void j.offsetWidth;j.classList.add('on');flash(.6,AMBER);snd.gong();setTimeout(()=>snd.streak(),400);
   clearTimeout(showJackpot.t);showJackpot.t=setTimeout(()=>{j.classList.remove('on');setTimeout(()=>{C.innerHTML=''},600)},4800);
@@ -1758,6 +1758,7 @@ function pumpQueue(){
 let gapT=0;
 
 /* ================= HUD ================= */
+let NAMES={};const nm=s=>NAMES[s]||s;
 let state={teams:[{name:'Команда Лёни',color:COL.A,today:0,hits_today:0,starts_today:0,conv:null},{name:'Команда Кати',color:COL.B,today:0,hits_today:0,starts_today:0,conv:null}],partners:[],round_end:null,round_no:1,ranks:[],badge_defs:{},prefB:'kate'};
 let SP=3,skew=0,shown={A:0,B:0},target={A:0,B:0},prevRanks={};
 const teamName=t=>state.teams[t==='A'?0:1].name;
@@ -1774,7 +1775,7 @@ function hud(){
   const mx=Math.max(1,target.A,target.B);
   for(const [id,v] of [['cA',target.A],['cB',target.B]]){const cells=$(id).children,n=Math.round(cells.length*v/mx);[...cells].forEach((c,i)=>c.classList.toggle('on',i<n))}
   const bd=state.badge_defs||{};
-  const row=(p,i)=>{const ri=rankInfo(p.power||0);return `<div class="r card${ME&&p.source===ME?' me':''}"><span class="n">${i+1}</span><span class="l">${esc(p.source)}<em>${(p.badges||[]).map(k=>bd[k]?bd[k].icon:'').join('')}</em></span><span class="v">${p.today}</span><span class="k">${esc(ri.name)}<i><u style="width:${Math.round(ri.pct*100)}%"></u></i></span></div>`};
+  const row=(p,i)=>{const ri=rankInfo(p.power||0);return `<div class="r card${ME&&p.source===ME?' me':''}"><span class="n">${i+1}</span><span class="l">${esc(nm(p.source))}<em>${(p.badges||[]).map(k=>bd[k]?bd[k].icon:'').join('')}</em></span><span class="v">${p.today}</span><span class="k">${esc(ri.name)}<i><u style="width:${Math.round(ri.pct*100)}%"></u></i></span></div>`};
   for(const [k,id] of [['A','topA'],['B','topB']]){const ps=state.partners.filter(p=>p.team===k&&p.today>0).sort((x,y)=>y.today-x.today).slice(0,3);
     $(id).innerHTML=`<div class="cap">ТОП РАУНДА</div>`+(ps.length?ps.map(row).join(''):`<div class="r card"><span class="empty" style="grid-column:1/4">ждём первый удар</span></div>`)}
   rating();
@@ -1796,12 +1797,12 @@ function rating(){
     const bl=(p.badges||[]).filter(x=>bd[x]),vis=bl.slice(0,3),rest=bl.slice(3);
     const chips=vis.map(x=>`<span class="chip" tabindex="0" data-d="${esc(bd[x].name)}: ${esc(bd[x].desc)}">${bd[x].icon} ${esc(bd[x].name)}</span>`).join('')+(rest.length?`<span class="chip more" tabindex="0" data-d="${esc(rest.map(x=>bd[x].icon+' '+bd[x].name).join(' · '))}">+${rest.length} ${rest.map(x=>bd[x].icon).join('')}</span>`:'');
     return `<div class="rt-card card${i<3?' p'+(i+1):''}${me?' me':''}" style="--c:${col}"><span class="n">${i+1}</span>
-      <div class="l">${i===0&&p.today>0?'<span class="crown">👑</span>':''}<span class="nm">${esc(p.source)}</span><span class="tm">${esc(tn)}</span>${hot>=3?`<span class="hot">🔥 в ударе · ${hot}</span>`:''}${me?'<span class="you">ТЫ</span>':''}</div>
+      <div class="l">${i===0&&p.today>0?'<span class="crown">👑</span>':''}<span class="nm">${esc(nm(p.source))}</span><span class="tm">${esc(tn)}</span>${hot>=3?`<span class="hot">🔥 в ударе · ${hot}</span>`:''}${me?'<span class="you">ТЫ</span>':''}</div>
       <span class="t">${p.today}<small>сила в раунде</small></span><span class="rk">${prog}</span>${mm?`<span class="mm">${mm}</span>`:''}${chips?`<span class="bd">${chips}</span>`:''}</div>`};
   $('rtList').innerHTML=shown.length?shown.map(card).join('')+(list.length>shown.length?`<div class="rt-more">и ещё ${list.length-shown.length}</div>`:''):'<div class="rt-s">пока без ударов</div>';
   const meP=ME&&state.partners.find(p=>p.source===ME);
   if(meP){const ri=rankInfo(meP.power||0);
-    $('rtMe').innerHTML=`<div class="rt-me card" style="--c:${COL[meP.team]}"><span class="lb">ТВОЁ МЕСТО</span><span class="pl">#${place.get(meP.source)+1}</span><span class="nm">${esc(meP.source)}<small>${esc(ri.name)}${ri.next?` · до «${esc(ri.next.name)}» ${ri.next.min-meP.power} силы`:''}</small></span><span class="pw">${meP.today}<small>СИЛА В РАУНДЕ</small></span><span class="bar" style="grid-column:1/4"><u style="width:${Math.round(ri.pct*100)}%"></u></span></div>`}
+    $('rtMe').innerHTML=`<div class="rt-me card" style="--c:${COL[meP.team]}"><span class="lb">ТВОЁ МЕСТО</span><span class="pl">#${place.get(meP.source)+1}</span><span class="nm">${esc(nm(meP.source))}<small>${esc(ri.name)}${ri.next?` · до «${esc(ri.next.name)}» ${ri.next.min-meP.power} силы`:''}</small></span><span class="pw">${meP.today}<small>СИЛА В РАУНДЕ</small></span><span class="bar" style="grid-column:1/4"><u style="width:${Math.round(ri.pct*100)}%"></u></span></div>`}
   else $('rtMe').innerHTML='';
   // блок достижений: все ачивки, кто уже выбил — подсвечены
   const holders={};state.partners.forEach(p=>(p.badges||[]).forEach(b=>(holders[b]=holders[b]||[]).push(p.source)));
@@ -1825,14 +1826,14 @@ function statusTick(){const s=$('status');s.classList.toggle('demo',DEMO);s.clas
 function ticker(ev){
   const t=$('ticker');const d=document.createElement('span');d.className='ev'+(ev.kind==='start'?' st':'');d.style.setProperty('--c',COL[ev.team]||'#fff');
   const pts=evPts(ev);if(ACT[ev.kind])d.classList.add('st');
-  d.innerHTML=ev.kind==='start'?`<b>+${SP}</b>${esc(ev.source)} <em>· апперкот</em>`:ev.kind==='hit'?`<b>+1</b>${esc(ev.source)}${ev.city?` <em>· ${esc(ev.city)}</em>`:''}`:`<b>+${pts}</b>${esc(ev.source)} <em>· ${esc((ACT[ev.kind]||{}).txt||ev.text||ev.kind)}</em>`;
+  d.innerHTML=ev.kind==='start'?`<b>+${SP}</b>${esc(nm(ev.source))} <em>· апперкот</em>`:ev.kind==='hit'?`<b>+1</b>${esc(nm(ev.source))}${ev.city?` <em>· ${esc(ev.city)}</em>`:''}`:`<b>+${pts}</b>${esc(nm(ev.source))} <em>· ${esc((ACT[ev.kind]||{}).txt||ev.text||ev.kind)}</em>`;
   t.insertBefore(d,t.firstChild);while(t.children.length>8)t.lastChild.remove();
 }
 function rankToast(label,rank,c){const d=document.createElement('div');d.className='toast';d.style.setProperty('--c',c);
-  d.innerHTML=`<div class="glow"><div class="ovc"><span class="ic">▲</span><span class="ovl">новый ранг</span><b>${esc(rank.toUpperCase())}</b><span class="tn">${esc(label)}${ME&&label===ME?' · это ты!':''}</span></div></div>`;
+  d.innerHTML=`<div class="glow"><div class="ovc"><span class="ic">▲</span><span class="ovl">новый ранг</span><b>${esc(rank.toUpperCase())}</b><span class="tn">${esc(nm(label))}${ME&&label===ME?' · это ты!':''}</span></div></div>`;
   $('toasts').appendChild(d);while($('toasts').children.length>2)$('toasts').firstChild.remove();setTimeout(()=>d.remove(),3500)}
 function applyStats(st,first){
-  SP=st.start_power||3;state={...state,...st};state.prefB=(st.partners.find(p=>p.team==='B')||{source:'kate'}).source.replace(/\d+$/,'')||'kate';
+  SP=st.start_power||3;NAMES=st.names||NAMES;state={...state,...st};state.prefB=(st.partners.find(p=>p.team==='B')||{source:'kate'}).source.replace(/\d+$/,'')||'kate';
   if(st.server_now)skew=Date.parse(st.server_now)-Date.now();
   target.A=st.teams[0].today;target.B=st.teams[1].today;if(first){shown.A=target.A;shown.B=target.B}
   for(const p of st.partners){const pr=prevRanks[p.source];if(!first&&pr!=null&&p.rank>pr){rankToast(p.source,p.rank_name,COL[p.team]||AMBER);snd.rank()}prevRanks[p.source]=p.rank}
@@ -1856,7 +1857,7 @@ function radarTick(dt){
   rx.restore();
 }
 function addPulse(ev){geoAdd(ev);if(ev.lat==null||ev.lon==null)return;pulses.push({lat:ev.lat,lon:ev.lon,c:COL[ev.team]||AMBER,t:0,big:ev.kind==='start'});if(pulses.length>40)pulses.shift();
-  if(ev.city){lastCity=ev.city;$('rCity').textContent=`${ev.city} · ${ev.source}`}rot=-ev.lon*Math.PI/180+rot*.0;}
+  if(ev.city){lastCity=ev.city;$('rCity').textContent=`${ev.city} · ${nm(ev.source)}`}rot=-ev.lon*Math.PI/180+rot*.0;}
 
 /* ================= «Карта ударов»: тактический глобус с контурами материков, сеткой, сканером, дугами к штабу ================= */
 // стилизованные контуры материков [широта, долгота] — грубые, но узнаваемые
@@ -2002,7 +2003,7 @@ function mapPanel(){
   const mx=list[0]?list[0].n:1;
   $('mpTop').innerHTML=list.length?list.slice(0,8).map((c,i)=>`<div class="mp-row${mp.focus===c.key?' on':''}" data-k="${esc(c.key)}"><span class="n">${i+1}</span><span class="nm">${i<3&&c.n>=2?'🔥 ':''}${esc(c.name)}${c.cc?` <em>${esc(c.cc)}</em>`:''}</span><span class="v">${c.n}</span><span class="bar"><i style="width:${(c.A/mx*100).toFixed(1)}%;background:var(--a)"></i><i style="width:${(c.B/mx*100).toFixed(1)}%;background:var(--b)"></i></span></div>`).join(''):'<div class="mp-empty">ждём первые удары — точки появятся на глобусе</div>';
   const ago=t=>{const s=Math.round((now-t)/1000);return s<60?s+' с':Math.round(s/60)+' мин'};
-  $('mpLast').innerHTML=GEO.last.length?GEO.last.map(e=>{const f=e.fresh;e.fresh=0;return `<div class="mp-ev${f?' fresh':''}${mp.focus===e.key?' on':''}" data-k="${esc(e.key)}" style="--c:${COL[e.team]||AMBER}"><b>+${e.pts}</b><span>${esc(e.src||'')} · ${esc(e.city)}</span><em>${ago(e.at)}</em></div>`}).join(''):'<div class="mp-empty">пока тихо</div>';
+  $('mpLast').innerHTML=GEO.last.length?GEO.last.map(e=>{const f=e.fresh;e.fresh=0;return `<div class="mp-ev${f?' fresh':''}${mp.focus===e.key?' on':''}" data-k="${esc(e.key)}" style="--c:${COL[e.team]||AMBER}"><b>+${e.pts}</b><span>${esc(nm(e.src||''))} · ${esc(e.city)}</span><em>${ago(e.at)}</em></div>`}).join(''):'<div class="mp-empty">пока тихо</div>';
   const top=list[0];$('mpHud').innerHTML=`<span><i></i>SCAN · LIVE</span><span>${top?`ГОРЯЧАЯ ТОЧКА: ${esc(top.name.toUpperCase())} · ${top.n}`:'ОЖИДАНИЕ СИГНАЛА'}</span><span>HQ ${HQ.lat.toFixed(1)}°N · ${HQ.lon.toFixed(1)}°E</span>`;
 }
 // фокус на городе из «Топа городов» и «Последних ударов»: наведение или тап
@@ -2023,8 +2024,8 @@ function endRound(){
     $('koCard').innerHTML=`<div class="glow"><div class="ovc"><div class="ovl">гонг · итоги раунда ${state.round_no}</div><div class="k1">${w?'K.O.':'НИЧЬЯ'}</div><div class="k2">${w?esc(teamName(w))+' побеждает':'Силы равны'}</div>
       <div class="ksc"><div class="${w==='A'?'win':''}" style="color:${COL.A}">${a}<small>${esc(teamName('A'))}</small></div><i>:</i><div class="${w==='B'?'win':''}" style="color:${COL.B}">${b}<small>${esc(teamName('B'))}</small></div></div>
       ${mvp?(()=>{const bd=state.badge_defs||{},bk=mvp.hits_today!=null?`<em>${mvp.hits_today}</em> уд · <em>${mvp.starts_today||0}</em> ап${mvp.act_points_today?` · <em>+${mvp.act_points_today}</em> бот`:''}`:esc(mvp.rank_name||'');
-        return `<div class="mvp" style="--rc:${COL[mvp.team]}"><span class="cr">MVP</span><span class="ml">боец раунда</span><span class="mv">${mvp.today}<small>сила</small></span><b>${esc(mvp.source)}${ME&&mvp.source===ME?' · ты':''} ${(mvp.badges||[]).map(k=>bd[k]?bd[k].icon:'').join('')}</b><span class="ms">${esc(teamName(mvp.team))} · ${bk}</span></div>`})():''}
-      ${top.length?`<div class="ovl" style="margin-top:6px">следом</div><div class="k4">${top.map((p,i)=>`<div class="row" style="--rc:${COL[p.team]}"><span class="n">${i+2}</span><b>${esc(p.source)}${ME&&p.source===ME?' · ты':''}</b><span class="v">${p.today}</span></div>`).join('')}</div>`:''}
+        return `<div class="mvp" style="--rc:${COL[mvp.team]}"><span class="cr">MVP</span><span class="ml">боец раунда</span><span class="mv">${mvp.today}<small>сила</small></span><b>${esc(nm(mvp.source))}${ME&&mvp.source===ME?' · ты':''} ${(mvp.badges||[]).map(k=>bd[k]?bd[k].icon:'').join('')}</b><span class="ms">${esc(teamName(mvp.team))} · ${bk}</span></div>`})():''}
+      ${top.length?`<div class="ovl" style="margin-top:6px">следом</div><div class="k4">${top.map((p,i)=>`<div class="row" style="--rc:${COL[p.team]}"><span class="n">${i+2}</span><b>${esc(nm(p.source))}${ME&&p.source===ME?' · ты':''}</b><span class="v">${p.today}</span></div>`).join('')}</div>`:''}
       <div class="k5">${AUTH?`<a href="/story.png?${AUTH}${(ME||mvp)?'&label='+encodeURIComponent(ME||mvp.source):''}" target="_blank">${ME?'Моя карточка':'Карточка раунда'}</a>`:''}<button class="g" id="koX">Новый раунд</button></div></div></div>`;
     k.classList.add('on');$('koX').onclick=closeKo;setTimeout(closeKo,DEMO?9000:15000);
   };

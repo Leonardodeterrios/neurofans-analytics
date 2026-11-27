@@ -286,6 +286,31 @@ if hasattr(app, "config"):
     app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 7 * 86400   # шрифты и статика кэшируются неделю
 
 
+NAMES_FILE = _str("NAMES_FILE") or os.path.join(os.path.dirname(DB_PATH) or ".", "names.csv")
+_names = {"mtime": None, "map": {}}
+
+def partner_names():
+    """Метка → имя для показа (@юзернейм). Файл data/names.csv на сервере (не в репозитории):
+    строки «метка,имя», перечитывается сам при изменении."""
+    try:
+        mt = os.path.getmtime(NAMES_FILE)
+    except OSError:
+        _names.update(mtime=None, map={})
+        return {}
+    if mt != _names["mtime"]:
+        m = {}
+        try:
+            with open(NAMES_FILE, encoding="utf-8-sig") as f:
+                for line in f:
+                    lab, _, name = line.strip().partition(",")
+                    lab, name = clean_label(lab).lower(), name.strip().strip('"')[:40]
+                    if lab and lab != "direct" and name:
+                        m[lab] = name
+        except OSError:
+            pass
+        _names.update(mtime=mt, map=m)
+    return _names["map"]
+
 def team_of(source):
     s = (source or "").lower()
     if TEAM_A_PREFIX and s.startswith(TEAM_A_PREFIX): return "A"
@@ -677,6 +702,7 @@ def _get_stats(at=None):
             "round_no": cur - first + 1, "prev_round": {k: v for k, v in prev.items() if k != "all"},
             "ranks": [{"min": t, "name": n} for t, n in RANKS],
             "badge_defs": {k: {"icon": i, "name": n, "desc": d} for k, (i, n, d) in BADGES.items()},
+            "names": partner_names(),
             "server_now": _utc_z(dt.datetime.now(dt.timezone.utc))}
 
 def _pct(v):
@@ -2359,11 +2385,11 @@ async function load(){
   document.getElementById('teams').innerHTML=card(A,'a','🌊')+'<div class="vs">VS</div>'+card(B,'b','🌺');
   const sum=A.clicks+B.clicks;document.getElementById('barA').style.width=(sum?(A.clicks/sum*100):50)+'%';
   const lt=d.leader_today;
-  document.getElementById('banner').innerHTML=lt?`🔥 Лидер раунда: <b>${esc(lt.source)}</b> — сила ${lt.clicks} `+tb(lt.team,A,B)
+  document.getElementById('banner').innerHTML=lt?`🔥 Лидер раунда: <b>${esc((d.names||{})[lt.source]||lt.source)}</b> — сила ${lt.clicks} `+tb(lt.team,A,B)
     :'😴 В этом раунде ударов ещё не было — кто будет первым?';
   document.getElementById('chRows').innerHTML=(d.channels||[]).map(c=>`<tr><td>${esc(c.name)}</td><td>${c.clicks}</td><td>${c.hits}</td><td>${c.starts}</td><td>${cv(c.conv)}</td></tr>`).join('')
     ||'<tr><td colspan=5 class="mut">Пока нет данных</td></tr>';
-  document.getElementById('rows').innerHTML=d.partners.map((p,i)=>`<tr><td class="rk">${medals[i]||(i+1)}</td><td>${p.team?`<a href="/p/${encodeURIComponent(p.source)}${q}" target="_blank">${esc(p.source)}</a>`:esc(p.source)}</td><td>${tb(p.team,A,B)}</td>
+  document.getElementById('rows').innerHTML=d.partners.map((p,i)=>`<tr><td class="rk">${medals[i]||(i+1)}</td><td>${p.team?`<a href="/p/${encodeURIComponent(p.source)}${q}" target="_blank">${esc(p.source)}</a>${(d.names||{})[p.source]?`<br><small style="color:#8a93ae">${esc(d.names[p.source])}</small>`:''}`:esc(p.source)}</td><td>${tb(p.team,A,B)}</td>
     <td><b>${p.power}</b></td><td>${p.hits}</td><td>${p.starts}</td><td>${cv(p.conv)}</td><td>${p.today}</td><td class="mut">${p.clicks}</td><td class="mut">${fmt(p.last)}</td></tr>`).join('')
     ||'<tr><td colspan=10 class="mut">Пока нет данных</td></tr>';
   if(window.Chart){
