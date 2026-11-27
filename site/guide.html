@@ -149,5 +149,7 @@ footer{border-top:1px solid var(--line);margin-top:40px;padding:22px 0 40px;colo
 </main>
 
 <footer><div class="wrap">18+ · © 2026 NEUROFANS. Все персонажи вымышлены и созданы ИИ. Результаты учеников индивидуальны и не являются гарантией дохода.</div></footer>
+<script>/* сквозная воронка: номер браузера с главной (если был) — в кнопку бота */
+try { const v = localStorage.getItem("nf_v") || ""; if (/^[a-z0-9]{8,40}$/i.test(v)) document.querySelectorAll('a[href*="AccessGrantedGuide_bot?start="]').forEach(a => { a.href = a.href.replace(/start=(site|guide|prompts|gallery)(?![_\w])/, "start=$1_" + v); }); } catch (e) {}</script>
 </body>
 </html>

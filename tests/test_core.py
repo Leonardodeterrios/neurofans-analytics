@@ -456,6 +456,14 @@ sec={x["id"]:x["people"] for x in st["sections"]}; assert sec["hero"]==2 and sec
 assert {x["src"] for x in st["sources"]}=={"threads.net","direct"}
 assert [g for g in st["goals"] if g["id"]=="buy_adv"][0]["people"]==1
 assert "site" in app.bot_stats(7)
+# сквозная воронка: кнопка бота на сайте несёт номер браузера → «Старт» → оплата
+r=app.record_start("site_ABCDEF123456", 909090); assert r["label"]=="site" and not r["scored"], r
+assert app.start_source(r)==("site","")
+app.note_paid(909090, True, "base")
+fz={x["src"]:x for x in app.site_stats(7)["funnel"]}
+assert fz["threads.net"]["people"]==1 and fz["threads.net"]["buy"]==1 and fz["threads.net"]["bot"]==1 and fz["threads.net"]["paid"]==1, fz
+assert fz["direct"]["bot"]==0
+assert app.parse_payload("site")[0]=="site" and app.record_start("site_x", 909091)["label"]!="site"   # короткий хвост — не наш формат
 print("аналитика сайта: OK")
 # резервные копии базы трекера + «здоровье» для сторожа
 import tempfile as _tf, gzip as _gz

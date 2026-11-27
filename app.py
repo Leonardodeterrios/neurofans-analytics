@@ -454,6 +454,8 @@ def init_db():
         c.execute("""CREATE TABLE IF NOT EXISTS bot_people(
             tg_uid INTEGER PRIMARY KEY, pay_open_ts TEXT, pay_kind TEXT, paid_ts TEXT, nudge_ts TEXT)""")
         bp = {r[1] for r in c.execute("PRAGMA table_info(bot_people)")}
+        if "vid" not in {r[1] for r in c.execute("PRAGMA table_info(starts)")}:   # номер браузера с сайта (сквозная воронка)
+            c.execute("ALTER TABLE starts ADD COLUMN vid TEXT")
         for col in ("paid_kind", "upg_ts", "f1_ts", "f2_ts", "f3_ts"):  # что купил, апгрейд, догоны после цепочки
             if col not in bp:
                 c.execute(f"ALTER TABLE bot_people ADD COLUMN {col} TEXT")
@@ -513,10 +515,14 @@ def record_click(source, ch, ip, ua, vid, geo=None, why=""):
                          g.get("city"), g.get("cc"), g.get("lat"), g.get("lon"), why or None))
         return cur.lastrowid, bool(scored), new_vis
 
+SITE_START = re.compile(r"(site|guide|prompts|gallery)_([A-Za-z0-9]{8,40})")
+
 def record_start(raw_payload, uid):
     """Старт бота из PuzzleBot. Засчитывается («апперкот»), если человек впервые пришёл в бота."""
     _stats_cache.clear()
-    label, cid, whole = parse_payload(raw_payload)
+    m = SITE_START.fullmatch((raw_payload or "").strip())
+    vid = m.group(2).lower() if m else None          # ?start=site_<номер браузера> — человек пришёл с сайта
+    label, cid, whole = parse_payload(m.group(1) if m else raw_payload)
     ch, click_ok = "", False
     with _conn() as c:
         if cid is not None:
@@ -534,8 +540,8 @@ def record_start(raw_payload, uid):
         seen_uid = bool(uid) and c.execute(
             "SELECT 1 FROM starts WHERE tg_uid=? LIMIT 1", (uid,)).fetchone() is not None
         scored = 1 if (click_ok and not used and not seen_uid and label != "direct") else 0
-        c.execute("INSERT INTO starts(ts,label,click_id,tg_uid,ch,scored) VALUES(?,?,?,?,?,?)",
-                  (_now_iso(), label, cid, uid or None, ch, scored))
+        c.execute("INSERT INTO starts(ts,label,click_id,tg_uid,ch,scored,vid) VALUES(?,?,?,?,?,?,?)",
+                  (_now_iso(), label, cid, uid or None, ch, scored, vid))
     return {"label": label, "click_id": cid, "ch": ch, "scored": bool(scored)}
 
 
@@ -2413,12 +2419,30 @@ def site_stats(days=7):
         srcs = [{"src": r[0], "people": r[1]} for r in c.execute(
             "SELECT src, COUNT(DISTINCT vid) n FROM site_ev WHERE ev='view' AND ts>=? GROUP BY src ORDER BY n DESC LIMIT 12", (since,))]
         buyers = one("SELECT COUNT(DISTINCT vid) FROM site_ev WHERE ev IN ('goal:buy_base','goal:buy_adv','goal:buy_up') AND ts>=?", since)
+        # сквозная воронка: откуда пришёл на сайт → нажал «Купить» → пришёл в бота с сайта → открыл оплату в боте → оплатил
+        vsrc = {r[0]: r[1] for r in c.execute(
+            "SELECT vid, src, MIN(ts) FROM site_ev WHERE ev='view' AND ts>=? GROUP BY vid", (since,))}
+        vbuy = {r[0] for r in c.execute("SELECT DISTINCT vid FROM site_ev WHERE ev LIKE 'goal:buy_%' AND ts>=?", (since,))}
+        vbot = {}
+        for r in c.execute("SELECT vid, tg_uid FROM starts WHERE vid IS NOT NULL AND tg_uid>0 AND ts>=?", (since,)):
+            vbot.setdefault(r[0], r[1])
+        paid = {r[0] for r in c.execute("SELECT tg_uid FROM bot_people WHERE paid_ts IS NOT NULL AND COALESCE(paid_kind,'')<>'test'")}
+        opened = {r[0] for r in c.execute("SELECT tg_uid FROM bot_people WHERE pay_open_ts IS NOT NULL")}
+        direct_paid = one("SELECT COUNT(*) FROM bot_people b WHERE paid_ts>=? AND COALESCE(paid_kind,'')<>'test' "
+                          "AND NOT EXISTS (SELECT 1 FROM starts s WHERE s.tg_uid=b.tg_uid)", since)
         d0 = (dt.datetime.now(dt.timezone.utc).replace(tzinfo=None) - dt.timedelta(days=13)).date()
         per = {r[0]: r[1] for r in c.execute(
             "SELECT substr(ts,1,10) d, COUNT(DISTINCT vid) FROM site_ev WHERE ev='view' AND ts>=? GROUP BY d", (d0.isoformat(),))}
     daily = [{"d": (d0 + dt.timedelta(days=i)).isoformat(), "n": per.get((d0 + dt.timedelta(days=i)).isoformat(), 0)} for i in range(14)]
     sections = [{"id": k, "name": n, "people": vis if k == "hero" else reach.get(k, 0)} for k, n in SITE_SECTIONS]
-    return {"visitors": vis, "views": views, "mobile": mob, "buyers": buyers, "sections": sections,
+    fun = {}
+    for v, sr in vsrc.items():
+        f = fun.setdefault(sr or "direct", {"src": sr or "direct", "people": 0, "buy": 0, "bot": 0, "pay_open": 0, "paid": 0})
+        uid = vbot.get(v)
+        f["people"] += 1; f["buy"] += v in vbuy; f["bot"] += bool(uid)
+        f["pay_open"] += bool(uid) and uid in opened; f["paid"] += bool(uid) and uid in paid
+    funnel = sorted(fun.values(), key=lambda x: (-x["people"], x["src"]))[:15]
+    return {"funnel": funnel, "direct_paid": direct_paid, "visitors": vis, "views": views, "mobile": mob, "buyers": buyers, "sections": sections,
             "goals": [{"id": k, "name": SITE_GOALS[k], "people": goals.get(k, 0)} for k in SITE_GOALS],
             "sources": srcs, "daily": daily}
 
@@ -2508,7 +2532,8 @@ span.t{color:#8a93ae;font-size:13px;margin-left:4px}.h{color:#ff4f8b;font-weight
 </style></head><body><h1>Бот и сайт</h1><p class="s">Кто заходит на сайт и что там нажимает, что настроено в боте, что бот сделал сам и о чём спрашивают люди. <a id="fl" href="/funnel">Воронка бота →</a></p>
 <h2>Сайт neurofans.ru</h2><div class="bar" id="d"></div><div class="k" id="sk"></div>
 <div class="sp" id="sd" title="посетители по дням, 14 дней"></div><p class="note" id="sdn"></p>
-<div class="two"><div><h2>До какого блока долистали</h2><div id="ss"></div></div><div><h2>Что нажимали</h2><div id="sg"></div><h2>Откуда пришли на сайт</h2><div class="wrap"><table id="so"></table></div></div></div>
+<div class="two"><div><h2>До какого блока долистали</h2><div id="ss"></div></div><div><h2>Что нажимали</h2><div id="sg"></div></div></div>
+<h2>Сквозная воронка: откуда пришли → купили</h2><p class="t">Люди, которые пришли на сайт за период. «В бота» — нажали кнопку бота на сайте и нажали «Старт». «Оплатили» — купили после этого. Кто покупает прямо с сайта, не заходя в бота, Tribute к источнику не привязывает: такие покупки — в строке под таблицей.</p><div class="wrap"><table id="so"></table></div><p class="t" id="sdp"></p>
 <p class="note">Считаем сами, без Яндекса и Google: анонимный номер браузера, без IP и имён. Боты и превью ссылок не считаются. Человек = браузер: если зашёл с телефона и с компьютера, это два человека.</p>
 <h2>Настройки бота</h2><div class="cfg" id="cfg"></div>
 <h2>Что сработало в боте</h2><div class="k" id="k"></div>
@@ -2554,7 +2579,8 @@ async function load(){
  const bars=(arr)=>arr.map(x=>`<div class="sbar"><span>${esc(x.name)}</span><span><s><i style="width:${V?Math.round(x.people*100/V):0}%"></i></s></span><b>${x.people} <span class="t">${pct(x.people,V)}</span></b></div>`).join("");
  document.getElementById("ss").innerHTML=V?bars(S.sections||[]):'<p class="t">Пока никто не заходил за этот период</p>';
  document.getElementById("sg").innerHTML=V?bars(S.goals||[]):'<p class="t">Пока нет нажатий</p>';
- document.getElementById("so").innerHTML="<tr><th>Откуда</th><th>Людей</th></tr>"+((S.sources||[]).length?S.sources.map(x=>`<tr><td>${esc(x.src=="direct"?"напрямую / из приложения":x.src)}</td><td><b>${x.people}</b> <span class="t">${pct(x.people,V)}</span></td></tr>`).join(""):'<tr><td colspan="2" class="t">Пока пусто</td></tr>');
+ document.getElementById("so").innerHTML="<tr><th>Откуда</th><th>На сайте</th><th>Нажали «Купить»</th><th>В бота</th><th>Открыли оплату в боте</th><th>Оплатили</th></tr>"+((S.funnel||[]).length?S.funnel.map(x=>`<tr><td>${esc(x.src=="direct"?"напрямую / из приложения":x.src)}</td><td><b>${x.people}</b> <span class="t">${pct(x.people,V)}</span></td><td>${x.buy} <span class="t">${pct(x.buy,x.people)}</span></td><td>${x.bot} <span class="t">${pct(x.bot,x.people)}</span></td><td>${x.pay_open}</td><td><b>${x.paid}</b></td></tr>`).join(""):'<tr><td colspan="6" class="t">Пока пусто</td></tr>');
+ document.getElementById("sdp").textContent="Оплатили напрямую (без бота, источник неизвестен): "+(S.direct_paid||0);
  const row3=(n,x)=>`<td><b>${x.people}</b></td><td>${x.pay_open} <span class="t">${pct(x.pay_open,x.people)}</span></td><td>${x.paid} <span class="t">${pct(x.paid,x.people)}</span></td>`;
  document.getElementById("src").innerHTML="<tr><th>Откуда</th><th>Новых людей</th><th>Открыли оплату</th><th>Оплатили</th></tr>"+((j.sources||[]).length?j.sources.map(x=>`<tr><td>${esc(x.name)}</td>${row3(0,x)}</tr>`).join(""):'<tr><td colspan="4" class="t">Пока никого за этот период</td></tr>');
  document.getElementById("prt").innerHTML="<tr><th>Аккаунт</th><th>Новых людей</th><th>Открыли оплату</th><th>Оплатили</th></tr>"+((j.partners||[]).length?j.partners.map(x=>`<tr><td>${esc(x.name||x.key)}${x.name?`<br><span class="t">${esc(x.key)}</span>`:""}</td>${row3(0,x)}</tr>`).join(""):'<tr><td colspan="4" class="t">Пока никого за этот период</td></tr>');
