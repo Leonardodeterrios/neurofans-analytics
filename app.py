@@ -1713,11 +1713,15 @@ def bot_ask():
     Отвечаем сразу 200, а ответ ИИ уходит человеку в фоне через API PuzzleBot."""
     if not INGEST_TOKEN or not hmac.compare_digest(request.values.get("key", ""), INGEST_TOKEN):
         abort(403)
+    vals = dict(request.values)
+    js = request.get_json(silent=True) if getattr(request, "is_json", False) else None
+    if isinstance(js, dict):
+        vals.update({k: str(v) for k, v in js.items()})
     try:
-        uid = int(re.sub(r"\D", "", request.values.get("uid") or "")[:15] or 0)
+        uid = int(re.sub(r"\D", "", vals.get("uid") or "")[:15] or 0)
     except ValueError:
         uid = 0
-    q = (request.values.get("q") or request.values.get("text") or "")[:2000]
+    q = (vals.get("q") or vals.get("text") or "")[:2000]
     if uid and q.strip() and not q.strip().startswith("/"):
         bg(handle_ask, uid, q)
         return jsonify(ok=True)
