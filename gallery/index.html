@@ -186,6 +186,18 @@ body.adult .age{display:none}
   .final{padding:60px 0 70px}
   .final:before{width:340px;height:340px;margin:-170px 0 0 -170px}
 }
+/* лента: по одной работе на всю ширину, видео играют сами */
+.grid.feed{display:block;max-width:760px;margin:0 auto}
+.feed .it{margin:0 0 18px}
+.feed .it:hover{transform:none}
+.feed .it:hover img,.feed .it:hover video{transform:none}
+.feed .it img,.feed .it video{display:block;max-height:88vh;object-fit:contain;background:#000}
+.feed .it .snd{position:absolute;right:12px;top:12px;z-index:3;width:38px;height:38px;border-radius:50%;border:1px solid var(--line2);background:rgba(4,5,12,.72);color:#fff;display:grid;place-items:center;backdrop-filter:blur(6px);font-size:16px}
+@media (max-width:700px){
+  body{overflow-x:hidden}
+  .feed .it{width:100vw;margin:0 0 12px calc(50% - 50vw);border-radius:0;border-left:0;border-right:0}
+  .feed .it img,.feed .it video{max-height:none}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -233,7 +245,7 @@ body.adult .age{display:none}
   <div class="flt" id="all"><div class="wrap"><div class="bar"><div class="chips" id="chips" role="toolbar" aria-label="Фильтр"></div><span class="cnt" id="cnt"></span></div></div></div>
   <div class="wrap">
     <div class="ser" id="ser"></div>
-    <div class="grid" id="grid" aria-live="polite"></div>
+    <div class="grid feed" id="grid" aria-live="polite"></div>
   </div>
 
   <section class="final">
@@ -255,6 +267,12 @@ body.adult .age{display:none}
 </div>
 
 <script>
+/* видео в ленте: на экране — грузим и играем без звука, ушло с экрана — пауза (экономим трафик) */
+var VIO = new IntersectionObserver(es => es.forEach(e => {
+  const v = e.target;
+  if (e.isIntersecting) { if (!v.getAttribute("src")) { v.src = v.dataset.src; v.preload = "auto"; } const p = v.play(); if (p) p.catch(() => {}); }
+  else if (!v.paused) v.pause();
+}), { rootMargin: "300px 0px", threshold: 0.35 });
 var cols0 = 2;   // колонок в сетке (первые 2 ряда превью грузятся сразу)
 /* Список работ — в media.json рядом со страницей (лежит только на зарубежном сервере, не в репозитории).
    Формат: {"site":"https://neurofans.ru/","items":[{"src":"media/g1.jpeg","type":"photo|video","title":"…","group":"Модель G"}]} */
@@ -324,37 +342,42 @@ function render() {
   const html = view.map((x, k) => {
     const v = x.type === "video";
     /* в сетке только лёгкие превью (optimize.sh); сам файл грузится при открытии */
-    const m = x.thumb ? `<img src="${esc(x.thumb)}" alt="${esc(x.title)}" loading="${k < cols0 * 2 ? "eager" : "lazy"}" decoding="async"${x.w ? ` width="${x.w}" height="${x.h}"` : ""}>`
-      : v ? `<video src="${esc(x.src)}#t=0.5" muted playsinline preload="metadata"></video>`
-          : `<img src="${esc(x.src)}" alt="${esc(x.title)}" loading="lazy" decoding="async">`;
+    /* лента: фото в хорошем качестве (web), видео без звука и само играет, пока на экране; файл видео грузится, только когда к нему подлистали */
+    const wh = x.w ? ` width="${x.w}" height="${x.h}"` : "";
+    const m = v ? `<video data-src="${esc(x.web || x.src)}"${x.thumb ? ` poster="${esc(x.thumb)}"` : ""}${wh} muted loop playsinline autoplay preload="none"></video>`
+                : `<img src="${esc(x.web || x.src)}" alt="${esc(x.title)}" loading="${k < 2 ? "eager" : "lazy"}" decoding="async"${wh}>`;
     return `<button class="it" data-k="${k}">
       <div class="m">${m}<span class="tag${v ? " v" : ""}">${v ? "ВИДЕО ИИ" : "ФОТО ИИ"}</span>
-      ${v ? `<span class="pl"><svg width="18" height="18" viewBox="0 0 18 18" fill="#fff"><path d="M5 3l10 6-10 6z"/></svg></span>` : ""}
+      ${v ? `<span class="snd" role="button" aria-label="Включить звук">🔇</span>` : ""}
       <div class="cap"><b>${esc(x.title)}</b>${x.group && x.group !== "Видео" ? `<span>${esc(x.group)}</span>` : ""}</div></div></button>`;
   });
-  const n = cols0; cols = n;
+  const n = 1; cols = n;
   const c = Array.from({ length: n }, () => []);
   html.forEach((h, i) => c[i % n].push(h));
   $("#grid").innerHTML = c.map(a => `<div class="col">${a.join("")}</div>`).join("");
   $("#grid").querySelectorAll(".it").forEach(el => {
     const md = el.querySelector("img,video");
     const ok = () => el.classList.add("ok");
-    if (md.tagName === "VIDEO") md.addEventListener("loadeddata", ok, { once: true }); else if (md.complete && md.naturalWidth) ok(); else md.onload = ok;
+    if (md.tagName === "VIDEO") { md.addEventListener("loadeddata", ok, { once: true }); if (md.poster) ok(); VIO.observe(md); }
+    else if (md.complete && md.naturalWidth) ok(); else md.onload = ok;
     md.onerror = () => el.remove();
   });
 }
 let cols = 0;
-addEventListener("resize", () => { const n = innerWidth < 700 ? 2 : innerWidth < 1100 ? 3 : 4; if (n !== cols && ALL.length) render(); });
+
 function plural(n, a, b, c) { const m = n % 100, k = n % 10; return m > 10 && m < 20 ? c : k === 1 ? a : k > 1 && k < 5 ? b : c; }
 addEventListener("scroll", () => $("#top").classList.toggle("sc", scrollY > 8), { passive: true });
 
 $("#grid").onclick = e => {
+  const sn = e.target.closest(".snd");
+  if (sn) { e.stopPropagation(); const v = sn.closest(".it").querySelector("video"); v.muted = !v.muted; if (!v.muted) { document.querySelectorAll("#grid video").forEach(o => { if (o !== v) { o.muted = true; o.closest(".it").querySelector(".snd").textContent = "🔇"; } }); v.play().catch(() => {}); } sn.textContent = v.muted ? "🔇" : "🔊"; return; }
   const el = e.target.closest(".it"); if (!el) return;
   show(+el.dataset.k);
 };
 
 
 function show(k) {
+  document.querySelectorAll("#grid video").forEach(v => v.pause());   // в полноэкранном просмотре лента молчит
   if (k < 0) k = view.length - 1; if (k >= view.length) k = 0;
   lbI = k; const x = view[k];
   $("#lbs").innerHTML = x.type === "video"
@@ -364,7 +387,8 @@ function show(k) {
   $("#lbc").innerHTML = `<span>${esc(x.title || "")}${x.group && x.group !== "Видео" ? ", " + esc(x.group) : ""}</span><em>${k + 1} / ${view.length}</em>`;
   $("#lb").classList.add("on"); body.style.overflow = "hidden"; $("#lbx").focus();
 }
-function hide() { $("#lb").classList.remove("on"); $("#lbs").innerHTML = ""; body.style.overflow = ""; }
+function hide() { $("#lb").classList.remove("on"); $("#lbs").innerHTML = ""; body.style.overflow = "";
+  document.querySelectorAll("#grid video").forEach(v => { const r = v.getBoundingClientRect(); if (v.getAttribute("src") && r.bottom > 0 && r.top < innerHeight) v.play().catch(() => {}); }); }
 $("#lbx").onclick = hide; $("#lbp").onclick = () => show(lbI - 1); $("#lbn").onclick = () => show(lbI + 1);
 $("#lb").onclick = e => { if (e.target.id === "lb") hide(); };
 addEventListener("keydown", e => {
