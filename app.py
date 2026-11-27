@@ -51,6 +51,7 @@ DB_PATH            = _str("DB_PATH", "data/clicks.db")
 DASHBOARD_TOKEN    = _str("DASHBOARD_TOKEN")    # полный доступ (дашборд, CSV)
 PUBLIC_TOKEN       = _str("PUBLIC_TOKEN")       # только арена/рейтинг — для партнёров
 INGEST_TOKEN       = _str("INGEST_TOKEN")       # ключ, с которым PuzzleBot шлёт /bot/start
+ADS_KEY            = _str("ADS_KEY")            # ключ, с которым скрипты AdsPower шлют статистику (/ads/stats)
 PORT               = _int("DASHBOARD_PORT", 8080)
 SHEET_WEBHOOK_URL  = _str("SHEET_WEBHOOK_URL")
 NOTIFY_CLICKS      = _flag("NOTIFY_CLICKS", "1")
@@ -382,6 +383,15 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT, tg_uid INTEGER, q TEXT, a TEXT, human INTEGER DEFAULT 0)""")
         c.execute("""CREATE TABLE IF NOT EXISTS alerts(
             id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT, source TEXT, kind TEXT)""")
+        # статистика скриптов AdsPower по аккаунтам партнёров (бывший приёмник в Google Таблице)
+        c.execute("""CREATE TABLE IF NOT EXISTS ads_sessions(
+            id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT, run_id TEXT UNIQUE, account TEXT, script TEXT,
+            ig_min REAL, th_min REAL, viewed_ig INTEGER, viewed_th INTEGER, likes_ig INTEGER, likes_th INTEGER,
+            comments INTEGER, posts INTEGER)""")
+        c.execute("""CREATE TABLE IF NOT EXISTS ads_comments(
+            id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT, session_id INTEGER, account TEXT, url TEXT, text TEXT, result TEXT)""")
+        c.execute("CREATE INDEX IF NOT EXISTS ix_ads_ts ON ads_sessions(ts)")
+        c.execute("CREATE INDEX IF NOT EXISTS ix_adsc_ts ON ads_comments(ts)")
         c.execute("CREATE INDEX IF NOT EXISTS ix_clicks_src_vid ON clicks(source, vid, rnd)")
         c.execute("CREATE INDEX IF NOT EXISTS ix_clicks_vid ON clicks(vid, rnd)")
         c.execute("CREATE INDEX IF NOT EXISTS ix_clicks_ip ON clicks(ip, rnd)")
@@ -1846,6 +1856,135 @@ def funnel(days=7, by="ch"):
         rows.append(row)
     rows.sort(key=lambda r: (r["group"] != "Все", -r["steps"]["start"]))
     return {"days": days, "by": by, "steps": FUNNEL_STEPS, "rows": rows}
+
+# ================= AdsPower: статистика аккаунтов партнёров =================
+# Скрипты AdsPower шлют POST https://ДОМЕН/ads/stats?key=<ADS_KEY> с тем же JSON, что раньше уходил
+# в Google Таблицу: runId, account, script, instagramMinutes, threadsMinutes, viewedInstagram, viewedThreads,
+# likesInstagram, likesThreads, commentsSent, postsSent, comments[{url,text,result}].
+ADS_BAD_RESULT = re.compile(r"err|fail|ошиб|не\s*удал|skip|пропу|block|блок", re.I)
+
+def _ads_txt(v, n):
+    return re.sub(r"[\x00-\x1f]+", " ", str(v if v is not None else "")).strip()[:n]
+
+def _ads_num(v, lo=0, hi=1e6):
+    try:
+        x = float(v)
+    except (TypeError, ValueError):
+        return 0
+    return 0 if x != x else max(lo, min(hi, x))
+
+def record_ads(data):
+    """Записывает один запуск скрипта. Повтор того же runId — не пишется. Возвращает (ok, duplicate)."""
+    account = _ads_txt(data.get("account"), 80) or "без имени"
+    run_id = _ads_txt(data.get("runId"), 120) or None
+    ig, th = _ads_num(data.get("instagramMinutes"), hi=1440), _ads_num(data.get("threadsMinutes"), hi=1440)
+    n = lambda k: int(_ads_num(data.get(k), hi=100000))
+    comments = data.get("comments") if isinstance(data.get("comments"), list) else []
+    now = _now_iso()
+    with _conn() as c:
+        try:
+            cur = c.execute("""INSERT INTO ads_sessions(ts,run_id,account,script,ig_min,th_min,viewed_ig,viewed_th,
+                likes_ig,likes_th,comments,posts) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (now, run_id, account, _ads_txt(data.get("script"), 80), round(ig, 1), round(th, 1),
+                 n("viewedInstagram"), n("viewedThreads"), n("likesInstagram"), n("likesThreads"),
+                 n("commentsSent"), n("postsSent")))
+        except sqlite3.IntegrityError:
+            return True, True
+        sid = cur.lastrowid
+        for cm in comments[:300]:
+            if isinstance(cm, dict):
+                c.execute("INSERT INTO ads_comments(ts,session_id,account,url,text,result) VALUES(?,?,?,?,?,?)",
+                          (now, sid, account, _ads_txt(cm.get("url"), 400), _ads_txt(cm.get("text"), 1000),
+                           _ads_txt(cm.get("result"), 120)))
+    return True, False
+
+def _cors(resp):
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type, X-Key"
+    return resp
+
+@app.route("/ads/stats", methods=["POST", "OPTIONS"])
+def ads_stats():
+    if request.method == "OPTIONS":
+        return _cors(Response("", status=204))
+    raw = request.get_data() or b""
+    if len(raw) > 512 * 1024:
+        return _cors(jsonify(ok=False, error="too_big")), 413
+    try:
+        data = json.loads(raw.decode("utf-8", "replace") or "{}")
+    except ValueError:
+        return _cors(jsonify(ok=False, error="bad_json")), 400
+    if not isinstance(data, dict):
+        return _cors(jsonify(ok=False, error="bad_json")), 400
+    key = request.args.get("key", "") or request.headers.get("X-Key", "") or str(data.get("key", ""))
+    if not ADS_KEY or not hmac.compare_digest(key, ADS_KEY):
+        return _cors(jsonify(ok=False, error="bad_key")), 403
+    ok, dup = record_ads(data)
+    return _cors(jsonify(ok=ok, duplicate=dup))
+
+def ads_report(days, admin=False):
+    """Сводка по аккаунтам за период (days=0 — всё время). Тексты комментариев — только админу."""
+    now = dt.datetime.now(dt.timezone.utc)
+    since = _utc_naive(now - dt.timedelta(days=days)) if days else ""
+    day_ago = _utc_naive(now - dt.timedelta(hours=24))
+    z = lambda ts: (ts or "")[:19] + "Z" if ts else None
+    with _conn() as c:
+        rows = c.execute("""SELECT account, COUNT(*) runs, SUM(ig_min) ig, SUM(th_min) th, SUM(viewed_ig) vi,
+            SUM(viewed_th) vt, SUM(likes_ig) li, SUM(likes_th) lt, SUM(comments) cm, SUM(posts) po, MAX(ts) last
+            FROM ads_sessions WHERE ts>=? GROUP BY account""", (since,)).fetchall()
+        badc = {}
+        for a, r in c.execute("SELECT account, result FROM ads_comments WHERE ts>=?", (since,)):
+            if ADS_BAD_RESULT.search(r or ""):
+                badc[a] = badc.get(a, 0) + 1
+        last_all = dict(c.execute("SELECT account, MAX(ts) FROM ads_sessions GROUP BY account").fetchall())
+        days14 = {}
+        d0 = (now - dt.timedelta(days=13)).date()
+        for a, d, m in c.execute("""SELECT account, substr(ts,1,10), SUM(ig_min+th_min) FROM ads_sessions
+                WHERE ts>=? GROUP BY account, substr(ts,1,10)""", (d0.isoformat(),)):
+            try:
+                i = (dt.date.fromisoformat(d) - d0).days
+            except ValueError:
+                continue
+            if 0 <= i < 14:
+                days14.setdefault(a, [0] * 14)[i] = round(m or 0, 1)
+        recent = []
+        if admin:
+            recent = [dict(r, ts=z(r["ts"])) for r in c.execute("""SELECT ts, account, url, text, result FROM ads_comments
+                WHERE ts>=? ORDER BY id DESC LIMIT 60""", (since,))]
+    accs = []
+    for r in rows:
+        a = r["account"]
+        accs.append({"account": a, "team": team_of(a), "runs": r["runs"],
+                     "ig_min": round(r["ig"] or 0, 1), "th_min": round(r["th"] or 0, 1),
+                     "viewed_ig": r["vi"] or 0, "viewed_th": r["vt"] or 0,
+                     "likes_ig": r["li"] or 0, "likes_th": r["lt"] or 0,
+                     "comments": r["cm"] or 0, "posts": r["po"] or 0, "comment_errors": badc.get(a, 0),
+                     "last": z(last_all.get(a) or r["last"]),
+                     "silent": (last_all.get(a) or "") < day_ago, "days14": days14.get(a, [0] * 14)})
+    # аккаунты, которые раньше работали, а за период — ни одного запуска (видно, кто «отвалился»)
+    for a, last in last_all.items():
+        if not any(x["account"] == a for x in accs):
+            accs.append({"account": a, "team": team_of(a), "runs": 0, "ig_min": 0, "th_min": 0, "viewed_ig": 0,
+                         "viewed_th": 0, "likes_ig": 0, "likes_th": 0, "comments": 0, "posts": 0,
+                         "comment_errors": 0, "last": z(last), "silent": True,
+                         "days14": days14.get(a, [0] * 14)})
+    accs.sort(key=lambda x: (-(x["ig_min"] + x["th_min"]), x["account"]))
+    tot = {k: round(sum(x[k] for x in accs), 1) for k in
+           ("runs", "ig_min", "th_min", "viewed_ig", "viewed_th", "likes_ig", "likes_th", "comments", "posts",
+            "comment_errors")}
+    tot["accounts"] = len(accs)
+    tot["active"] = sum(1 for x in accs if not x["silent"])
+    return {"days": days, "accounts": accs, "total": tot, "recent": recent}
+
+@app.route("/api/ads")
+def api_ads():
+    role = _need()
+    try:
+        days = max(0, min(365, int(request.args.get("days", 1))))
+    except ValueError:
+        days = 1
+    return jsonify(ads_report(days, admin=role == "admin"))
 
 @app.route("/api/funnel")
 def api_funnel():

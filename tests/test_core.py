@@ -383,4 +383,25 @@ B=app.bot_stats(0); assert B["count"]["f1"]>=1 and B["count"]["upgrade"]>=1 and 
 assert app.bot_stats(1)["cfg"]["pb"] is True and "BOT_PAGE" in dir(app)
 app.bg=_bgsave; app.notify_all=_na; app.PB_TOKEN=""
 print("автоматика бота: догон брошенной оплаты, метка «оплатил», ИИ-ассистент и «Катя» ✅")
+# AdsPower: приёмник статистики аккаунтов и сводка для арены
+app.ADS_KEY="adsk"
+def ads(body, key="adsk"):
+    flask.request.method="POST"; flask.request.args={"key":key}; flask.request.headers=H({})
+    flask.request.data=json.dumps(body).encode()
+    r=app.ads_stats(); return (r[0],r[1]) if isinstance(r,tuple) else (r,200)
+run={"runId":"r1","account":"leo07","script":"прогрев","instagramMinutes":12.34,"threadsMinutes":"7",
+     "viewedInstagram":30,"viewedThreads":12,"likesInstagram":9,"likesThreads":4,"commentsSent":2,"postsSent":1,
+     "comments":[{"url":"https://threads.net/p/1","text":"класс <b>","result":"ok"},{"url":"u2","text":"t2","result":"ошибка: нет поля"}]}
+assert ads(run,key="bad")[1]==403
+r,code=ads(run); assert code==200 and json.loads(r.content)=={"ok":True,"duplicate":False}
+r,code=ads(run); assert json.loads(r.content)["duplicate"] is True     # повтор того же runId не пишется
+ads({"runId":"r2","account":"акк Маши","instagramMinutes":"x","postsSent":-5})
+flask.request.data=b"not json"; flask.request.args={"key":"adsk"}; assert app.ads_stats()[1]==400
+rep=app.ads_report(1, admin=True); a={x["account"]:x for x in rep["accounts"]}
+assert a["leo07"]["team"]=="A" and a["leo07"]["ig_min"]==12.3 and a["leo07"]["th_min"]==7 and a["leo07"]["comment_errors"]==1
+assert a["акк Маши"]["ig_min"]==0 and a["акк Маши"]["posts"]==0 and a["акк Маши"]["team"] is None
+assert rep["total"]["runs"]==2 and len(rep["recent"])==2 and rep["recent"][0]["ts"].endswith("Z")
+assert app.ads_report(1)["recent"]==[] and sum(a["leo07"]["days14"])==19.3
+print("AdsPower: ключ, повторы, кривые числа, сводка по аккаунтам ✅")
+
 print("\nВСЕ ПРОВЕРКИ ПРОШЛИ ✅")
