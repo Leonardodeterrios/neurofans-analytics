@@ -533,6 +533,39 @@ footer p{margin:6px 0 0;max-width:48em}
 .dock .btn{padding:12px 16px;font-size:14px}
 @media(max-width:760px){.dock{display:flex}footer{padding-bottom:96px}}
 @media(prefers-reduced-motion:reduce){.dock{transition:none}}
+.mods details{border:0}
+.mods summary{list-style:none;cursor:default}
+.mods summary::-webkit-details-marker{display:none}
+.tc .fit{font-size:14px;color:var(--mu);margin:-4px 0 12px;line-height:1.45}
+.cmpd{margin-top:22px}
+.cmpd>summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:8px;font-weight:800;color:var(--cy);padding:10px 0}
+.cmpd>summary::-webkit-details-marker{display:none}
+.cmpd>summary:after{content:"";width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translateY(-3px);transition:transform .2s}
+.cmpd[open]>summary:after{transform:rotate(-135deg) translateY(-1px)}
+.cmpd .cmp{margin-top:8px}
+.swipe{display:none}
+.lesd>summary{list-style:none;cursor:default}
+.lesd>summary::-webkit-details-marker{display:none}
+@media(min-width:761px){.lesd>summary{display:none}}
+@media(max-width:760px){.lesd>summary{cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:12px 0;font-weight:800;border-top:1px solid var(--line)}
+ .lesd>summary:after{content:"";width:8px;height:8px;border-right:2px solid var(--mu);border-bottom:2px solid var(--mu);transform:rotate(45deg);transition:transform .2s}
+ .lesd[open]>summary:after{transform:rotate(-135deg)}}
+@media(max-width:760px){
+  .mods{gap:0!important}
+  .mods details{border-top:1px solid var(--line)}
+  .mods details:first-child{border-top:0}
+  .mods summary{cursor:pointer;padding:12px 0}
+  .mods summary h4{margin:0}
+  .mods summary h4:after{content:"";margin-left:auto;width:8px;height:8px;border-right:2px solid var(--mu);border-bottom:2px solid var(--mu);transform:rotate(45deg);transition:transform .2s}
+  .mods details[open] summary h4:after{transform:rotate(-135deg)}
+  .mods details ul{padding-bottom:12px}
+  .cases{display:flex!important;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;margin-right:-18px;padding-right:18px;scrollbar-width:none}
+  .cases::-webkit-scrollbar,.pg::-webkit-scrollbar{display:none}
+  .cases .cs{flex:0 0 86%;scroll-snap-align:start}
+  .swipe{display:block;font-size:13px;color:var(--mu);margin:-6px 0 12px}
+  ol.steps{grid-template-columns:1fr 1fr!important;row-gap:18px}
+  ol.steps li{padding-right:10px}
+}
 </style>
 </head>
 <body>
@@ -542,13 +575,12 @@ footer p{margin:6px 0 0;max-width:48em}
     <a class="logo" href="#"><i><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#2ee6d6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 9h3l2-5 3 9 2-6 1.5 2H15"/></svg></i>NEUROFANS</a>
     <nav class="nav" aria-label="Разделы">
       <a href="#real">Примеры</a>
+      <a href="#cases">Кейсы</a>
       <a href="#math">Математика</a>
       <a href="#soft">Софт</a>
-      <a href="#flow">Как работает</a>
-      <a href="#sim">Симулятор</a>
       <a href="#program">Программа</a>
-      <a href="#cases">Кейсы</a>
       <a href="#price">Тарифы</a>
+      <a href="#sim">Симулятор</a>
     </nav>
     <a class="btn pr" href="#price">Выбрать тариф</a>
   </div>
@@ -633,6 +665,41 @@ footer p{margin:6px 0 0;max-width:48em}
   </div>
 </section>
 
+<section id="cases">
+  <div class="wrap">
+    <div class="sh">
+      <h2>Кейсы учеников</h2>
+      <p>Результаты отдельных учеников со скриншотов их кабинетов Fanvue. У каждого свои цифры: они зависят от модели, трафика и того, сколько времени ты вкладываешь.</p>
+    </div>
+    <span class="swipe" aria-hidden="true">Листай вбок, чтобы увидеть все кейсы</span>
+    <div class="cases">
+      <article class="cs">
+        <div class="hd"><span class="av">d</span><div><b>dmitry_traffic</b><span>Участник закрытого чата, 2 модели</span></div><span class="res">+$5 612 за месяц</span></div>
+        <div class="er"><div><small>All-time earnings</small><b>$16 881.84</b></div><div><small>This month</small><b>$5 612.97</b></div><div class="src"><span>Fanvue Insights</span><em>Top 1.4% creator</em></div></div>
+        <p>До курса сам ковырял нейронки по ютубу: кривые пальцы и баны на Реддите. Здесь взял связку Threads и X и посадил двух чаттеров в ночную смену под США. На скрине только основная модель, вторая дала ещё +$1 400.</p>
+      </article>
+      <article class="cs">
+        <div class="hd"><span class="av">С</span><div><b>Соня М.</b><span>С полного нуля, первый месяц</span></div><span class="res">+$1 932 за месяц</span></div>
+        <div class="er"><div><small>All-time earnings</small><b>$2 021.40</b></div><div><small>This month</small><b>$1 932.57</b></div><div class="src"><span>Fanvue Insights</span><em>Top 4.8% creator</em></div></div>
+        <p>Прошёл мой первый месяц, в следующем надеюсь сделать х2. Вчера фанат прислал $100 типсами просто за общение по скрипту прогрева, я даже ни одного фото ещё не отправила. Поддержка в чате отвечает быстро.</p>
+      </article>
+      <article class="cs">
+        <div class="hd"><span class="av">А</span><div><b>Анна К.</b><span>Маркетолог, совмещает с работой</span></div><span class="res">+$3 290 на 2-й месяц</span></div>
+        <p>До этого покупала дорогие гайды, в голове была каша, а 18+ генерации получались кринжовые. Тут всё точечно: наконец-то поняла, как фиксировать одно и то же лицо, фигуру и кожу. За 3 недели вышла на $1 400, сейчас подключила вторую модель.</p>
+      </article>
+      <article class="cs">
+        <div class="hd"><span class="av">В</span><div><b>Влад</b><span>21 год, работал с ноутбука</span></div><span class="res">+$840 за 2 недели</span></div>
+        <p>В ИИ был полный ноль. По видеоурокам настроил всё за вечер со старого макбука. Английский не знаю вообще, выручает переводчик и шаблоны из курса. Вывел первые $840.</p>
+      </article>
+    </div>
+    <div class="prf">
+      <h3>Доходы учеников</h3>
+      <p>Скриншоты из кабинетов Fanvue и Telegram-каналов моделей учеников. Ники фанатов и названия аккаунтов скрыты. Это реальные результаты, но не обещание дохода: у каждого свои цифры.</p>
+      <div class="pg"><button type="button" data-full="proofs/insights.jpg" data-cap="доход за апрель–июнь 2026, Fanvue"><img src="proofs/insights.jpg" alt="Скриншот: доход за апрель–июнь 2026, Fanvue" loading="lazy"><span><b>$12 676</b>доход за апрель–июнь 2026, Fanvue</span></button><button type="button" data-full="proofs/subs.jpg" data-cap="подписки и продления за 10 дней, Fanvue"><img src="proofs/subs.jpg" alt="Скриншот: подписки и продления за 10 дней, Fanvue" loading="lazy"><span><b>$200 · $600</b>подписки и продления за 10 дней, Fanvue</span></button><button type="button" data-full="proofs/tips.jpg" data-cap="покупки сообщений и чаевые за час, Fanvue"><img src="proofs/tips.jpg" alt="Скриншот: покупки сообщений и чаевые за час, Fanvue" loading="lazy"><span><b>$170 · $130</b>покупки сообщений и чаевые за час, Fanvue</span></button><button type="button" data-full="proofs/balance.jpg" data-cap="доступно к выводу, Fanvue"><img src="proofs/balance.jpg" alt="Скриншот: доступно к выводу, Fanvue" loading="lazy"><span><b>$1 437</b>доступно к выводу, Fanvue</span></button><button type="button" data-full="proofs/payouts.jpg" data-cap="выплаты на банковский счёт, Fanvue"><img src="proofs/payouts.jpg" alt="Скриншот: выплаты на банковский счёт, Fanvue" loading="lazy"><span><b>$677–913</b>выплаты на банковский счёт, Fanvue</span></button><button type="button" data-full="proofs/stars.jpg" data-cap="звёзды в Telegram-канале модели"><img src="proofs/stars.jpg" alt="Скриншот: звёзды в Telegram-канале модели" loading="lazy"><span><b>≈ $1 481</b>звёзды в Telegram-канале модели</span></button></div>
+    </div>
+  </div>
+</section>
+
 <section id="math">
   <div class="wrap">
     <div class="sh">
@@ -646,16 +713,6 @@ footer p{margin:6px 0 0;max-width:48em}
       <div class="tot"><div class="k">Одна модель</div><div class="v">≈ $2 155</div><p>в месяц, примерно 1,5–2 часа работы в день</p></div>
     </div>
     <div class="scale"><span>Следующий шаг: сетка из 3 моделей и чаттеры, которые ведут переписку за процент от кассы. Именно так выходят на уровень лучших кейсов учеников.</span><b>$5 400 – $6 800</b></div>
-    <div class="flow">
-      <h3>Зачем здесь софт</h3>
-      <p>Доход модели складывается из четырёх шагов. Когда каждый шаг виден в цифрах, ты понимаешь, где просадка, и чинишь именно её, а не переделываешь всё подряд.</p>
-      <ol class="fl">
-        <li><b>Ссылка в био</b><p>Своя ссылка под каждый канал и пост.</p><em>Ссылки кабинета</em><small>Просадка: ссылка не работает или стоит не там</small></li>
-        <li><b>Живые переходы</b><p>Сколько людей пришло, откуда и когда. Без ботов.</p><em>Эфир и NF Core</em><small>Просадка: канал «молчит», а ты продолжаешь в него вкладываться</small></li>
-        <li><b>Контент по плану</b><p>Посты под каналы, которые реально приводят людей.</p><em>ИИ-Студия</em><small>Просадка: нет идей, публикации раз в неделю</small></li>
-        <li><b>Дожим в переписке</b><p>Ответы по этапам воронки до покупки.</p><em>Нейро-чаттер</em><small>Просадка: фанаты пишут, но не покупают</small></li>
-      </ol>
-    </div>
   </div>
 </section>
 
@@ -663,7 +720,7 @@ footer p{margin:6px 0 0;max-width:48em}
   <div class="wrap">
     <div class="sh">
       <h2>Софт, которого нет у других курсов</h2>
-      <p>Обычный курс даёт видео и чат. Мы даём рабочий инструмент с первого дня: видно, откуда приходят люди, что публиковать завтра и что ответить фанату. Посмотри, как это выглядит внутри.</p>
+      <p>Уроки объясняют, что делать. Кабинет показывает, сработало ли: откуда приходят люди, что публиковать завтра и что ответить фанату. Посмотри, как это выглядит внутри.</p>
     </div>
     <div class="tabsw" id="tabsw"><div class="tabs" role="tablist" aria-label="Разделы кабинета">
       <button role="tab" aria-selected="true" aria-controls="p1" id="t1"><i></i>Аналитика ссылок</button>
@@ -738,82 +795,11 @@ footer p{margin:6px 0 0;max-width:48em}
         <div id="d4" hidden><h3>Ты не один: каждую неделю новая игра</h3><p>Модели учеников соревнуются по живым людям за неделю. Есть отдельный зачёт «Рывок недели», чтобы у новичков был шанс.</p><ul><li>Ранги моделей и ачивки за первые результаты</li><li>Дивизионы, чтобы новички не соревновались с топами</li><li>Карточка «Моя неделя» для сторис</li></ul></div>
         <div id="d5" hidden><h3>Возвращает в работу без напоминаний</h3><p>Бот кабинета пишет в Telegram, когда ссылка заработала, модель поднялась в лиге или пора подвести итоги.</p><ul><li>Не больше 4 сообщений в сутки</li><li>Тихие часы ночью</li><li>Можно оставить только итоги недели</li></ul></div>
       </div>
-    </div>
-    <div class="vs">
-      <table>
-        <thead><tr><th></th><th>Обычный курс</th><th>NEUROFANS</th></tr></thead>
-        <tbody>
-          <tr><td>Ссылки в био</td><td>«Ставьте ссылку» и неизвестно, работает ли она</td><td>Своя ссылка на каждый канал и живые цифры уже в первую неделю</td></tr>
-          <tr><td>Статистика</td><td>Сторонние счётчики вместе с ботами</td><td>Только живые люди, боты и свои клики отсекаются</td></tr>
-          <tr><td>Контент</td><td>Придумывай сам</td><td>ИИ-Студия пишет план постов на неделю под твою модель</td></tr>
-          <tr><td>Переписка</td><td>Скрипты в PDF</td><td>Нейро-чаттер предлагает три ответа на каждое сообщение</td></tr>
-          <tr><td>Мотивация</td><td>Один на один с уроками</td><td>Еженедельная лига, ранги, ачивки и уведомления в Telegram</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</section>
-
-<section id="flow">
-  <div class="wrap">
-    <div class="sh">
-      <h2>Как обучение и софт работают вместе</h2>
-      <p>Уроки объясняют, что делать. Кабинет показывает, сработало ли, и подсказывает следующий шаг. Вот один день работы на примере.</p>
-    </div>
-    <div class="story">
-      <article class="sc">
-        <div class="vis" aria-hidden="true">
-          <div class="ev"><i></i><span><b>Threads</b> · anna-t · Лос-Анджелес</span><em>+1</em></div>
-          <div class="ev"><i></i><span><b>Threads</b> · anna-t · Майами</span><em>+1</em></div>
-          <div class="ev dim"><i style="background:var(--mu);box-shadow:none"></i><span><b>TikTok</b> · anna-tt · тишина 2 дня</span><em style="color:var(--mu)">0</em></div>
-        </div>
-        <div class="tx"><h3>Клик отразился в Эфире</h3><p>Человек нажал ссылку в био Threads, и через секунду он в Эфире: город, приложение, время. Видно, что Threads выстреливает, а TikTok молчит.</p><span class="tag">Урок: трафик и прогрев · Модуль: Эфир</span></div>
-      </article>
-      <article class="sc">
-        <div class="vis" aria-hidden="true">
-          <div class="pp"><small>Студия · Чт 19:00 · Threads</small><b>Личная история</b><p>Короткий тезис о том, как прошёл съёмочный день, и вопрос подписчикам. Ссылка для био: anna-t</p></div>
-        </div>
-        <div class="tx"><h3>Студия подсказала пост</h3><p>Раз Threads работает, Студия ставит туда больше постов в голосе модели и даёт ссылку для био. Не нужно гадать, что и когда публиковать.</p><span class="tag">Урок: паспорт модели · Модуль: ИИ-Студия</span></div>
-      </article>
-      <article class="sc">
-        <div class="vis mini" aria-hidden="true">
-          <div class="q">loved your post today. got anything more personal?</div>
-          <div class="o">glad you liked it! I have a set that didn't make my feed, want a peek?</div>
-          <div class="paid">Сет куплен: $25 · пример</div>
-        </div>
-        <div class="tx"><h3>Чаттер довёл до продажи</h3><p>Фанат написал в личку. Нейро-чаттер предложил три ответа под этап «предложение», ты выбрал и отправил. Продажа без давления и обмана.</p><span class="tag">Урок: чаттинг · Модуль: Нейро-чаттер</span></div>
-      </article>
-    </div>
-    <div class="jobs">
-      <div><b>Аналитика и Эфир</b><p>Видно реальные переходы по каждому каналу, без ботов.</p><span>Перестаёшь сливать время в «мёртвые» каналы</span></div>
-      <div><b>ИИ-Студия</b><p>План постов на неделю под каналы и голос модели.</p><span>Нет ступора «что публиковать сегодня»</span></div>
-      <div><b>Нейро-чаттер</b><p>Три варианта ответа по этапу воронки.</p><span>Меньше ошибок в переписке, быстрее ответ</span></div>
-      <div><b>Лига и уведомления</b><p>Ранги, ачивки и итоги недели в Telegram.</p><span>Держит ритм, когда мотивация падает</span></div>
-    </div>
-  </div>
+    </div>  </div>
 </section>
 
 
-<section id="sim">
-  <div class="wrap simx">
-    <div class="side">
-      <h2>Симулятор переписки: доведи фаната до покупки</h2>
-      <p>Основные деньги на Fanvue приходят не с подписок, а из личных сообщений. Пройди пять этапов воронки: на каждом выбери ответ и посмотри разбор.</p>
-      <ul class="rules2">
-        <li>Модель честно остаётся ИИ-персонажем: на вопрос «ты настоящая?» не врёт</li>
-        <li>Не продавай на первом сообщении: сначала контакт, потом предложение</li>
-        <li>Без давления и скидок от паники: фанат платит за внимание, а не за уговоры</li>
-      </ul>
-      <p class="note">Цифры в симуляторе для примера. В кабинете нейро-чаттер так же предлагает три ответа под этап, но уже в голосе твоей модели.</p>
-    </div>
-    <div class="chatbox" id="simx">
-      <div class="hd"><span class="av">J</span><div><b>James_TX</b><span>Fanvue · личные сообщения</span></div><button class="rs" id="simReset" type="button">Начать заново</button></div>
-      <div class="stg" id="stg"><div>Знакомство</div><div>Флирт</div><div>Прогрев</div><div>Предложение</div><div>Продажа</div></div>
-      <div class="msgs" id="msgs" aria-live="polite"></div>
-      <div class="opts" id="opts"></div>
-    </div>
-  </div>
-</section>
+
 
 <section id="program">
   <div class="wrap">
@@ -825,6 +811,7 @@ footer p{margin:6px 0 0;max-width:48em}
       <div class="pc">
         <div class="k"><h3>Базовый</h3><span class="pr">3 900 ₽</span></div>
         <p>Видеоуроки и подробная текстовая инструкция к каждому. Подходит новичкам.</p>
+        <details class="lesd"><summary>9 уроков шаг за шагом</summary>
         <ol class="les">
           <li>Знакомство и план работы</li>
           <li>Сервисы и оплата нейросетей из России</li>
@@ -836,60 +823,24 @@ footer p{margin:6px 0 0;max-width:48em}
           <li>Откровенный контент</li>
           <li>Готовый фотосет</li>
         </ol>
+        </details>
       </div>
       <div class="pc adv">
         <div class="k"><h3>Продвинутый</h3><span class="pr">14 900 ₽</span></div>
         <p>Всё из Базового и полный путь от пустого телефона к первым продажам, по шагам и с готовыми шаблонами.</p>
         <div class="mods">
-          <div><h4><i></i>Стратегия</h4><ul><li>7 архетипов модели и под какого фаната каждый</li><li>Психология фаната: за какое чувство он платит</li><li>Паспорт модели за один вечер</li></ul></div>
-          <div><h4><i></i>Контент</h4><ul><li>Видео-генерация 18+</li><li>199 примеров генераций с промптами</li><li>Видео по трендовому рилсу</li></ul></div>
-          <div><h4><i></i>Fanvue</h4><ul><li>Профиль и BIO, которые продают</li><li>Цены, пробный период, платные посты</li><li>Автосообщения, правила платформы, вывод денег</li></ul></div>
-          <div><h4><i></i>Трафик</h4><ul><li>Рабочий телефон под западный рынок</li><li>Прогрев Instagram, Threads и TikTok</li><li>Канал модели и закрытый 18+ канал в Telegram</li></ul></div>
-          <div><h4><i></i>Чаттинг</h4><ul><li>Стратегии «хорошая девочка» и «дерзкая»</li><li>Кастомы под запрос фаната</li><li>Фразы-границы и примеры диалогов</li></ul></div>
-          <div><h4><i></i>Масштаб</h4><ul><li>Сетка из 2–3 моделей</li><li>Чаттеры за процент от кассы</li><li>Закрытый чат участников и разборы кейсов</li></ul></div>
+          <details><summary><h4><i></i>Стратегия</h4></summary><ul><li>7 архетипов модели и под какого фаната каждый</li><li>Психология фаната: за какое чувство он платит</li><li>Паспорт модели за один вечер</li></ul></details>
+          <details><summary><h4><i></i>Контент</h4></summary><ul><li>Видео-генерация 18+</li><li>199 примеров генераций с промптами</li><li>Видео по трендовому рилсу</li></ul></details>
+          <details><summary><h4><i></i>Fanvue</h4></summary><ul><li>Профиль и BIO, которые продают</li><li>Цены, пробный период, платные посты</li><li>Автосообщения, правила платформы, вывод денег</li></ul></details>
+          <details><summary><h4><i></i>Трафик</h4></summary><ul><li>Рабочий телефон под западный рынок</li><li>Прогрев Instagram, Threads и TikTok</li><li>Канал модели и закрытый 18+ канал в Telegram</li></ul></details>
+          <details><summary><h4><i></i>Чаттинг</h4></summary><ul><li>Стратегии «хорошая девочка» и «дерзкая»</li><li>Кастомы под запрос фаната</li><li>Фразы-границы и примеры диалогов</li></ul></details>
+          <details><summary><h4><i></i>Масштаб</h4></summary><ul><li>Сетка из 2–3 моделей</li><li>Чаттеры за процент от кассы</li><li>Закрытый чат участников и разборы кейсов</li></ul></details>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<section id="cases">
-  <div class="wrap">
-    <div class="sh">
-      <h2>Кейсы учеников</h2>
-      <p>Результаты отдельных учеников со скриншотов их кабинетов Fanvue. У каждого свои цифры: они зависят от модели, трафика и того, сколько времени ты вкладываешь.</p>
-    </div>
-    <div class="cases">
-      <article class="cs">
-        <div class="hd"><span class="av">d</span><div><b>dmitry_traffic</b><span>Участник закрытого чата, 2 модели</span></div><span class="res">+$5 612 за месяц</span></div>
-        <div class="er"><div><small>All-time earnings</small><b>$16 881.84</b></div><div><small>This month</small><b>$5 612.97</b></div><div class="src"><span>Fanvue Insights</span><em>Top 1.4% creator</em></div></div>
-        <p>До курса сам ковырял нейронки по ютубу: кривые пальцы и баны на Реддите. Здесь взял связку Threads и X и посадил двух чаттеров в ночную смену под США. На скрине только основная модель, вторая дала ещё +$1 400.</p>
-      </article>
-      <article class="cs">
-        <div class="hd"><span class="av">С</span><div><b>Соня М.</b><span>С полного нуля, первый месяц</span></div><span class="res">+$1 932 за месяц</span></div>
-        <div class="er"><div><small>All-time earnings</small><b>$2 021.40</b></div><div><small>This month</small><b>$1 932.57</b></div><div class="src"><span>Fanvue Insights</span><em>Top 4.8% creator</em></div></div>
-        <p>Прошёл мой первый месяц, в следующем надеюсь сделать х2. Вчера фанат прислал $100 типсами просто за общение по скрипту прогрева, я даже ни одного фото ещё не отправила. Поддержка в чате отвечает быстро.</p>
-      </article>
-      <article class="cs">
-        <div class="hd"><span class="av">А</span><div><b>Анна К.</b><span>Маркетолог, совмещает с работой</span></div><span class="res">+$3 290 на 2-й месяц</span></div>
-        <p>До этого покупала дорогие гайды, в голове была каша, а 18+ генерации получались кринжовые. Тут всё точечно: наконец-то поняла, как фиксировать одно и то же лицо, фигуру и кожу. За 3 недели вышла на $1 400, сейчас подключила вторую модель.</p>
-      </article>
-      <article class="cs">
-        <div class="hd"><span class="av">В</span><div><b>Влад</b><span>21 год, работал с ноутбука</span></div><span class="res">+$840 за 2 недели</span></div>
-        <p>В ИИ был полный ноль. По видеоурокам настроил всё за вечер со старого макбука. Английский не знаю вообще, выручает переводчик и шаблоны из курса. Вывел первые $840.</p>
-      </article>
-    </div>
-    <div class="prf">
-      <h3>Пруфы автора курса</h3>
-      <p>Скриншоты кабинета Fanvue и Telegram-канала ИИ-модели Кати, которая ведёт курс. Ники фанатов и названия аккаунтов скрыты. Это результаты автора, а не обещание дохода.</p>
-      <div class="pg"><button type="button" data-full="proofs/insights.jpg" data-cap="доход за апрель–июнь 2026, Fanvue"><img src="proofs/insights.jpg" alt="Скриншот: доход за апрель–июнь 2026, Fanvue" loading="lazy"><span><b>$12 676</b>доход за апрель–июнь 2026, Fanvue</span></button><button type="button" data-full="proofs/subs.jpg" data-cap="подписки и продления за 10 дней, Fanvue"><img src="proofs/subs.jpg" alt="Скриншот: подписки и продления за 10 дней, Fanvue" loading="lazy"><span><b>$200 · $600</b>подписки и продления за 10 дней, Fanvue</span></button><button type="button" data-full="proofs/tips.jpg" data-cap="покупки сообщений и чаевые за час, Fanvue"><img src="proofs/tips.jpg" alt="Скриншот: покупки сообщений и чаевые за час, Fanvue" loading="lazy"><span><b>$170 · $130</b>покупки сообщений и чаевые за час, Fanvue</span></button><button type="button" data-full="proofs/balance.jpg" data-cap="доступно к выводу, Fanvue"><img src="proofs/balance.jpg" alt="Скриншот: доступно к выводу, Fanvue" loading="lazy"><span><b>$1 437</b>доступно к выводу, Fanvue</span></button><button type="button" data-full="proofs/payouts.jpg" data-cap="выплаты на банковский счёт, Fanvue"><img src="proofs/payouts.jpg" alt="Скриншот: выплаты на банковский счёт, Fanvue" loading="lazy"><span><b>$677–913</b>выплаты на банковский счёт, Fanvue</span></button><button type="button" data-full="proofs/stars.jpg" data-cap="звёзды в Telegram-канале модели"><img src="proofs/stars.jpg" alt="Скриншот: звёзды в Telegram-канале модели" loading="lazy"><span><b>≈ $1 481</b>звёзды в Telegram-канале модели</span></button></div>
-    </div>
-    <div class="stats">
-      <div><b>380+</b><span>учеников в закрытом комьюнити</span></div>
-      <div><b style="color:var(--cy)">$6 840</b><span>лучший заработок ученика за первый месяц</span></div>
-    </div>
-  </div>
-</section>
 
 <section id="price">
   <div class="wrap">
@@ -902,6 +853,7 @@ footer p{margin:6px 0 0;max-width:48em}
         <div class="ph"><img src="tariffs/base.jpg" alt="Обложка тарифа: ИИ-модель, сгенерированная нейросетью" width="1280" height="720" loading="lazy" decoding="async"></div>
         <div class="nm vh">Базовый</div>
         <p class="sub">Своя ИИ-модель и 18+ фото</p>
+        <p class="fit">Подойдёт, если хочешь сначала научиться делать контент и проверить нишу без больших вложений.</p>
         <div class="price">3 900<span>₽</span></div>
         <p class="once">один платёж</p>
         <ul>
@@ -918,6 +870,7 @@ footer p{margin:6px 0 0;max-width:48em}
         <div class="ph"><img src="tariffs/adv.jpg" alt="Обложка тарифа: ИИ-модель, сгенерированная нейросетью" width="1280" height="720" loading="lazy" decoding="async"></div>
         <div class="nm vh">Продвинутый</div>
         <p class="sub">Полный запуск модели: контент, площадки, трафик, продажи</p>
+        <p class="fit">Подойдёт, если готов вести модель как бизнес: площадки, трафик, переписка, вывод денег.</p>
         <div class="price">14 900<span>₽</span></div>
         <p class="once">один платёж</p>
         <ul>
@@ -931,6 +884,7 @@ footer p{margin:6px 0 0;max-width:48em}
         <a class="btn pr" data-buy="adv" href="#">Купить Продвинутый</a>
       </div>
     </div>
+    <details class="cmpd"><summary>Сравнить тарифы подробно</summary>
     <div class="cmp">
       <table>
         <thead><tr><th></th><th>Базовый</th><th>Продвинутый</th></tr></thead>
@@ -950,10 +904,7 @@ footer p{margin:6px 0 0;max-width:48em}
       </table>
     </div>
     <p class="note">ИИ-функции кабинета (Студия и нейро-чаттер) в обоих тарифах работают с дневными лимитами, первые 14 дней лимиты выше. Больше генераций даёт отдельная подписка Pro.</p>
-    <div class="who">
-      <div><b>Базовый подойдёт, если</b>хочешь сначала научиться делать контент и проверить нишу без больших вложений.</div>
-      <div><b>Продвинутый подойдёт, если</b>готов вести модель как бизнес: площадки, трафик, переписка, вывод денег.</div>
-    </div>
+    </details>
     <div class="up">
       <img class="av" src="tariffs/upg.jpg" alt="" width="52" height="52" loading="lazy">
       <span>Уже на Базовом? Переход на Продвинутый: доплата разницы <b>11 000 ₽</b>, без новой регистрации.</span>
@@ -965,6 +916,27 @@ footer p{margin:6px 0 0;max-width:48em}
       <li><b>Свой ник и пароль</b><p>Telegram подключится сам</p></li>
       <li><b>Уроки и софт</b><p>Открываются сразу, без куратора</p></li>
     </ol>
+  </div>
+</section>
+
+<section id="sim">
+  <div class="wrap simx">
+    <div class="side">
+      <h2>Симулятор переписки: доведи фаната до покупки</h2>
+      <p>Основные деньги на Fanvue приходят не с подписок, а из личных сообщений. Пройди пять этапов воронки: на каждом выбери ответ и посмотри разбор.</p>
+      <ul class="rules2">
+        <li>Модель честно остаётся ИИ-персонажем: на вопрос «ты настоящая?» не врёт</li>
+        <li>Не продавай на первом сообщении: сначала контакт, потом предложение</li>
+        <li>Без давления и скидок от паники: фанат платит за внимание, а не за уговоры</li>
+      </ul>
+      <p class="note">Цифры в симуляторе для примера. В кабинете нейро-чаттер так же предлагает три ответа под этап, но уже в голосе твоей модели.</p>
+    </div>
+    <div class="chatbox" id="simx">
+      <div class="hd"><span class="av">J</span><div><b>James_TX</b><span>Fanvue · личные сообщения</span></div><button class="rs" id="simReset" type="button">Начать заново</button></div>
+      <div class="stg" id="stg"><div>Знакомство</div><div>Флирт</div><div>Прогрев</div><div>Предложение</div><div>Продажа</div></div>
+      <div class="msgs" id="msgs" aria-live="polite"></div>
+      <div class="opts" id="opts"></div>
+    </div>
   </div>
 </section>
 
@@ -1074,6 +1046,9 @@ let inView = false;
 if ("IntersectionObserver" in window) new IntersectionObserver(e => inView = e[0].isIntersecting, {threshold: .35}).observe(soft);
 if (!reduce) setInterval(() => { if (auto && inView && !document.hidden) show((cur + 1) % tabs.length); }, 6000);
 
+/* Программа: на компьютере модули раскрыты, на телефоне по нажатию */
+(() => { const mq = matchMedia("(min-width:761px)"); const set = () => document.querySelectorAll(".mods details,.lesd").forEach(d => d.open = mq.matches); set(); mq.addEventListener("change", set);
+  document.querySelectorAll(".mods summary,.lesd>summary").forEach(sm => sm.addEventListener("click", e => { if (mq.matches) e.preventDefault(); })); })();
 /* Пруфы: просмотр крупно */
 (() => {
   const lb = document.getElementById("lbx"), im = lb.querySelector("img"), cap = lb.querySelector("p");
