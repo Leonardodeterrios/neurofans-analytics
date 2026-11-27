@@ -196,7 +196,10 @@ h3{font:800 20px/1.3 var(--body);margin:0 0 8px}
 .vs td:last-child{color:var(--tx)}
 
 /* галерея */
-.galf{display:flex;gap:16px;align-items:center;justify-content:space-between;margin-top:18px;color:var(--mu);font-size:15px}
+.galf{display:flex;gap:20px;align-items:center;justify-content:space-between;margin-top:24px;padding:22px 26px;border:1px solid rgba(255,79,139,.45);border-radius:20px;background:linear-gradient(120deg,rgba(255,79,139,.14),rgba(46,230,214,.06));box-shadow:0 0 40px rgba(255,79,139,.12);color:var(--tx2);font-size:15px}
+.galf b{display:block;font:800 20px var(--body);color:var(--tx);margin-bottom:4px}
+.btn.mg{background:linear-gradient(135deg,#ff6fa3,#ff4f8b);color:#1a0610;padding:16px 26px;white-space:nowrap}
+.btn.mg:hover{box-shadow:0 10px 30px rgba(255,79,139,.35)}
 
 /* симулятор */
 .sim{display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:center}
@@ -491,7 +494,8 @@ footer p{margin:6px 0 0;max-width:48em}
   .app .txt{padding:22px 18px}
   .vs th:nth-child(2),.vs td:nth-child(2){display:none}
   .vs th,.vs td{padding:12px 14px;font-size:14px}
-  .galf{flex-direction:column;align-items:flex-start}
+  .galf{flex-direction:column;align-items:stretch}
+  .btn.mg{white-space:normal}
   .mods,.cases,.stats,.tar{grid-template-columns:1fr}
   .pc,.tc{padding:22px}
   .tc .ph{margin:-22px -22px 18px}
@@ -551,7 +555,7 @@ footer p{margin:6px 0 0;max-width:48em}
       <ul class="chips" aria-label="Софт в кабинете ученика"><li>Аналитика трафика</li><li>ИИ-Студия</li><li>Нейро-чаттер</li><li>Лига учеников</li></ul>
       <div class="cta">
         <a class="btn pr" href="#price">Забрать систему обучения</a>
-        <a class="btn gh" href="#soft">Посмотреть софт</a>
+        <a class="btn gh" href="https://ai-creators.ru/primery" target="_blank" rel="noopener">Примеры генераций</a>
       </div>
       <p class="plbl">Ориентиры из кейсов учеников</p>
       <div class="proof">
@@ -617,7 +621,7 @@ footer p{margin:6px 0 0;max-width:48em}
       <figure class="gc"><div class="ph"><img data-src="https://ai-creators.ru/P4.jpg" alt="ИИ-модель за ужином в ресторане" referrerpolicy="no-referrer"><span class="ai">100% ИИ</span></div><figcaption><b>Ужин в ресторане</b><span>Лайфстайл-кадр «как с iPhone»: смешанный свет, детали интерьера.</span><ul><li>Сцена</li><li>Свет</li><li>Реализм</li></ul></figcaption></figure>
       <figure class="gc"><div class="ph"><img data-src="https://ai-creators.ru/P7.jpg" alt="ИИ-модель в шёлковой пижаме" referrerpolicy="no-referrer"><span class="ai">100% ИИ</span></div><figcaption><b>Утро дома</b><span>Мягкий дневной свет, ткань и текстура кожи без «пластика».</span><ul><li>Текстура</li><li>Ткань</li><li>Образ</li></ul></figcaption></figure>
     </div>
-    <div class="galf"><span>Ещё 30+ примеров фото и видео 18+, за которые фанаты платят больше всего, в закрытой галерее.</span><a class="btn gh" href="https://ai-creators.ru/primery" target="_blank" rel="noopener">Смотреть примеры 18+</a></div>
+    <div class="galf"><div><b>Примеры генераций 18+</b><span>Ещё 30+ фото и видео, за которые фанаты платят больше всего. Открываются в закрытой галерее.</span></div><a class="btn mg" href="https://ai-creators.ru/primery" target="_blank" rel="noopener">Смотреть примеры генераций</a></div>
   </div>
 </section>
 
@@ -1170,10 +1174,10 @@ const gal = document.getElementById("gal");
 gal.querySelectorAll("img").forEach(img => {
   const card = img.closest(".gc");
   img.onload = () => card.classList.add("ok");
-  img.onerror = () => { card.remove(); if (!gal.children.length) document.getElementById("real").hidden = true; };
+  img.onerror = () => { card.remove(); if (!gal.children.length) gal.hidden = true; };
   img.loading = "lazy"; img.decoding = "async"; img.src = img.dataset.src;
 });
-setTimeout(() => { gal.querySelectorAll(".gc:not(.ok)").forEach(c => c.remove()); if (!gal.children.length) document.getElementById("real").hidden = true; }, 12000);
+setTimeout(() => { gal.querySelectorAll(".gc:not(.ok)").forEach(c => c.remove()); if (!gal.children.length) gal.hidden = true; }, 12000);
 </script>
 </body>
 </html>
