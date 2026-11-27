@@ -1899,6 +1899,97 @@ def funnel(days=7, by="ch"):
     rows.sort(key=lambda r: (r["group"] != "Все", -r["steps"]["start"]))
     return {"days": days, "by": by, "steps": FUNNEL_STEPS, "rows": rows}
 
+# ================= аккаунты на коротких доменах: хост/t01…t48, хост/r01…r15 =================
+# Таблица аккаунтов (NeuroFans_Accounts_63.csv) даёт каждому аккаунту ссылку вида loradaily.shop/t01:
+# 3 аккаунта на домен, по порядку доменов. Это те же 63 метки, что у поддоменов go./my./hi.:
+# tNN → leo(17+NN) (Threads), rNN → kate(5+NN) (видео). Caddy шлёт такие пути на /acc/<хост>/<код>.
+ACC_L = ("loradaily lyravibe linaflow loranotes lanavibe lizaweb lilynotes liananotes letavibe leomira "
+         "lukaflow lubadaily lanaflow lenavibe lorablog lidastudio").split()
+ACC_K = "kseniadaily katyanotes kamiladaily kiranotes ksyushaflow".split()
+
+def acc_label(host, code):
+    """(метка трекера, канал) для хост/код или None, если такой ссылки нет (чужой домен, номер вне диапазона)."""
+    m = re.fullmatch(r"([tr])(\d{1,2})", (code or "").lower())
+    base = (host or "").lower().split(":")[0]
+    if not m or not base.endswith(".shop"):
+        return None
+    kind, n = m.group(1), int(m.group(2))
+    doms, first, prefix, ch = (ACC_L, 18, TEAM_A_PREFIX, "threads") if kind == "t" else (ACC_K, 6, TEAM_B_PREFIX, "video")
+    if not 1 <= n <= len(doms) * 3 or base[:-5] != doms[(n - 1) // 3]:
+        return None
+    return f"{prefix}{first + n - 1:02d}", ch
+
+@app.route("/acc/<host>/<code>")
+def go_account(host, code):
+    hit = acc_label(host, code)
+    if not hit:
+        abort(404)
+    return _track_and_redirect(hit[0], hit[1])
+
+def label_from_url(url):
+    """Метка трекера из ссылки в био: хост/tNN, /t/<метка>, /v/<метка>, go./my./hi.-поддомен не разбираем (нет таблицы)."""
+    try:
+        from urllib.parse import urlparse
+        u = urlparse((url or "").strip())
+    except ValueError:
+        return None
+    path = (u.path or "").strip("/")
+    hit = acc_label(u.hostname or "", path)
+    if hit:
+        return hit[0]
+    m = re.fullmatch(r"(?:t|v|go)/([A-Za-z0-9_-]+)", path)
+    return clean_label(m.group(1)) if m else None
+
+# ---- реестр аккаунтов (CSV из таблицы; хранится в базе, не в публичном репозитории) ----
+_ACC_COLS = {"label": ("метка",), "name": ("имя профиля", "имя"), "user": ("юзернейм", "username", "ник"),
+             "kind": ("типаж",), "branch": ("ветка",), "url": ("ссылка", "url")}
+
+def parse_accounts_csv(text):
+    rows = list(csv.reader(io.StringIO(text.lstrip("\ufeff"))))
+    if not rows:
+        return []
+    head = [h.strip().lower() for h in rows[0]]
+    idx = {}
+    for key, names in _ACC_COLS.items():
+        for i, h in enumerate(head):
+            if any(h.startswith(n) for n in names):
+                idx[key] = i
+                break
+    out = []
+    for r in rows[1:501]:
+        g = lambda k: (r[idx[k]].strip() if k in idx and idx[k] < len(r) else "")[:200]
+        acc = {k: g(k) for k in _ACC_COLS}
+        acc["user"] = acc["user"].lstrip("@")
+        if not (acc["label"] or acc["user"]):
+            continue
+        acc["tl"] = label_from_url(acc["url"])
+        out.append(acc)
+    return out
+
+def accounts_registry():
+    with _conn() as c:
+        r = c.execute("SELECT v FROM meta WHERE k='accounts'").fetchone()
+    try:
+        return json.loads(r[0]) if r else []
+    except ValueError:
+        return []
+
+def _acc_key(v):
+    return re.sub(r"\s+", "", str(v or "")).lstrip("@").lower()
+
+@app.route("/api/ads/accounts", methods=["POST"])
+def api_ads_accounts():
+    _need(admin=True)
+    raw = request.get_data() or b""
+    if len(raw) > 1024 * 1024:
+        abort(413)
+    accs = parse_accounts_csv(raw.decode("utf-8", "replace"))
+    if not accs:
+        return jsonify(ok=False, error="Не нашёл строк. Нужен CSV с колонками «Метка», «Юзернейм», «Ссылка»."), 400
+    with _conn() as c:
+        c.execute("INSERT OR REPLACE INTO meta(k,v) VALUES('accounts',?)", (json.dumps(accs, ensure_ascii=False),))
+    return jsonify(ok=True, count=len(accs), linked=sum(1 for a in accs if a["tl"]))
+
 # ================= AdsPower: статистика аккаунтов партнёров =================
 # Скрипты AdsPower шлют POST https://ДОМЕН/ads/stats?key=<ADS_KEY> с тем же JSON, что раньше уходил
 # в Google Таблицу: runId, account, script, instagramMinutes, threadsMinutes, viewedInstagram, viewedThreads,
@@ -1966,58 +2057,92 @@ def ads_stats():
     return _cors(jsonify(ok=ok, duplicate=dup))
 
 def ads_report(days, admin=False):
-    """Сводка по аккаунтам за период (days=0 — всё время). Тексты комментариев — только админу."""
+    """Сводка по аккаунтам за период (days=0 — всё время): работа скриптов AdsPower + результат ссылки в био
+    (удары = засчитанные переходы, старты = пришли в бота). Тексты комментариев — только админу."""
     now = dt.datetime.now(dt.timezone.utc)
     since = _utc_naive(now - dt.timedelta(days=days)) if days else ""
     day_ago = _utc_naive(now - dt.timedelta(hours=24))
     z = lambda ts: (ts or "")[:19] + "Z" if ts else None
+    reg = accounts_registry()
+    alias = {}                                   # любое имя аккаунта из AdsPower → запись реестра
+    for i, a in enumerate(reg):
+        for v in (a.get("label"), a.get("user"), a.get("tl")):
+            if v:
+                alias.setdefault(_acc_key(v), i)
     with _conn() as c:
         rows = c.execute("""SELECT account, COUNT(*) runs, SUM(ig_min) ig, SUM(th_min) th, SUM(viewed_ig) vi,
-            SUM(viewed_th) vt, SUM(likes_ig) li, SUM(likes_th) lt, SUM(comments) cm, SUM(posts) po, MAX(ts) last
+            SUM(viewed_th) vt, SUM(likes_ig) li, SUM(likes_th) lt, SUM(comments) cm, SUM(posts) po
             FROM ads_sessions WHERE ts>=? GROUP BY account""", (since,)).fetchall()
         badc = {}
         for a, r in c.execute("SELECT account, result FROM ads_comments WHERE ts>=?", (since,)):
             if ADS_BAD_RESULT.search(r or ""):
                 badc[a] = badc.get(a, 0) + 1
         last_all = dict(c.execute("SELECT account, MAX(ts) FROM ads_sessions GROUP BY account").fetchall())
-        days14 = {}
         d0 = (now - dt.timedelta(days=13)).date()
-        for a, d, m in c.execute("""SELECT account, substr(ts,1,10), SUM(ig_min+th_min) FROM ads_sessions
-                WHERE ts>=? GROUP BY account, substr(ts,1,10)""", (d0.isoformat(),)):
-            try:
-                i = (dt.date.fromisoformat(d) - d0).days
-            except ValueError:
-                continue
-            if 0 <= i < 14:
-                days14.setdefault(a, [0] * 14)[i] = round(m or 0, 1)
+        daily = c.execute("""SELECT account, substr(ts,1,10), SUM(ig_min+th_min) FROM ads_sessions
+                WHERE ts>=? GROUP BY account, substr(ts,1,10)""", (d0.isoformat(),)).fetchall()
+        hits = dict(c.execute("SELECT source, COUNT(*) FROM clicks WHERE scored=1 AND ts>=? GROUP BY source",
+                              (since,)).fetchall())
+        starts = dict(c.execute("SELECT label, COUNT(*) FROM starts WHERE scored=1 AND ts>=? GROUP BY label",
+                                (since,)).fetchall())
         recent = []
         if admin:
-            recent = [dict(r, ts=z(r["ts"])) for r in c.execute("""SELECT ts, account, url, text, result FROM ads_comments
-                WHERE ts>=? ORDER BY id DESC LIMIT 60""", (since,))]
-    accs = []
+            recent = [dict(r, ts=z(r["ts"])) for r in c.execute("""SELECT ts, account, url, text, result
+                FROM ads_comments WHERE ts>=? ORDER BY id DESC LIMIT 60""", (since,))]
+    empty = lambda: {"runs": 0, "ig_min": 0.0, "th_min": 0.0, "viewed_ig": 0, "viewed_th": 0, "likes_ig": 0,
+                     "likes_th": 0, "comments": 0, "posts": 0, "comment_errors": 0, "last": "", "days14": [0.0] * 14}
+    accs, by_key = [], {}
+    def slot(name):
+        i = alias.get(_acc_key(name))
+        key = ("r", i) if i is not None else ("a", name)
+        if key not in by_key:
+            rec = {"account": name, **empty()}
+            if i is not None:
+                a = reg[i]
+                rec.update(account=("@" + a["user"]) if a.get("user") else a.get("label") or name,
+                           code=a.get("label", ""), persona=a.get("name", ""), kind=a.get("kind", ""),
+                           branch=a.get("branch", ""), url=a.get("url", ""), tl=a.get("tl"))
+            by_key[key] = rec
+            accs.append(rec)
+        return by_key[key]
+    for i, a in enumerate(reg):                  # все аккаунты из таблицы — даже если скрипт ещё не запускался
+        slot(a.get("label") or a.get("user"))
     for r in rows:
-        a = r["account"]
-        accs.append({"account": a, "team": team_of(a), "runs": r["runs"],
-                     "ig_min": round(r["ig"] or 0, 1), "th_min": round(r["th"] or 0, 1),
-                     "viewed_ig": r["vi"] or 0, "viewed_th": r["vt"] or 0,
-                     "likes_ig": r["li"] or 0, "likes_th": r["lt"] or 0,
-                     "comments": r["cm"] or 0, "posts": r["po"] or 0, "comment_errors": badc.get(a, 0),
-                     "last": z(last_all.get(a) or r["last"]),
-                     "silent": (last_all.get(a) or "") < day_ago, "days14": days14.get(a, [0] * 14)})
-    # аккаунты, которые раньше работали, а за период — ни одного запуска (видно, кто «отвалился»)
+        x = slot(r["account"])
+        x["runs"] += r["runs"]; x["ig_min"] += r["ig"] or 0; x["th_min"] += r["th"] or 0
+        for k, col in (("viewed_ig", "vi"), ("viewed_th", "vt"), ("likes_ig", "li"), ("likes_th", "lt"),
+                       ("comments", "cm"), ("posts", "po")):
+            x[k] += r[col] or 0
     for a, last in last_all.items():
-        if not any(x["account"] == a for x in accs):
-            accs.append({"account": a, "team": team_of(a), "runs": 0, "ig_min": 0, "th_min": 0, "viewed_ig": 0,
-                         "viewed_th": 0, "likes_ig": 0, "likes_th": 0, "comments": 0, "posts": 0,
-                         "comment_errors": 0, "last": z(last), "silent": True,
-                         "days14": days14.get(a, [0] * 14)})
-    accs.sort(key=lambda x: (-(x["ig_min"] + x["th_min"]), x["account"]))
+        x = slot(a)
+        x["last"] = max(x["last"], last or "")
+    for a, n in badc.items():
+        slot(a)["comment_errors"] += n
+    for a, d, m in daily:
+        try:
+            i = (dt.date.fromisoformat(d) - d0).days
+        except ValueError:
+            continue
+        if 0 <= i < 14:
+            x = slot(a)
+            x["days14"][i] = round(x["days14"][i] + (m or 0), 1)
+    for x in accs:
+        tl = x.get("tl") or (x["account"] if team_of(x["account"]) else None)
+        x["tl"] = tl
+        x["team"] = team_of(tl) if tl else None
+        x["hits"], x["starts"] = hits.get(tl, 0) if tl else 0, starts.get(tl, 0) if tl else 0
+        x["ig_min"], x["th_min"] = round(x["ig_min"], 1), round(x["th_min"], 1)
+        x["silent"] = (x["last"] or "") < day_ago
+        x["never"] = not x["last"]
+        x["last"] = z(x["last"])
+    accs.sort(key=lambda x: (x["never"], -(x["ig_min"] + x["th_min"]), -x["hits"], x.get("code") or x["account"]))
     tot = {k: round(sum(x[k] for x in accs), 1) for k in
            ("runs", "ig_min", "th_min", "viewed_ig", "viewed_th", "likes_ig", "likes_th", "comments", "posts",
-            "comment_errors")}
+            "comment_errors", "hits", "starts")}
     tot["accounts"] = len(accs)
     tot["active"] = sum(1 for x in accs if not x["silent"])
-    return {"days": days, "accounts": accs, "total": tot, "recent": recent}
+    return {"days": days, "accounts": accs, "total": tot, "recent": recent, "admin": admin,
+            "registry": len(reg)}
 
 @app.route("/api/ads")
 def api_ads():

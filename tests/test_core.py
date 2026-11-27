@@ -410,4 +410,32 @@ assert rep["total"]["runs"]==2 and len(rep["recent"])==2 and rep["recent"][0]["t
 assert app.ads_report(1)["recent"]==[] and sum(a["leo07"]["days14"])==19.3
 print("AdsPower: ключ, повторы, кривые числа, сводка по аккаунтам ✅")
 
+# ссылки аккаунтов из таблицы: хост/t01… → та же метка, что у поддоменов
+assert app.acc_label("loradaily.shop","t01")==("leo18","threads") and app.acc_label("loradaily.shop","t03")==("leo20","threads")
+assert app.acc_label("lyravibe.shop","t04")==("leo21","threads") and app.acc_label("lidastudio.shop","t48")==("leo65","threads")
+assert app.acc_label("kseniadaily.shop","r01")==("kate06","video") and app.acc_label("ksyushaflow.shop","r15")==("kate20","video")
+assert app.acc_label("lyravibe.shop","t01") is None and app.acc_label("loradaily.shop","t49") is None and app.acc_label("evil.com","t01") is None
+flask.request.args={}; flask.request.values={}; flask.request.cookies={}
+flask.request.headers=H({"User-Agent":"Mozilla/5.0 (iPhone) Barcelona 300","CF-Connecting-IP":"10.9.9.9"})
+r=app.go_account("lyravibe.shop","t05"); assert r.headers["Location"].startswith("https://t.me/AccessGrantedGuide_bot?start=leo22-"),r.headers
+try: app.go_account("lyravibe.shop","t01"); assert False
+except flask._Abort as e: assert e.code==404
+csv_text="№,Ветка (Трафик),Метка (Start),Имя профиля,Юзернейм,Типаж (по Мануалу),Био профиля,Ссылка (URL)\n"\
+ "1,L (Threads),th_l_01,Лора Вейв,@lora.ai.daily,Типаж 1,\"био, с запятой\",https://loradaily.shop/t01\n"\
+ "49,K (Reels/TikTok/Shorts),rk_k_01,Ксения Дейли,@ksenia.daily.ai,Типаж 1,био,https://kseniadaily.shop/r01\n"
+accs=app.parse_accounts_csv("\ufeff"+csv_text)
+assert [(a["label"],a["user"],a["tl"]) for a in accs]==[("th_l_01","lora.ai.daily","leo18"),("rk_k_01","ksenia.daily.ai","kate06")],accs
+flask.request.args={"token":"adm"}; flask.request.data=csv_text.encode()
+assert json.loads(app.api_ads_accounts().content)=={"ok":True,"count":2,"linked":2}
+flask.request.args={"token":"pub"}
+try: app.api_ads_accounts(); assert False
+except flask._Abort as e: assert e.code==401
+ads({"runId":"r3","account":"@Lora.AI.daily","threadsMinutes":5,"commentsSent":1})   # AdsPower называет по юзернейму
+ads({"runId":"r4","account":"th_l_01","instagramMinutes":2})                        # или по метке из таблицы
+rep=app.ads_report(1, admin=True); a={x["account"]:x for x in rep["accounts"]}
+lo=a["@lora.ai.daily"]; assert lo["runs"]==2 and lo["th_min"]==5 and lo["ig_min"]==2 and lo["tl"]=="leo18" and lo["team"]=="A" and lo["persona"]=="Лора Вейв"
+ks=a["@ksenia.daily.ai"]; assert ks["never"] and ks["runs"]==0 and ks["team"]=="B"
+assert rep["registry"]==2 and app.label_from_url("https://go.ai-creators.ru/t/leo07")=="leo07"
+print("таблица аккаунтов: ссылки хост/t01, реестр, связка с AdsPower и трекером ✅")
+
 print("\nВСЕ ПРОВЕРКИ ПРОШЛИ ✅")
