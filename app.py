@@ -1891,6 +1891,101 @@ async function load(){bar("d",D,days,v=>days=+v);bar("b",B,by,v=>by=v);
 load();
 </script></body></html>"""
 
+def bot_stats(days=7):
+    """Сводка автоматики бота для админа: что настроено, что сработало за период, последние вопросы ИИ."""
+    since = (dt.datetime.now(dt.timezone.utc).replace(tzinfo=None) - dt.timedelta(days=days)).isoformat(timespec="seconds") if days else "0"
+    with _conn() as c:
+        one = lambda q, *a: (c.execute(q, a).fetchone() or [0])[0] or 0
+        cnt = {
+            "starts":  one("SELECT COUNT(*) FROM (SELECT tg_uid FROM starts WHERE tg_uid>0 GROUP BY tg_uid HAVING MIN(ts)>=?)", since),
+            "pay_open": one("SELECT COUNT(*) FROM bot_people WHERE pay_open_ts>=?", since),
+            "paid":    one("SELECT COUNT(*) FROM bot_people WHERE paid_ts>=?", since),
+            "nudge":   one("SELECT COUNT(*) FROM bot_people WHERE nudge_ts>=?", since),
+            "f1":      one("SELECT COUNT(*) FROM bot_people WHERE f1_ts>=?", since),
+            "f2":      one("SELECT COUNT(*) FROM bot_people WHERE f2_ts>=?", since),
+            "f3":      one("SELECT COUNT(*) FROM bot_people WHERE f3_ts>=?", since),
+            "upgrade": one("SELECT COUNT(*) FROM bot_people WHERE upg_ts>=?", since),
+            "asks":    one("SELECT COUNT(*) FROM bot_asks WHERE ts>=?", since),
+            "askers":  one("SELECT COUNT(DISTINCT tg_uid) FROM bot_asks WHERE ts>=?", since),
+            "human":   one("SELECT COUNT(*) FROM bot_asks WHERE human=1 AND ts>=?", since),
+        }
+        hi = (dt.datetime.now(dt.timezone.utc).replace(tzinfo=None) - dt.timedelta(hours=NUDGE_MAX_H)).isoformat(timespec="seconds")
+        cnt["waiting"] = one("SELECT COUNT(*) FROM bot_people WHERE pay_open_ts>=? AND paid_ts IS NULL", hi)
+        asks = [dict(r) for r in c.execute(
+            "SELECT ts, tg_uid, q, a, human FROM bot_asks ORDER BY id DESC LIMIT 40")]
+    cfg = {"pb": bool(PB_TOKEN), "ai": bool(AI_KEY or (AI_URL and AI_SECRET)), "tg": bool(BOT_TOKEN),
+           "tribute": bool(TRIBUTE_KEY), "quiet": _quiet_now()}
+    return {"days": days, "count": cnt, "cfg": cfg, "asks": asks}
+
+@app.route("/api/bot")
+def api_bot():
+    _need(admin=True)
+    try:
+        days = max(0, min(365, int(request.args.get("days", 7))))
+    except ValueError:
+        days = 7
+    return jsonify(bot_stats(days))
+
+@app.route("/bot")
+def bot_page():
+    _need(admin=True)
+    return Response(BOT_PAGE, mimetype="text/html")
+
+BOT_PAGE = r"""<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><title>Бот: автоматика</title><style>
+body{margin:0;background:#04050c;color:#e9edf8;font:15px/1.5 system-ui,-apple-system,sans-serif;padding:20px;max-width:1100px}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:17px;margin:26px 0 10px}p.s{color:#8a93ae;margin:0 0 16px}a{color:#2ee6d6}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}.bar button{background:#0a0e1c;border:1px solid #283255;color:#c4cade;border-radius:10px;padding:8px 12px;cursor:pointer}
+.bar button.on{border-color:#2ee6d6;color:#fff;background:rgba(46,230,214,.12)}
+.cfg{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.cfg div{border:1px solid #1b2238;border-radius:12px;padding:12px 14px;background:#0a0e1c}.cfg b{display:block}.cfg span{color:#8a93ae;font-size:13px}
+.ok b:before{content:"● ";color:#2ee6d6}.no b:before{content:"● ";color:#ff7d6e}.man b:before{content:"○ ";color:#8a93ae}
+.k{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.k div{border:1px solid #1b2238;border-radius:12px;padding:12px 14px;background:#0a0e1c}.k b{display:block;font-size:24px}.k span{color:#8a93ae;font-size:13px}
+.k .g{border-color:rgba(46,230,214,.4)}
+.wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:640px}th,td{padding:9px 10px;border-bottom:1px solid #1b2238;text-align:left;vertical-align:top}
+th{color:#8a93ae;font-weight:600;font-size:13px}td.t{white-space:nowrap;color:#8a93ae;font-size:13px}td.a{color:#c4cade;font-size:14px;max-width:460px}
+.h{color:#ff4f8b;font-weight:700;font-size:12px}.note{color:#8a93ae;font-size:13px;margin-top:10px}
+</style></head><body><h1>Бот: автоматика</h1><p class="s">Что настроено, что бот сделал сам и о чём спрашивают люди. <a id="fl" href="/funnel">Воронка бота →</a></p>
+<h2>Настройки</h2><div class="cfg" id="cfg"></div>
+<h2>Что сработало</h2><div class="bar" id="d"></div><div class="k" id="k"></div>
+<p class="note">Догоны и апгрейд бот шлёт сам с 10:00 до 22:00 по Москве. Купившим продающие сообщения не приходят.</p>
+<h2>Вопросы ИИ-помощнику</h2><div class="wrap"><table id="t"></table></div>
+<script>
+const Q=new URLSearchParams(location.search),tok=Q.get("token")||"";let days=+(Q.get("days")||7);
+document.getElementById("fl").href="/funnel?token="+encodeURIComponent(tok);
+const D=[[1,"Сутки"],[7,"7 дней"],[30,"30 дней"],[0,"Всё время"]];
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const pct=(a,b)=>b?Math.round(a*1000/b)/10+"%":"";
+async function load(){
+ const bar=document.getElementById("d");bar.innerHTML=D.map(([v,n])=>`<button class="${v==days?'on':''}" data-v="${v}">${n}</button>`).join("");
+ bar.onclick=e=>{const b=e.target.closest("button");if(b){days=+b.dataset.v;load()}};
+ const j=await (await fetch(`/api/bot?token=${encodeURIComponent(tok)}&days=${days}`)).json(),c=j.count,f=j.cfg;
+ const it=(ok,t,s)=>`<div class="${ok===null?'man':ok?'ok':'no'}"><b>${t}</b><span>${s}</span></div>`;
+ document.getElementById("cfg").innerHTML=[
+  it(f.pb,"Ключ PuzzleBot",f.pb?"догоны, апгрейд и метка «оплатил» работают":"нет PUZZLEBOT_API_TOKEN в .env: догоны не уходят"),
+  it(f.ai,"ИИ-помощник",f.ai?"отвечает на вопросы в боте":"не подключён ретранслятор ИИ"),
+  it(f.tribute,"Оплаты Tribute",f.tribute?"вебхук проверяет подпись":"нет TRIBUTE_API_KEY: оплаты не засчитываются"),
+  it(f.tg,"Уведомления админам",f.tg?"оплаты и «позовите Катю» приходят в Telegram":"нет BOT_TOKEN"),
+  it(null,"Обложка и имя бота","вручную: новая картинка вместо ACCESS GRANTED, /setname в BotFather"),
+  it(null,"Кружки Кати","вручную: 3 кружка по сценариям, вставлю в цепочку")].join("");
+ const box=(v,t,cls)=>`<div class="${cls||''}"><b>${v}</b><span>${t}</span></div>`;
+ document.getElementById("k").innerHTML=[
+  box(c.starts,"новых людей в боте"),
+  box(c.pay_open,"открыли оплату "+pct(c.pay_open,c.starts)),
+  box(c.paid,"оплатили "+pct(c.paid,c.starts),"g"),
+  box(c.waiting,"ждут решения (открыли оплату за 48 ч)"),
+  box(c.nudge,"догон «сомнения перед оплатой»"),
+  box(c.f1+" · "+c.f2+" · "+c.f3,"догоны 7 / 10 / 14 день"),
+  box(c.upgrade,"предложений апгрейда"),
+  box(c.asks,"вопросов ИИ от "+c.askers+" чел."),
+  box(c.human,"попросили Катю","g")].join("");
+ document.getElementById("t").innerHTML="<tr><th>Когда</th><th>Вопрос</th><th>Ответ</th></tr>"+(j.asks.length?j.asks.map(a=>
+  `<tr><td class="t">${esc((a.ts||"").replace("T"," ").slice(0,16))}<br>id ${esc(a.tg_uid)}</td><td>${a.human?'<span class="h">ПОЗВАЛИ КАТЮ</span><br>':''}${esc(a.q)}</td><td class="a">${esc(a.a)}</td></tr>`).join(""):'<tr><td colspan="3" class="t">Пока вопросов нет</td></tr>');
+}
+load();
+</script></body></html>"""
+
 @app.route("/healthz")
 def healthz():
     return "ok"
@@ -1930,7 +2025,7 @@ th{color:var(--mut);font-weight:600}
 .rk{width:34px;font-weight:700}.mut{color:var(--mut)}
 .foot{color:var(--mut);font-size:12px;margin-top:14px}
 </style></head><body>
-<h1>🏆 NeuroFans — соревнование команд &nbsp;<a id="arenaLink" href="/arena" style="font-size:14px">🥊 Открыть арену</a> &nbsp;<a id="funnelLink" href="/funnel" style="font-size:14px">📈 Воронка бота</a></h1>
+<h1>🏆 NeuroFans — соревнование команд &nbsp;<a id="arenaLink" href="/arena" style="font-size:14px">🥊 Открыть арену</a> &nbsp;<a id="funnelLink" href="/funnel" style="font-size:14px">📈 Воронка бота</a> &nbsp;<a id="botLink" href="/bot" style="font-size:14px">🤖 Бот</a></h1>
 <p class="sub" id="updated">загрузка…</p>
 <div class="teams" id="teams"></div>
 <div class="bar"><i id="barA" style="width:50%"></i></div>
@@ -1960,7 +2055,7 @@ th{color:var(--mut);font-weight:600}
 <script>
 const token=new URLSearchParams(location.search).get('token');
 const q=token?('?token='+encodeURIComponent(token)):'';
-document.getElementById('csv').href='/export'+q;document.getElementById('csvS').href='/export/starts'+q;document.getElementById('csvP').href='/export/partner_links'+q;document.getElementById('story').href='/story.png'+q;document.getElementById('arenaL').href='/arena'+q;document.getElementById('funnelLink').href='/funnel'+q;
+document.getElementById('csv').href='/export'+q;document.getElementById('csvS').href='/export/starts'+q;document.getElementById('csvP').href='/export/partner_links'+q;document.getElementById('story').href='/story.png'+q;document.getElementById('arenaL').href='/arena'+q;document.getElementById('funnelLink').href='/funnel'+q;document.getElementById('botLink').href='/bot'+q;
 document.getElementById('arenaLink').href='/arena'+q;
 let dayChart,topChart;const medals=['🥇','🥈','🥉'];
 function fmt(ts){return ts?ts.replace('T',' '):'—';}

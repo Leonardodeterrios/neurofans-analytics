@@ -379,6 +379,8 @@ n0=len(calls); assert app.run_followups()==2
 got=[(p["platform_chat_id"],p["command_name"]) for m,p in calls[n0:] if m=="sendCommand"]
 assert (8001,"Не купил → Догон 1") in got and (8002,"Не купил → Догон 2") in got and all(u not in (8003,8004) for u,_ in got)
 assert app.run_followups()==0                                      # второй раз не шлём
+B=app.bot_stats(0); assert B["count"]["f1"]>=1 and B["count"]["upgrade"]>=1 and B["count"]["asks"]>=3 and B["count"]["human"]>=1 and B["asks"][0]["q"]
+assert app.bot_stats(1)["cfg"]["pb"] is True and "BOT_PAGE" in dir(app)
 app.bg=_bgsave; app.notify_all=_na; app.PB_TOKEN=""
 print("автоматика бота: догон брошенной оплаты, метка «оплатил», ИИ-ассистент и «Катя» ✅")
 print("\nВСЕ ПРОВЕРКИ ПРОШЛИ ✅")
