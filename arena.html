@@ -94,6 +94,7 @@ html,body{height:100%;background:#05060f;color:var(--ink);font:500 14px/1.4 Man,
 @keyframes evin{from{opacity:0;transform:translateX(-14px)}}
 .btns{position:absolute;right:14px;top:calc(86px + env(safe-area-inset-top));display:none;gap:6px;flex-direction:column}
 .ui-btn{pointer-events:auto;width:38px;height:38px;border-radius:11px;border:1px solid var(--line);background:var(--glass);color:var(--ink);font:800 15px Man;display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(6px)}
+a.ui-btn{text-decoration:none}.ui-btn[hidden]{display:none!important}
 .ui-btn.on{border-color:var(--amber);color:var(--amber)}
 .corner{position:absolute;right:18px;bottom:calc(64px + env(safe-area-inset-bottom));display:flex;gap:6px;pointer-events:auto}
 .dots{position:fixed;left:50%;bottom:calc(4px + env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;gap:6px;pointer-events:none}
@@ -354,7 +355,7 @@ body.off-arena #jack{visibility:hidden}
     </div>
     <div class="me-chip" id="meChip"></div>
     <div class="tops"><div class="top3 a" id="topA" style="--c:var(--a)"></div><div class="top3 b" id="topB" style="--c:var(--b)"></div></div>
-    <div class="corner"><button class="ui-btn" id="bSnd" title="Звук" aria-label="Звук">🔇</button><button class="ui-btn" id="bMap" title="Карта ударов" aria-label="Карта ударов">◎</button><button class="ui-btn" id="bRate" title="Рейтинг" aria-label="Рейтинг">☰</button><button class="ui-btn" id="bAds" title="Аккаунты партнёров" aria-label="Аккаунты партнёров">▤</button></div>
+    <div class="corner"><button class="ui-btn" id="bSnd" title="Звук" aria-label="Звук">🔇</button><button class="ui-btn" id="bMap" title="Карта ударов" aria-label="Карта ударов">◎</button><button class="ui-btn" id="bRate" title="Рейтинг" aria-label="Рейтинг">☰</button><button class="ui-btn" id="bAds" title="Аккаунты партнёров" aria-label="Аккаунты партнёров">▤</button><a class="ui-btn" id="bBot" href="#" target="_blank" rel="noopener" title="Бот: откуда пришли, оплаты, вопросы" aria-label="Бот" hidden>🤖</a></div>
     <div class="bottom">
       <div class="radar card"><div class="h"><span>КАРТА УДАРОВ</span><i></i></div><canvas id="radar" width="272" height="272"></canvas><div class="c" id="rCity">ждём первый клик</div><div class="s">гео: DB-IP · только город</div></div>
       <div class="ticker card" id="tickerBox"><span class="lb"><i></i>LIVE</span><div class="lst" id="ticker"></div></div>
@@ -1833,7 +1834,7 @@ function rankToast(label,rank,c){const d=document.createElement('div');d.classNa
   d.innerHTML=`<div class="glow"><div class="ovc"><span class="ic">▲</span><span class="ovl">новый ранг</span><b>${esc(rank.toUpperCase())}</b><span class="tn">${esc(nm(label))}${ME&&label===ME?' · это ты!':''}</span></div></div>`;
   $('toasts').appendChild(d);while($('toasts').children.length>2)$('toasts').firstChild.remove();setTimeout(()=>d.remove(),3500)}
 function applyStats(st,first){
-  SP=st.start_power||3;NAMES=st.names||NAMES;state={...state,...st};state.prefB=(st.partners.find(p=>p.team==='B')||{source:'kate'}).source.replace(/\d+$/,'')||'kate';
+  SP=st.start_power||3;NAMES=st.names||NAMES;{const bb=$('bBot');if(bb&&st.role==='admin'&&bb.hidden){bb.href='/bot?'+AUTH;bb.hidden=false}}state={...state,...st};state.prefB=(st.partners.find(p=>p.team==='B')||{source:'kate'}).source.replace(/\d+$/,'')||'kate';
   if(st.server_now)skew=Date.parse(st.server_now)-Date.now();
   target.A=st.teams[0].today;target.B=st.teams[1].today;if(first){shown.A=target.A;shown.B=target.B}
   for(const p of st.partners){const pr=prevRanks[p.source];if(!first&&pr!=null&&p.rank>pr){rankToast(p.source,p.rank_name,COL[p.team]||AMBER);snd.rank()}prevRanks[p.source]=p.rank}
