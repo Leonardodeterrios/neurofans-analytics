@@ -7,6 +7,16 @@
 <meta name="description" content="Пошаговая система: своя ИИ-модель, 18+ контент и продажи на Fanvue и в Telegram. Вместе с курсом ты получаешь собственный софт: аналитику трафика, ИИ-Студию и нейро-чаттер.">
 <link rel="canonical" href="https://neurofans.ru/">
 <meta name="theme-color" content="#04050c">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="NEUROFANS">
+<meta property="og:url" content="https://neurofans.ru/">
+<meta property="og:title" content="NEUROFANS: создание и монетизация ИИ-моделей 18+">
+<meta property="og:description" content="Своя вымышленная ИИ-модель, продажи на Fanvue и в Telegram и собственный софт. От 3 900 ₽, доступ сразу после оплаты.">
+<meta property="og:image" content="https://neurofans.ru/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://neurofans.ru/og.jpg">
 <style>
 @font-face{font-family:Unb;src:url(/fonts/Unbounded-ExtraBold.woff) format("woff");font-weight:800;font-display:swap}
 @font-face{font-family:Unb;src:url(/fonts/Unbounded-Medium.woff) format("woff");font-weight:500;font-display:swap}
@@ -230,6 +240,12 @@ h2{font-size:clamp(28px,3.6vw,48px)}
   .nph img{height:260px}
 }
 
+.live{display:flex;align-items:center;gap:10px;margin:18px 0 0;color:var(--tx2);font-size:14px}
+.live i{width:8px;height:8px;border-radius:50%;background:var(--cy);box-shadow:0 0 0 0 rgba(46,230,214,.6);animation:lv 2s infinite;flex:none}
+.live b{font:600 15px var(--num);color:#fff}
+@keyframes lv{70%{box-shadow:0 0 0 9px rgba(46,230,214,0)}100%{box-shadow:0 0 0 0 rgba(46,230,214,0)}}
+@media(prefers-reduced-motion:reduce){.live i{animation:none}}
+@media(max-width:900px){.hero .live{order:5}.hero .proof{order:6}}
 /* ниша */
 .niche{display:grid;grid-template-columns:1.2fr 1fr;gap:48px;align-items:start}
 .niche p{color:var(--tx2);margin:0 0 16px}
@@ -735,6 +751,7 @@ footer p{margin:6px 0 0;max-width:48em}
         <a class="btn pr" href="#price">Выбрать тариф</a>
         <a class="lnk" href="https://gallery.lukaflow.shop/" target="_blank" rel="noopener">Смотреть примеры генераций</a>
       </div>
+      <p class="live" id="live" hidden><i></i><span></span></p>
       <div class="proof">
         <div><b class="g">$6 840</b><span>лучший первый месяц ученика</span></div>
         <div><b>$840+</b><span>первые деньги ученика за 2 недели</span></div>
@@ -1251,6 +1268,14 @@ gal.querySelectorAll("img").forEach(img => {
 /* Плашка «Выбрать тариф» на телефоне прячется, пока листаешь вниз, и возвращается при прокрутке вверх */
 (() => { const d = document.getElementById("dock"); let y = scrollY;
   addEventListener("scroll", () => { const n = scrollY; if (Math.abs(n - y) > 12) { d.classList.toggle("hid", n > y && n > 400); y = n; } }, {passive: true}); })();
+
+/* Живая цифра из кабинета: только агрегаты, показываем при 3+ активных моделях */
+(() => { const el = document.getElementById("live"); if (!el || !window.fetch) return;
+  const nf = n => (+n || 0).toLocaleString("ru-RU").replace(/\u00a0/g, " ");
+  fetch("https://lab.neurofans.ru/api/public/pulse", {cache: "no-store"}).then(r => r.ok ? r.json() : null).then(j => {
+    if (!j || !j.ready || !j.models_active) return;
+    el.querySelector("span").innerHTML = `Сейчас в работе <b>${nf(j.models_active)}</b> моделей учеников` + (j.people_week ? `, за эту неделю по их ссылкам пришло <b>${nf(j.people_week)}</b> человек` : "");
+    el.hidden = false; }).catch(() => {}); })();
 </script>
 </body>
 </html>
