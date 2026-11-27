@@ -457,4 +457,18 @@ assert {x["src"] for x in st["sources"]}=={"threads.net","direct"}
 assert [g for g in st["goals"] if g["id"]=="buy_adv"][0]["people"]==1
 assert "site" in app.bot_stats(7)
 print("аналитика сайта: OK")
+# резервные копии базы трекера + «здоровье» для сторожа
+import tempfile as _tf, gzip as _gz
+_oadm=app.ADMIN_IDS; app.ADMIN_IDS=["1"]; app.BACKUP_DIR=_tf.mkdtemp(); _sent=[]; _obg=app.bg; app.bg=lambda fn,*a: _sent.append(fn.__name__)
+_mon=dt.datetime(2026,11,30,6,0,tzinfo=app.ZoneInfo(app.SUMMARY_TZ))       # понедельник 06:00
+app.run_backups(_mon); app.run_backups(_mon); app.bg=_obg; app.ADMIN_IDS=_oadm
+_f=app.latest_backup(); assert _f and _f.endswith("track-2026-11-30.db.gz")
+assert _gz.open(_f).read(16).startswith(b"SQLite format 3"), "копия — настоящая база SQLite"
+assert _sent==["_send_backup"], _sent                                       # в понедельник — один раз
+for i in range(20): app.make_backup(f"2026-01-{i+1:02d}")
+assert len(os.listdir(app.BACKUP_DIR))==app.KEEP_BACKUPS
+flask.request.args={"deep":"1"}; h=json.loads(app.healthz().content); flask.request.args={}
+assert h["db"] is True and h["backup"] is not None and "sched_age" in h and h["tg_bad"] is False, h
+assert app.healthz()=="ok"
+print("резервные копии трекера и /healthz?deep=1 ✅")
 print("\nВСЕ ПРОВЕРКИ ПРОШЛИ ✅")

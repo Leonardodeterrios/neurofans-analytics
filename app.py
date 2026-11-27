@@ -987,14 +987,21 @@ def geo_updater():
 
 
 # ---------- Telegram (только отправка) ----------
+HEALTH = {"sched": 0.0, "tg_ok": 0.0, "tg_err": 0.0, "tg_why": ""}   # для /healthz?deep=1 (сторож в Амстердаме)
+
 def tg_send(text, chat_id):
     if not (BOT_TOKEN and chat_id):
         return
     try:
-        httpx.post(f"{TG_API}/sendMessage",
-                   json={"chat_id": int(chat_id), "text": text, "disable_web_page_preview": True},
-                   timeout=10)
+        r = httpx.post(f"{TG_API}/sendMessage",
+                       json={"chat_id": int(chat_id), "text": text, "disable_web_page_preview": True},
+                       timeout=10)
+        if r.status_code == 200:
+            HEALTH["tg_ok"] = time.time()
+        elif r.status_code >= 500 or r.status_code in (401, 404):     # 400/403 — один чат, не связь
+            HEALTH["tg_err"], HEALTH["tg_why"] = time.time(), f"HTTP {r.status_code}"
     except Exception as e:
+        HEALTH["tg_err"], HEALTH["tg_why"] = time.time(), type(e).__name__
         log.error("tg send to %s failed: %s", chat_id, e)
 
 def tg_photo(png, caption, chat_id):
@@ -1005,6 +1012,77 @@ def tg_photo(png, caption, chat_id):
                    files={"photo": ("round.png", png, "image/png")}, timeout=30)
     except Exception as e:
         log.error("tg photo to %s failed: %s", chat_id, e)
+
+def tg_doc(path, caption, chat_id):
+    """Файл в Telegram (резервная копия базы). Лимит Bot API — 50 МБ."""
+    if not (BOT_TOKEN and chat_id and path):
+        return False
+    try:
+        with open(path, "rb") as f:
+            r = httpx.post(f"{TG_API}/sendDocument", data={"chat_id": str(chat_id), "caption": caption[:1000]},
+                           files={"document": (os.path.basename(path), f, "application/gzip")}, timeout=180)
+        return r.status_code == 200
+    except Exception as e:
+        log.error("tg doc to %s failed: %s", chat_id, e)
+        return False
+
+
+# ---------- резервные копии базы трекера ----------
+BACKUP_DIR = _str("BACKUP_DIR") or os.path.join(os.path.dirname(DB_PATH) or ".", "backups")
+KEEP_BACKUPS = int(os.getenv("KEEP_BACKUPS", "14"))
+
+def make_backup(stamp=None):
+    """Горячая копия SQLite без остановки → data/backups/track-<дата>.db.gz, хранятся KEEP_BACKUPS последних."""
+    import glob, shutil
+    stamp = stamp or dt.datetime.now(ZoneInfo(SUMMARY_TZ)).strftime("%Y-%m-%d")
+    os.makedirs(BACKUP_DIR, exist_ok=True)
+    tmp, out = os.path.join(BACKUP_DIR, f".track-{stamp}.db"), os.path.join(BACKUP_DIR, f"track-{stamp}.db.gz")
+    src, dst = sqlite3.connect(DB_PATH, timeout=30), sqlite3.connect(tmp)
+    with dst:
+        src.backup(dst)
+    src.close(); dst.close()
+    with open(tmp, "rb") as f, gzip.open(out, "wb", compresslevel=6) as g:
+        shutil.copyfileobj(f, g)
+    os.remove(tmp)
+    os.chmod(out, 0o600)
+    for old in sorted(glob.glob(os.path.join(BACKUP_DIR, "track-*.db.gz")))[:-KEEP_BACKUPS]:
+        os.remove(old)
+    return out
+
+def latest_backup():
+    import glob
+    files = sorted(glob.glob(os.path.join(BACKUP_DIR, "track-*.db.gz")))
+    return files[-1] if files else None
+
+def _last_backup_age():
+    """Часов с последней копии (None — копий ещё нет)."""
+    f = latest_backup()
+    return round((time.time() - os.path.getmtime(f)) / 3600, 1) if f else None
+
+def _send_backup(path):
+    mb = os.path.getsize(path) / 1e6
+    if mb > 48:
+        return _notify_all_now(f"💾 Копия базы трекера {os.path.basename(path)} — {mb:.0f} МБ, в Telegram не влезает "
+                               f"(лимит 50 МБ). Лежит на сервере: data/backups/")
+    for cid in ADMIN_IDS:
+        tg_doc(path, f"💾 Резервная копия базы трекера (клики, старты, оплаты), {mb:.1f} МБ. "
+                     "Просто сохрани — понадобится, только если сервер сломается.", cid)
+
+def run_backups(nowtz=None):
+    """Раз в сутки после 04:00 — копия; по понедельникам после 05:00 — отправка админам в Telegram."""
+    nowtz = nowtz or dt.datetime.now(ZoneInfo(SUMMARY_TZ))
+    day = nowtz.strftime("%Y-%m-%d")
+    if nowtz.hour >= 4 and not os.path.exists(os.path.join(BACKUP_DIR, f"track-{day}.db.gz")):
+        make_backup(day)
+    if nowtz.weekday() == 0 and nowtz.hour >= 5 and ADMIN_IDS:
+        with _conn() as c:
+            sent = (c.execute("SELECT v FROM meta WHERE k='backup_sent'").fetchone() or [None])[0]
+            if sent == day:
+                return
+            c.execute("INSERT INTO meta(k,v) VALUES('backup_sent',?) ON CONFLICT(k) DO UPDATE SET v=excluded.v", (day,))
+        f = latest_backup()
+        if f:
+            bg(_send_backup, f)
 
 def round_card_png(which="last", label=None):
     """Карточка итогов раунда 9:16 (Pillow). which: last — закончившийся раунд, current — идущий."""
@@ -1140,6 +1218,7 @@ def scheduler_loop():
     last_summary_date = None
     while True:
         now = time.time()
+        HEALTH["sched"] = now
         if now - last_silence >= SILENCE_CHECK_MIN * 60:
             last_silence = now
             try:
@@ -1152,6 +1231,10 @@ def scheduler_loop():
             run_followups()
         except Exception as e:
             log.error("nudges failed: %s", e)
+        try:
+            run_backups()
+        except Exception as e:
+            log.error("backup failed: %s", e)
         if DAILY_SUMMARY_TIME and ADMIN_IDS:
             try:
                 nowtz = dt.datetime.now(ZoneInfo(SUMMARY_TZ))
@@ -1729,6 +1812,16 @@ def admin_rescore():
     """Пересчитать удары по текущим правилам (после смены фильтров). Только админ."""
     _need(admin=True)
     return jsonify(rescore_all())
+
+@app.route("/admin/backup")
+def admin_backup():
+    """Скачать свежую копию базы трекера (gz). Только админ."""
+    _need(admin=True)
+    f = make_backup(dt.datetime.now(ZoneInfo(SUMMARY_TZ)).strftime("%Y-%m-%d"))
+    with open(f, "rb") as fh:
+        data = fh.read()
+    return Response(data, mimetype="application/gzip",
+                    headers={"Content-Disposition": f'attachment; filename="{os.path.basename(f)}"'})
 
 @app.route("/export/starts")
 def export_starts():
@@ -2473,7 +2566,21 @@ load();
 
 @app.route("/healthz")
 def healthz():
-    return "ok"
+    """Простой ответ «ok»; ?deep=1 — JSON для сторожа: жив ли планировщик, очередь фона, связь с Telegram, база."""
+    if not request.args.get("deep"):
+        return "ok"
+    now = time.time()
+    try:
+        with _conn() as c:
+            c.execute("SELECT 1").fetchone()
+        dbok = True
+    except Exception:
+        dbok = False
+    tg_bad = bool(HEALTH["tg_err"] and HEALTH["tg_err"] > HEALTH["tg_ok"] and now - HEALTH["tg_err"] < 1800)
+    out = {"db": dbok, "sched_age": int(now - HEALTH["sched"]) if HEALTH["sched"] else None,
+           "bg_queue": _bg_q.qsize(), "tg_bad": tg_bad, "tg_why": HEALTH["tg_why"] if tg_bad else "",
+           "backup": _last_backup_age()}
+    return jsonify(out)
 
 PAGE = r"""<!doctype html><html lang="ru"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">

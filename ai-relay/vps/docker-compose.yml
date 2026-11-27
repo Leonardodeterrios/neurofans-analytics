@@ -8,6 +8,15 @@ services:
     volumes: ["./relay.mjs:/app/relay.mjs:ro"]
     env_file: .env
     mem_limit: 256m
+  watch:    # сторож: проверки раз в 5 минут, тревоги в Telegram (watch.mjs, ставится watch_from_main.sh)
+    image: node:22-alpine
+    restart: unless-stopped
+    working_dir: /app
+    command: ["node", "watch.mjs"]
+    volumes: ["./watch.mjs:/app/watch.mjs:ro", "./watch-state:/state"]
+    env_file: .env
+    mem_limit: 128m
+    depends_on: [relay]
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
