@@ -246,6 +246,22 @@ h2{font-size:clamp(28px,3.6vw,48px)}
 @keyframes lv{70%{box-shadow:0 0 0 9px rgba(46,230,214,0)}100%{box-shadow:0 0 0 0 rgba(46,230,214,0)}}
 @media(prefers-reduced-motion:reduce){.live i{animation:none}}
 @media(max-width:900px){.hero .live{order:5}.hero .proof{order:6}}
+.author{padding-top:40px}
+.au{display:grid;grid-template-columns:1.35fr 1fr;gap:36px;align-items:center;padding:40px;border-radius:26px;border:1px solid transparent;
+  background:linear-gradient(135deg,#0d1226,#0a0c19) padding-box,linear-gradient(135deg,rgba(46,230,214,.55),rgba(255,79,139,.45)) border-box}
+.au .sh{margin-bottom:18px}
+.au blockquote{margin:0;padding:0 0 0 22px;border-left:3px solid var(--mg)}
+.au blockquote p{margin:0 0 14px;font-size:19px;line-height:1.55;color:var(--tx)}
+.au .sig{display:flex;align-items:center;gap:12px;margin-top:22px}
+.au .sig .av{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font:800 18px var(--body);background:linear-gradient(135deg,var(--cy),var(--mg));color:#04050c}
+.au .sig b{display:block}.au .sig span{color:var(--mu);font-size:14px}
+.aus{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.aus div{padding:20px;border-radius:18px;background:rgba(4,5,12,.6);border:1px solid var(--line2)}
+.aus div.w{grid-column:1/-1}
+.aus b{display:block;font:600 34px/1.1 var(--num);color:#fff;margin-bottom:6px;white-space:nowrap}
+.aus div:first-child b{color:var(--cy)}.aus div.w b{color:#ff8db3}
+.aus span{color:var(--mu);font-size:14px}
+@media(max-width:900px){.au{grid-template-columns:1fr;padding:24px;gap:24px}.au blockquote p{font-size:17px}.aus b{font-size:28px}}
 /* ниша */
 .niche{display:grid;grid-template-columns:1.2fr 1fr;gap:48px;align-items:start}
 .niche p{color:var(--tx2);margin:0 0 16px}
@@ -730,7 +746,7 @@ footer p{margin:6px 0 0;max-width:48em}
     <a class="logo" href="#"><i><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#2ee6d6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 9h3l2-5 3 9 2-6 1.5 2H15"/></svg></i>NEUROFANS</a>
     <nav class="nav" aria-label="Разделы">
       <a href="#real">Примеры</a>
-      <a href="#cases">Кейсы</a>
+      <a href="#cases">Кейсы</a><a href="#author">Автор</a>
       <a href="#math">Математика</a>
       <a href="#soft">Софт</a>
       <a href="#program">Программа</a>
@@ -834,6 +850,26 @@ footer p{margin:6px 0 0;max-width:48em}
         <p>В ИИ был полный ноль. По видеоурокам настроил всё за вечер со старого макбука. Английский не знаю вообще, выручает переводчик и шаблоны из курса. Вывел первые $840.</p>
       </article>
     </div>
+    </div>
+  </div>
+</section>
+
+<section id="author" class="author">
+  <div class="wrap">
+    <div class="au">
+      <div class="aut">
+        <div class="sh"><h2>Кто ведёт курс</h2></div>
+        <blockquote>
+          <p>Первую ИИ-модель я запустила в начале 2025 года, и за год она заработала $52 000. Сейчас я веду сразу пять моделей, каждая приносит от $4 200 до $11 000 в месяц.</p>
+          <p>В личке с фанатами вместо меня общаются помощники, а я занимаюсь трафиком и развиваю наш сервис, к которому вы получите доступ на курсе.</p>
+        </blockquote>
+        <div class="sig"><span class="av">К</span><div><b>Катя</b><span>автор курса NEUROFANS</span></div></div>
+      </div>
+      <div class="aus">
+        <div><b>$52 000</b><span>заработала первая модель за 2025 год</span></div>
+        <div><b>5</b><span>моделей сейчас ведёт Катя</span></div>
+        <div class="w"><b>$4 200–11 000</b><span>в месяц приносит каждая модель</span></div>
+      </div>
     </div>
   </div>
 </section>
