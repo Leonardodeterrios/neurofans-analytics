@@ -262,12 +262,9 @@ h3{font:800 20px/1.3 var(--body);margin:0 0 8px}
 .tc li.sw{color:var(--cy)}
 .tc .btn{width:100%}
 .tc{overflow:hidden}
-.tc .ph{position:relative;margin:-32px -32px 22px;aspect-ratio:12/5;overflow:hidden;background:#0a0b14}
-.tc .ph img{width:100%;height:100%;object-fit:cover;object-position:60% 40%;display:block}
-.tc .ph:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--panel) 0,rgba(0,0,0,0) 45%),linear-gradient(0deg,var(--panel) 0,rgba(0,0,0,0) 40%)}
-.tc .ph i{position:absolute;left:-6%;top:-40%;width:78%;aspect-ratio:1;border-radius:50%;border:1px solid rgba(46,230,214,.45);z-index:1}
-.tc.adv .ph i{border-color:rgba(255,79,139,.5)}
-.tc .ph .ai{position:absolute;right:14px;top:14px;z-index:2;font:600 12px/1 var(--num);padding:6px 9px;border:1px solid rgba(46,230,214,.6);border-radius:8px;color:var(--cy);background:rgba(4,5,12,.6)}
+.tc .ph{margin:-32px -32px 22px;aspect-ratio:16/9;overflow:hidden;background:#04050c;border-bottom:1px solid var(--line)}
+.tc .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .up .av{width:52px;height:52px;border-radius:50%;flex:none;object-fit:cover;border:1px solid rgba(46,230,214,.55);box-shadow:0 0 0 3px rgba(255,79,139,.18)}
 
 .up{margin-top:18px;display:flex;align-items:center;justify-content:space-between;gap:20px;border:1px dashed var(--line2);border-radius:var(--r);padding:18px 22px;color:var(--mu);font-size:15px}
@@ -882,8 +879,8 @@ footer p{margin:6px 0 0;max-width:48em}
     </div>
     <div class="tar">
       <div class="tc">
-        <div class="ph"><img src="tariffs/base.jpg" alt="ИИ-модель, сгенерированная нейросетью" width="720" height="300" loading="lazy" decoding="async"><i></i><span class="ai">AI · 21+</span></div>
-        <div class="nm">Базовый</div>
+        <div class="ph"><img src="tariffs/base.jpg" alt="Обложка тарифа: ИИ-модель, сгенерированная нейросетью" width="1280" height="720" loading="lazy" decoding="async"></div>
+        <div class="nm vh">Базовый</div>
         <p class="sub">Своя ИИ-модель и 18+ фото</p>
         <div class="price">3 900<span>₽</span></div>
         <p class="once">один платёж</p>
@@ -898,8 +895,8 @@ footer p{margin:6px 0 0;max-width:48em}
         <a class="btn gh" data-buy="base" href="#">Купить Базовый</a>
       </div>
       <div class="tc adv">
-        <div class="ph"><img src="tariffs/adv.jpg" alt="ИИ-модель, сгенерированная нейросетью" width="720" height="300" loading="lazy" decoding="async"><i></i><span class="ai">AI · 21+</span></div>
-        <div class="nm">Продвинутый</div>
+        <div class="ph"><img src="tariffs/adv.jpg" alt="Обложка тарифа: ИИ-модель, сгенерированная нейросетью" width="1280" height="720" loading="lazy" decoding="async"></div>
+        <div class="nm vh">Продвинутый</div>
         <p class="sub">Полный запуск модели: контент, площадки, трафик, продажи</p>
         <div class="price">14 900<span>₽</span></div>
         <p class="once">один платёж</p>
