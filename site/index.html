@@ -156,6 +156,79 @@ h2{font-size:clamp(28px,3.6vw,48px)}
   .cs .er b{font-size:18px;white-space:nowrap}
 }
 
+
+/* === дизайн 28.11: первый экран, фото, калькулятор, путь === */
+.lnk{color:var(--tx2);font-weight:800;font-size:15px;text-decoration:underline;text-decoration-color:rgba(46,230,214,.5);text-underline-offset:5px;align-self:center;padding:8px 4px}
+.lnk:hover{color:var(--cy)}
+.hero .lead{max-width:30em}
+.hero .proof{margin-top:34px}
+.st2{position:relative;height:560px}
+.st2 .mdl{position:absolute;left:4%;top:0;width:58%;margin:0;border-radius:26px;overflow:hidden;border:1px solid var(--line2);box-shadow:0 40px 100px rgba(0,0,0,.6)}
+.st2 .mdl img{display:block;width:100%;height:520px;object-fit:cover;object-position:50% 30%}
+.st2 figcaption{top:14px;bottom:auto!important}
+.st2 figcaption,.nph figcaption{position:absolute;left:14px;bottom:14px;font:800 12px/1 var(--body);padding:8px 11px;border-radius:999px;background:rgba(4,5,12,.78);border:1px solid var(--line2);color:var(--tx2)}
+.st2 .phn{position:absolute;right:0;top:70px;width:44%;border-radius:34px;padding:9px;background:#0b0f1e;border:1px solid #2f3a62;box-shadow:0 0 0 1px rgba(46,230,214,.15),0 40px 90px rgba(0,0,0,.7),0 0 70px rgba(46,230,214,.18)}
+.st2 .phn img{display:block;width:100%;height:auto;border-radius:26px}
+.st2 .phn span{position:absolute;left:50%;bottom:-12px;transform:translateX(-50%);white-space:nowrap;font:600 11px var(--body);color:#ff9dbf;padding:5px 10px;border-radius:999px;background:#0b0f1e;border:1px solid var(--line2)}
+.st2 .ern{position:absolute;left:0;bottom:6px;padding:14px 18px;border-radius:16px;background:rgba(10,14,28,.94);border:1px solid rgba(245,200,107,.4);box-shadow:0 20px 50px rgba(0,0,0,.55);backdrop-filter:blur(8px)}
+.st2 .ern small{display:block;color:var(--mu);font-size:12px}
+.st2 .ern b{display:block;font:600 30px/1.15 var(--num);color:#fff}
+.st2 .ern span{font-size:12px;color:var(--gd)}
+.nph{position:relative;margin:0 0 4px;border-radius:20px;overflow:hidden;border:1px solid var(--line2)!important;padding:0!important;background:none!important}
+.nph img{display:block;width:100%;height:300px;object-fit:cover;object-position:50% 20%}
+.facts .nph{border-left-width:1px!important}
+.cases1{margin-bottom:18px}
+.prf.in{margin:0 0 30px}
+.prf.in h3{display:none}.prf.in>p{color:var(--mu);font-size:14px;margin:0 0 12px}
+.calc{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:16px 28px;align-items:end;margin:0 0 18px;padding:22px 24px;border-radius:20px;border:1px solid rgba(46,230,214,.35);background:linear-gradient(135deg,rgba(46,230,214,.08),rgba(10,14,28,.6))}
+.calc label{display:grid;grid-template-columns:1fr auto;gap:10px 12px;align-items:baseline}
+.calc label span{color:var(--tx2);font-size:15px}
+.calc output{font:600 26px/1 var(--num);color:var(--cy)}
+.calc input{grid-column:1/-1;width:100%;accent-color:#2ee6d6;height:28px;cursor:pointer}
+.calc p{margin:0;color:var(--mu);font-size:13px;line-height:1.45}
+.path{list-style:none;margin:0 0 10px;padding:0;display:grid;grid-template-columns:repeat(8,1fr);gap:0;counter-reset:p;position:relative}
+.path li{position:relative;padding:34px 10px 0 0;counter-increment:p}
+.path li:before{content:counter(p);position:absolute;left:0;top:0;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font:600 12px/1 var(--num);background:#04050c;border:2px solid var(--pc,var(--cy));color:var(--pc,var(--cy));z-index:1}
+.path li:after{content:"";position:absolute;left:24px;right:0;top:11px;height:2px;background:var(--pc,var(--cy));opacity:.55}
+.path li:last-child:after{display:none}
+.path li.a{--pc:var(--mg)}
+.path li.z:before{width:30px;height:30px;top:-3px;left:-3px;background:var(--mg);color:#fff;box-shadow:0 0 24px rgba(255,79,139,.6)}
+.path b{display:block;font:800 15px/1.25 var(--body);margin-bottom:4px}
+.path span{display:block;color:var(--mu);font-size:13px;line-height:1.35}
+.pathk{display:flex;gap:18px;margin:16px 0 30px;font-size:13px;font-weight:800}
+.pathk span:before{content:"";display:inline-block;width:22px;height:3px;border-radius:2px;margin-right:8px;vertical-align:middle;background:var(--cy)}
+.pathk .b{color:var(--cy)}.pathk .a{color:#ff8db3}.pathk .a:before{background:var(--mg)}
+.tc .trust{margin:12px 0 0;text-align:center;color:var(--mu);font-size:13px}
+.final .fin{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;text-align:left}
+.final .fin h2{font-size:clamp(32px,4.2vw,56px)}
+.final .fin p{margin:0 0 26px}
+.final .fin .cta{justify-content:flex-start}
+.final .fin .trust{margin:18px 0 0;font-size:13px;color:var(--di)}
+.fph{margin:0;border-radius:28px;overflow:hidden;border:1px solid var(--line2);box-shadow:0 40px 110px rgba(255,79,139,.18)}
+.fph img{display:block;width:100%;height:auto}
+@media(min-width:900px){.faq{max-width:none;display:grid;grid-template-columns:1fr 1fr;column-gap:40px}.faq details:last-child{border-bottom:0}.faq details{border-bottom:0}}
+.dock.hid{transform:translateY(140%)!important}
+@media(max-width:900px){
+  .st2{height:auto;display:grid;grid-template-columns:1.15fr 1fr;gap:12px;align-items:end;margin-top:8px}
+  .st2 .mdl,.st2 .phn,.st2 .ern{position:relative;left:auto;right:auto;top:auto;bottom:auto;width:auto}
+  .st2 .mdl img{height:250px}
+  .hero .wrap>div:first-child{display:contents}
+  .hero .wrap{display:flex;flex-direction:column;gap:0}
+  .hero h1{order:1}.hero .st2{order:2;margin:4px 0 22px}.hero .lead{order:3}.hero .cta{order:4}.hero .proof{order:5}
+
+  .st2 .phn{border-radius:24px;padding:6px}.st2 .phn img{border-radius:19px}
+  .st2 .ern{grid-column:1/-1;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-top:6px}
+  .st2 .ern b{font-size:24px}
+  .calc{grid-template-columns:1fr;padding:18px}
+  .path{grid-template-columns:1fr;gap:0}
+  .path li{padding:0 0 18px 40px}
+  .path li:after{left:11px;right:auto;top:24px;bottom:0;width:2px;height:auto}
+  .final .fin{grid-template-columns:1fr;text-align:center}
+  .final .fin .cta{justify-content:center}
+  .fph{max-width:320px;margin:0 auto;order:-1}
+  .nph img{height:260px}
+}
+
 /* ниша */
 .niche{display:grid;grid-template-columns:1.2fr 1fr;gap:48px;align-items:start}
 .niche p{color:var(--tx2);margin:0 0 16px}
@@ -656,45 +729,21 @@ footer p{margin:6px 0 0;max-width:48em}
   <div class="wrap">
     <div>
       <h1>Создание и монетизация ИИ-моделей 18+</h1>
-      <p class="lead">Пошаговая система запуска ИИ-модели: от первой генерации до продаж на Fanvue и в Telegram, без показа лица. Плюс собственный софт, которого нет у других курсов.</p>
-      <ul class="chips" aria-label="Софт в кабинете ученика"><li>Аналитика трафика</li><li>ИИ-Студия</li><li>Нейро-чаттер</li><li>Лига учеников</li></ul>
+      <p class="lead">От первой генерации до продаж на Fanvue и в Telegram, без показа лица. С собственным софтом для трафика, постов и переписки.</p>
       <div class="cta">
-        <a class="btn pr" href="#price">Забрать систему обучения</a>
-        <a class="btn gh" href="https://gallery.lukaflow.shop/" target="_blank" rel="noopener">Примеры генераций</a>
+        <a class="btn pr" href="#price">Выбрать тариф</a>
+        <a class="lnk" href="https://gallery.lukaflow.shop/" target="_blank" rel="noopener">Смотреть примеры генераций</a>
       </div>
-      <p class="plbl">Ориентиры из кейсов учеников</p>
       <div class="proof">
         <div><b class="g">$6 840</b><span>лучший первый месяц ученика</span></div>
         <div><b>$840+</b><span>первые деньги ученика за 2 недели</span></div>
         <div><b>380+</b><span>учеников в закрытом комьюнити</span></div>
       </div>
     </div>
-    <div class="stage" aria-label="Пример: доход ученика на Fanvue и его кабинет NEUROFANS">
-      <div class="card fv">
-        <div class="h"><span>Fanvue Insights</span><em>Top 1.4% creator</em></div>
-        <div class="lbl">This month</div>
-        <div class="v">$5 612.97</div>
-        <div class="lbl">All-time earnings</div>
-        <div class="v s">$16 881.84</div>
-        <div class="who"><i>d</i>Кейс ученика dmitry_traffic, 2 модели</div>
-      </div>
-      <div class="card toast" role="status">
-        <i><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2ee6d6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></i>
-        <div><b>Ссылка Threads заработала</b><small>Первый живой человек, Лос-Анджелес. Бот NeuroFans Lab</small></div>
-      </div>
-      <div class="card lb">
-        <div class="t"><b>NEUROFANS LAB</b><span class="demo">пример данных</span></div>
-        <div class="row">
-          <div><div style="color:var(--mu);font-size:12px">Живые люди за неделю</div><div class="big">412<small>+38%</small></div></div>
-          <div style="text-align:right;color:var(--mu);font-size:12px">Место в лиге<div class="num" style="font-size:22px;color:var(--tx)">#3</div></div>
-        </div>
-        <svg viewBox="0 0 300 70" preserveAspectRatio="none" aria-hidden="true">
-          <defs><linearGradient id="g1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#2ee6d6" stop-opacity=".3"/><stop offset="1" stop-color="#2ee6d6" stop-opacity="0"/></linearGradient></defs>
-          <path d="M0 55 C25 52 40 46 60 48 S95 58 115 50 150 30 170 36 205 44 225 34 260 14 300 8 L300 70 0 70Z" fill="url(#g1)"/>
-          <path d="M0 55 C25 52 40 46 60 48 S95 58 115 50 150 30 170 36 205 44 225 34 260 14 300 8" fill="none" stroke="#2ee6d6" stroke-width="2"/>
-        </svg>
-        <div class="chs"><span>TikTok<b>186</b></span><span>Threads<b>121</b></span><span>Reels<b>74</b></span><span>Telegram<b>31</b></span></div>
-      </div>
+    <div class="st2" aria-label="ИИ-модель, кабинет NEUROFANS и доход ученика">
+      <figure class="mdl"><img src="look/hero.webp" width="560" height="835" alt="ИИ-модель, созданная нейросетью: девушка за ужином в ресторане" fetchpriority="high" decoding="async"><figcaption>Модель создана ИИ</figcaption></figure>
+      <div class="phn"><img src="soft/m-core.webp" width="780" height="1120" alt="Экран кабинета NEUROFANS на телефоне: люди по ссылкам за последний час" decoding="async"><span>пример данных</span></div>
+      <div class="ern"><small>Fanvue · этот месяц</small><b>$5 612.97</b><span>кейс ученика dmitry_traffic</span></div>
     </div>
   </div>
 </section>
@@ -708,6 +757,7 @@ footer p{margin:6px 0 0;max-width:48em}
       <p style="color:var(--mu);font-size:15px">Все модели вымышленные и созданы ИИ, контент помечается как ИИ. Мы не работаем с реальными людьми, дипфейками и заменой лица.</p>
     </div>
     <div class="facts">
+      <figure class="nph"><img src="look/niche.webp" width="590" height="628" alt="ИИ-модель с татуировками, созданная нейросетью" loading="lazy" decoding="async"><figcaption>Вымышленная модель, 100% ИИ</figcaption></figure>
       <div><b>Анонимно</b><span>Никто из знакомых не узнает о твоём проекте</span></div>
       <div><b>Без мощного ПК</b><span>Генерации работают в облаке, с телефона или ноутбука</span></div>
       <div><b class="n">$840 – $6 840</b><span>Результаты учеников из кейсов ниже за первые 2–8 недель. У каждого свои цифры, они зависят от работы</span></div>
@@ -736,14 +786,22 @@ footer p{margin:6px 0 0;max-width:48em}
       <h2>Кейсы учеников</h2>
       <p>Результаты отдельных учеников со скриншотов их кабинетов Fanvue. У каждого свои цифры: они зависят от модели, трафика и того, сколько времени ты вкладываешь.</p>
     </div>
-    <span class="swipe" aria-hidden="true">Листай вбок, чтобы увидеть все кейсы</span>
-    <div class="cases">
+    <div class="cases1">
       <article class="cs top">
         <div class="hd"><span class="av">d</span><div><b>dmitry_traffic</b><span>Участник закрытого чата, 2 модели</span></div><span class="res">+$5 612 за месяц</span></div>
         <div class="big">+$5 612<small>за месяц, основная модель</small></div>
         <div class="er"><div><small>All-time earnings</small><b>$16 881.84</b></div><div><small>This month</small><b>$5 612.97</b></div><div class="src"><span>Fanvue Insights</span><em>Top 1.4% creator</em></div></div>
         <p>До курса сам ковырял нейронки по ютубу: кривые пальцы и баны на Реддите. Здесь взял связку Threads и X и посадил двух чаттеров в ночную смену под США. На скрине только основная модель, вторая дала ещё +$1 400.</p>
       </article>
+    </div>
+    <div class="prf in">
+      <h3>Доходы учеников</h3>
+      <p>Скриншоты из кабинетов Fanvue и Telegram-каналов моделей учеников. Ники фанатов и названия аккаунтов скрыты. Это реальные результаты, но не обещание дохода: у каждого свои цифры.</p>
+      <div class="pg"><button type="button" data-full="proofs/insights.jpg" data-cap="доход за апрель–июнь 2026, Fanvue"><img src="proofs/insights.jpg" alt="Скриншот: доход за апрель–июнь 2026, Fanvue" loading="lazy"><span><b>$12 676</b>доход за апрель–июнь 2026, Fanvue</span></button><button type="button" data-full="proofs/subs.jpg" data-cap="подписки и продления за 10 дней, Fanvue"><img src="proofs/subs.jpg" alt="Скриншот: подписки и продления за 10 дней, Fanvue" loading="lazy"><span><b>$200 · $600</b>подписки и продления за 10 дней, Fanvue</span></button><button type="button" data-full="proofs/tips.jpg" data-cap="покупки сообщений и чаевые за час, Fanvue"><img src="proofs/tips.jpg" alt="Скриншот: покупки сообщений и чаевые за час, Fanvue" loading="lazy"><span><b>$170 · $130</b>покупки сообщений и чаевые за час, Fanvue</span></button><button type="button" data-full="proofs/balance.jpg" data-cap="доступно к выводу, Fanvue"><img src="proofs/balance.jpg" alt="Скриншот: доступно к выводу, Fanvue" loading="lazy"><span><b>$1 437</b>доступно к выводу, Fanvue</span></button><button type="button" data-full="proofs/payouts.jpg" data-cap="выплаты на банковский счёт, Fanvue"><img src="proofs/payouts.jpg" alt="Скриншот: выплаты на банковский счёт, Fanvue" loading="lazy"><span><b>$677–913</b>выплаты на банковский счёт, Fanvue</span></button><button type="button" data-full="proofs/stars.jpg" data-cap="звёзды в Telegram-канале модели"><img src="proofs/stars.jpg" alt="Скриншот: звёзды в Telegram-канале модели" loading="lazy"><span><b>≈ $1 481</b>звёзды в Telegram-канале модели</span></button></div>
+    </div>
+    <span class="swipe" aria-hidden="true">Листай вбок, чтобы увидеть все кейсы</span>
+    <div class="cases">
+      
       <article class="cs">
         <div class="hd"><span class="av">С</span><div><b>Соня М.</b><span>С полного нуля, первый месяц</span></div><span class="res">+$1 932 за месяц</span></div>
         <div class="er"><div><small>All-time earnings</small><b>$2 021.40</b></div><div><small>This month</small><b>$1 932.57</b></div><div class="src"><span>Fanvue Insights</span><em>Top 4.8% creator</em></div></div>
@@ -758,10 +816,6 @@ footer p{margin:6px 0 0;max-width:48em}
         <p>В ИИ был полный ноль. По видеоурокам настроил всё за вечер со старого макбука. Английский не знаю вообще, выручает переводчик и шаблоны из курса. Вывел первые $840.</p>
       </article>
     </div>
-    <div class="prf">
-      <h3>Доходы учеников</h3>
-      <p>Скриншоты из кабинетов Fanvue и Telegram-каналов моделей учеников. Ники фанатов и названия аккаунтов скрыты. Это реальные результаты, но не обещание дохода: у каждого свои цифры.</p>
-      <div class="pg"><button type="button" data-full="proofs/insights.jpg" data-cap="доход за апрель–июнь 2026, Fanvue"><img src="proofs/insights.jpg" alt="Скриншот: доход за апрель–июнь 2026, Fanvue" loading="lazy"><span><b>$12 676</b>доход за апрель–июнь 2026, Fanvue</span></button><button type="button" data-full="proofs/subs.jpg" data-cap="подписки и продления за 10 дней, Fanvue"><img src="proofs/subs.jpg" alt="Скриншот: подписки и продления за 10 дней, Fanvue" loading="lazy"><span><b>$200 · $600</b>подписки и продления за 10 дней, Fanvue</span></button><button type="button" data-full="proofs/tips.jpg" data-cap="покупки сообщений и чаевые за час, Fanvue"><img src="proofs/tips.jpg" alt="Скриншот: покупки сообщений и чаевые за час, Fanvue" loading="lazy"><span><b>$170 · $130</b>покупки сообщений и чаевые за час, Fanvue</span></button><button type="button" data-full="proofs/balance.jpg" data-cap="доступно к выводу, Fanvue"><img src="proofs/balance.jpg" alt="Скриншот: доступно к выводу, Fanvue" loading="lazy"><span><b>$1 437</b>доступно к выводу, Fanvue</span></button><button type="button" data-full="proofs/payouts.jpg" data-cap="выплаты на банковский счёт, Fanvue"><img src="proofs/payouts.jpg" alt="Скриншот: выплаты на банковский счёт, Fanvue" loading="lazy"><span><b>$677–913</b>выплаты на банковский счёт, Fanvue</span></button><button type="button" data-full="proofs/stars.jpg" data-cap="звёзды в Telegram-канале модели"><img src="proofs/stars.jpg" alt="Скриншот: звёзды в Telegram-канале модели" loading="lazy"><span><b>≈ $1 481</b>звёзды в Telegram-канале модели</span></button></div>
     </div>
   </div>
 </section>
@@ -772,11 +826,16 @@ footer p{margin:6px 0 0;max-width:48em}
       <h2>Математика одной модели</h2>
       <p>Миллионы подписчиков не нужны. Вот пример расчёта для одной модели с 30–35 активными фанатами. Это модель для ориентира, а не обещание: твои цифры зависят от контента, трафика и переписки.</p>
     </div>
+    <div class="calc" id="calc">
+      <label><span>Фанатов с подпиской</span><output id="cFo">35</output><input type="range" id="cF" min="10" max="150" step="5" value="35" aria-label="Фанатов с подпиской"></label>
+      <label><span>Цена подписки, $</span><output id="cPo">15</output><input type="range" id="cP" min="5" max="30" step="1" value="15" aria-label="Цена подписки в долларах"></label>
+      <p>Двигай ползунки: продажи в личке и кастомы считаются от числа фанатов так же, как в примере ниже. Это пример расчёта, не обещание дохода.</p>
+    </div>
     <div class="math">
-      <div><div class="k">Подписки</div><div class="v">$525<small>/мес</small></div><p>35 фанатов с подпиской по $15 на Fanvue или в закрытом Telegram-канале</p><span class="op" aria-hidden="true">+</span></div>
-      <div><div class="k">Продажи в личке</div><div class="v">$1 250<small>/мес</small></div><p>Фото и видео паки в переписке, средний чек $45–60 по готовым скриптам</p><span class="op" aria-hidden="true">+</span></div>
-      <div><div class="k">Кастомы и чаевые</div><div class="v">$380<small>/мес</small></div><p>Донаты по $50–100 за личное внимание и фото под запрос фаната</p><span class="op" aria-hidden="true">=</span></div>
-      <div class="tot"><div class="k">Одна модель</div><div class="v">≈ $2 155</div><p>в месяц, примерно 1,5–2 часа работы в день</p></div>
+      <div><div class="k">Подписки</div><div class="v"><span id="mS">$525</span><small>/мес</small></div><p><span id="mSt">35 фанатов с подпиской по $15</span> на Fanvue или в закрытом Telegram-канале</p><span class="op" aria-hidden="true">+</span></div>
+      <div><div class="k">Продажи в личке</div><div class="v"><span id="mD">$1 250</span><small>/мес</small></div><p>Фото и видео паки в переписке, средний чек $45–60 по готовым скриптам</p><span class="op" aria-hidden="true">+</span></div>
+      <div><div class="k">Кастомы и чаевые</div><div class="v"><span id="mC">$380</span><small>/мес</small></div><p>Донаты по $50–100 за личное внимание и фото под запрос фаната</p><span class="op" aria-hidden="true">=</span></div>
+      <div class="tot"><div class="k">Одна модель</div><div class="v" id="mT">≈ $2 155</div><p>в месяц, примерно 1,5–2 часа работы в день</p></div>
     </div>
     <div class="scale"><span>Следующий шаг: сетка из 3 моделей и чаттеры, которые ведут переписку за процент от кассы. Именно так выходят на уровень лучших кейсов учеников.</span><b>$5 400 – $6 800</b></div>
   </div>
@@ -836,6 +895,17 @@ footer p{margin:6px 0 0;max-width:48em}
       <h2>Программа</h2>
       <p>Базовый тариф учит делать контент. Продвинутый добавляет всё, что нужно, чтобы на нём зарабатывать: площадки, трафик, переписку с фанатами и вывод денег.</p>
     </div>
+    <ol class="path" aria-label="Путь от нуля до первых продаж">
+      <li class="b"><b>Своя модель</b><span>внешность и характер</span></li>
+      <li class="b"><b>Первые 100 фото</b><span>живая кожа, без пластика</span></li>
+      <li class="b"><b>18+ и сеты</b><span>референсы, кастомы</span></li>
+      <li class="a"><b>Видео 18+</b><span>и 199 примеров</span></li>
+      <li class="a"><b>Fanvue</b><span>профиль, цены, вывод</span></li>
+      <li class="a"><b>Трафик</b><span>Threads, Instagram, TikTok</span></li>
+      <li class="a"><b>Переписка</b><span>5 этапов воронки</span></li>
+      <li class="a z"><b>Первые продажи</b><span>и масштаб на 2–3 модели</span></li>
+    </ol>
+    <div class="pathk"><span class="b">Базовый: шаги 1–3</span><span class="a">Продвинутый: весь путь</span></div>
     <div class="prog">
       <div class="pc">
         <div class="k"><h3>Базовый</h3><span class="pr">3 900 ₽</span></div>
@@ -894,6 +964,7 @@ footer p{margin:6px 0 0;max-width:48em}
           <li class="sw">Кабинет целиком: аналитика, ИИ-Студия, нейро-чаттер, лига</li>
         </ul>
         <a class="btn gh" data-buy="base" href="#">Купить Базовый</a>
+        <p class="trust">380+ учеников · доступ сразу · карта РФ, СБП</p>
       </div>
       <div class="tc adv">
         <span class="rib">Полный путь до продаж</span>
@@ -912,6 +983,7 @@ footer p{margin:6px 0 0;max-width:48em}
           <li class="sw">Кабинет целиком плюс уроки, как выжать из него максимум</li>
         </ul>
         <a class="btn pr" data-buy="adv" href="#">Купить Продвинутый</a>
+        <p class="trust">380+ учеников · доступ сразу · карта РФ, СБП</p>
       </div>
     </div>
     <details class="cmpd"><summary>Сравнить тарифы подробно</summary>
@@ -997,10 +1069,14 @@ footer p{margin:6px 0 0;max-width:48em}
 </section>
 
 <section class="final">
-  <div class="wrap">
-    <h2>Запусти свою первую модель</h2>
-    <p>Уроки, кабинет с софтом и закрытое комьюнити откроются сразу после оплаты.</p>
-    <div class="cta"><a class="btn pr" href="#price">Выбрать тариф</a><a class="btn gh" href="https://t.me/AccessGrantedGuide_bot?start=site" target="_blank" rel="noopener">Задать вопрос в Telegram</a></div>
+  <div class="wrap fin">
+    <div>
+      <h2>Запусти свою первую модель</h2>
+      <p>Уроки, кабинет с софтом и закрытое комьюнити откроются сразу после оплаты.</p>
+      <div class="cta"><a class="btn pr" href="#price">Выбрать тариф</a><a class="btn gh" href="https://t.me/AccessGrantedGuide_bot?start=site" target="_blank" rel="noopener">Задать вопрос в Telegram</a></div>
+      <p class="trust">Оплата картой РФ, СБП или в Telegram · доступ сразу после оплаты</p>
+    </div>
+    <figure class="fph"><img src="look/final.webp" width="590" height="628" alt="ИИ-модель, созданная нейросетью" loading="lazy" decoding="async"></figure>
   </div>
 </section>
 </main>
@@ -1161,6 +1237,19 @@ gal.querySelectorAll("img").forEach(img => {
  const vis={h:true,p:false};const up=()=>{const on=!vis.h&&!vis.p;d.classList.toggle("on",on);d.setAttribute("aria-hidden",on?"false":"true");d.querySelector("a").tabIndex=on?0:-1};
  new IntersectionObserver(e=>{vis.h=e[0].isIntersecting;up()}).observe(hero);
  new IntersectionObserver(e=>{vis.p=e[0].isIntersecting;up()},{rootMargin:"0px 0px 200px 0px"}).observe(pr);})();
+
+/* Калькулятор одной модели: продажи в личке и кастомы на фаната как в примере (1250/35 и 380/35) */
+(() => {
+  const F = document.getElementById("cF"), P = document.getElementById("cP"); if (!F) return;
+  const $ = id => document.getElementById(id), fmt = n => "$" + Math.round(n).toLocaleString("ru-RU").replace(/\u00a0/g, " ");
+  const go = () => { const f = +F.value, p = +P.value, sub = f * p, dm = f * 1250 / 35, cu = f * 380 / 35;
+    $("cFo").textContent = f; $("cPo").textContent = p; $("mS").textContent = fmt(sub); $("mD").textContent = fmt(dm); $("mC").textContent = fmt(cu);
+    $("mSt").textContent = f + " фанатов с подпиской по $" + p; $("mT").textContent = "≈ " + fmt(sub + dm + cu); };
+  F.addEventListener("input", go); P.addEventListener("input", go);
+})();
+/* Плашка «Выбрать тариф» на телефоне прячется, пока листаешь вниз, и возвращается при прокрутке вверх */
+(() => { const d = document.getElementById("dock"); let y = scrollY;
+  addEventListener("scroll", () => { const n = scrollY; if (Math.abs(n - y) > 12) { d.classList.toggle("hid", n > y && n > 400); y = n; } }, {passive: true}); })();
 </script>
 </body>
 </html>
