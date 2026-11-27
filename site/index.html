@@ -351,18 +351,21 @@ footer p{margin:6px 0 0;max-width:48em}
 .mini .paid{margin-top:8px;padding:8px 11px;border-radius:12px;border:1px solid rgba(245,200,107,.45);background:rgba(245,200,107,.08);color:var(--gd);font:600 13px var(--num)}
 
 /* галерея: карточки с подписями */
-.gal{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-.gc{margin:0;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:var(--panel);display:flex;flex-direction:column}
-.gc .ph{position:relative;aspect-ratio:4/5;background:linear-gradient(110deg,var(--panel) 30%,var(--panel2) 50%,var(--panel) 70%);background-size:200% 100%;animation:shim 1.4s linear infinite}
+.gal{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:1320px;margin:0 auto}
+#real .wrap{max-width:none}
+#real .sh,#real .galf{max-width:1160px;margin-left:auto;margin-right:auto}
+.gc{margin:0;border:1px solid var(--line);border-radius:24px;overflow:hidden;background:var(--panel);position:relative;box-shadow:0 30px 80px rgba(0,0,0,.45)}
+.gc .ph{position:relative;aspect-ratio:9/14;background:linear-gradient(110deg,var(--panel) 30%,var(--panel2) 50%,var(--panel) 70%);background-size:200% 100%;animation:shim 1.4s linear infinite}
 .gc.ok .ph{animation:none}
-.gc img{width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .4s}
+.gc img{width:100%;height:100%;object-fit:cover;object-position:50% 30%;opacity:0;transition:opacity .4s,transform .6s}
 .gc.ok img{opacity:1}
-.gc .ai{position:absolute;left:12px;top:12px;font:600 11px var(--num);color:var(--tx);background:rgba(4,5,12,.72);border:1px solid var(--line2);border-radius:999px;padding:3px 9px;backdrop-filter:blur(6px)}
-.gc figcaption{padding:16px 18px}
-.gc figcaption b{display:block;font:800 16px var(--body);margin-bottom:4px}
-.gc figcaption span{color:var(--mu);font-size:14px}
-.gc ul{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
-.gc li{font-size:12px;color:var(--tx2);border:1px solid var(--line2);border-radius:999px;padding:2px 9px}
+.gc:hover img{transform:scale(1.03)}
+.gc .ai{position:absolute;left:14px;top:14px;font:600 12px var(--num);color:var(--tx);background:rgba(4,5,12,.72);border:1px solid var(--line2);border-radius:999px;padding:4px 10px;backdrop-filter:blur(6px)}
+.gc figcaption{position:absolute;left:0;right:0;bottom:0;padding:70px 22px 20px;background:linear-gradient(0deg,rgba(4,5,12,.92) 20%,rgba(4,5,12,0))}
+.gc figcaption b{display:block;font:800 20px var(--body);margin-bottom:4px}
+.gc figcaption span{color:var(--tx2);font-size:14px;display:block}
+.gc ul{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.gc li{font-size:12px;color:var(--tx2);background:rgba(4,5,12,.5);border:1px solid var(--line2);border-radius:999px;padding:2px 9px}
 @keyframes shim{to{background-position:-200% 0}}
 
 /* симулятор */
@@ -450,7 +453,9 @@ footer p{margin:6px 0 0;max-width:48em}
   .fl li:nth-child(3){padding-left:0;border-left:0}
   .fl li:nth-child(2):after{display:none}
   .story,.simx{grid-template-columns:1fr}
-  .gal{grid-template-columns:repeat(3,1fr)}
+  .gal{grid-template-columns:repeat(3,1fr);gap:14px;padding:0}
+  .gc figcaption{padding:60px 14px 14px}
+  .gc figcaption span{display:none}
   .steps{grid-template-columns:1fr 1fr;row-gap:24px}
   .steps li:nth-child(2):after{display:none}
 }
@@ -508,7 +513,8 @@ footer p{margin:6px 0 0;max-width:48em}
   .flow{padding:20px}
   .gal{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;margin-right:-18px;padding-right:18px;scrollbar-width:none}
   .gal::-webkit-scrollbar{display:none}
-  .gc{flex:0 0 78%;scroll-snap-align:start}
+  .gc{flex:0 0 82%;scroll-snap-align:start}
+  .gc figcaption span{display:block}
   .msgs{height:300px}
   .cmp th,.cmp td{padding:11px 12px;font-size:14px}
   .cmp td:nth-child(2),.cmp td:nth-child(3){width:auto;text-align:center}
@@ -523,6 +529,7 @@ footer p{margin:6px 0 0;max-width:48em}
   <div class="wrap">
     <a class="logo" href="#"><i><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#2ee6d6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 9h3l2-5 3 9 2-6 1.5 2H15"/></svg></i>NEUROFANS</a>
     <nav class="nav" aria-label="Разделы">
+      <a href="#real">Примеры</a>
       <a href="#math">Математика</a>
       <a href="#soft">Софт</a>
       <a href="#flow">Как работает</a>
@@ -596,6 +603,21 @@ footer p{margin:6px 0 0;max-width:48em}
       <div><b>Без мощного ПК</b><span>Генерации работают в облаке, с телефона или ноутбука</span></div>
       <div><b class="n">$840 – $6 840</b><span>Результаты учеников из кейсов ниже за первые 2–8 недель. У каждого свои цифры, они зависят от работы</span></div>
     </div>
+  </div>
+</section>
+
+<section id="real">
+  <div class="wrap">
+    <div class="sh">
+      <h2>Реалистичный ИИ-контент</h2>
+      <p>Новички палятся на «пластиковой» коже. Внутри курса учим живую текстуру кожи, свет и ракурсы. Все модели на фото вымышленные и созданы ИИ, откровенные примеры только в закрытой галерее.</p>
+    </div>
+    <div class="gal" id="gal" aria-label="Примеры генераций">
+      <figure class="gc"><div class="ph"><img data-src="https://ai-creators.ru/P1.jpg" alt="ИИ-модель в светлом платье на ночной лестнице" referrerpolicy="no-referrer"><span class="ai">100% ИИ</span></div><figcaption><b>Вечерний город</b><span>Тёплые фонари, живой свет на коже, одна модель в разных сценах.</span><ul><li>Свет</li><li>Кожа</li><li>Образ</li></ul></figcaption></figure>
+      <figure class="gc"><div class="ph"><img data-src="https://ai-creators.ru/P4.jpg" alt="ИИ-модель за ужином в ресторане" referrerpolicy="no-referrer"><span class="ai">100% ИИ</span></div><figcaption><b>Ужин в ресторане</b><span>Лайфстайл-кадр «как с iPhone»: смешанный свет, детали интерьера.</span><ul><li>Сцена</li><li>Свет</li><li>Реализм</li></ul></figcaption></figure>
+      <figure class="gc"><div class="ph"><img data-src="https://ai-creators.ru/P7.jpg" alt="ИИ-модель в шёлковой пижаме" referrerpolicy="no-referrer"><span class="ai">100% ИИ</span></div><figcaption><b>Утро дома</b><span>Мягкий дневной свет, ткань и текстура кожи без «пластика».</span><ul><li>Текстура</li><li>Ткань</li><li>Образ</li></ul></figcaption></figure>
+    </div>
+    <div class="galf"><span>Ещё 30+ примеров фото и видео 18+, за которые фанаты платят больше всего, в закрытой галерее.</span><a class="btn gh" href="https://ai-creators.ru/primery" target="_blank" rel="noopener">Смотреть примеры 18+</a></div>
   </div>
 </section>
 
@@ -759,20 +781,6 @@ footer p{margin:6px 0 0;max-width:48em}
   </div>
 </section>
 
-<section id="real">
-  <div class="wrap">
-    <div class="sh">
-      <h2>Реалистичный ИИ-контент</h2>
-      <p>Новички палятся на «пластиковой» коже. Внутри курса учим живую текстуру кожи, свет и ракурсы. Все модели на фото вымышленные и созданы ИИ, откровенные примеры только в закрытой галерее.</p>
-    </div>
-    <div class="gal" id="gal" aria-label="Примеры генераций">
-      <figure class="gc"><div class="ph"><img data-src="https://ai-creators.ru/P1.jpg" alt="ИИ-модель в светлом платье на ночной лестнице" referrerpolicy="no-referrer"><span class="ai">100% ИИ</span></div><figcaption><b>Вечерний город</b><span>Тёплые фонари, живой свет на коже, одна модель в разных сценах.</span><ul><li>Свет</li><li>Кожа</li><li>Образ</li></ul></figcaption></figure>
-      <figure class="gc"><div class="ph"><img data-src="https://ai-creators.ru/P4.jpg" alt="ИИ-модель за ужином в ресторане" referrerpolicy="no-referrer"><span class="ai">100% ИИ</span></div><figcaption><b>Ужин в ресторане</b><span>Лайфстайл-кадр «как с iPhone»: смешанный свет, детали интерьера.</span><ul><li>Сцена</li><li>Свет</li><li>Реализм</li></ul></figcaption></figure>
-      <figure class="gc"><div class="ph"><img data-src="https://ai-creators.ru/P7.jpg" alt="ИИ-модель в шёлковой пижаме" referrerpolicy="no-referrer"><span class="ai">100% ИИ</span></div><figcaption><b>Утро дома</b><span>Мягкий дневной свет, ткань и текстура кожи без «пластика».</span><ul><li>Текстура</li><li>Ткань</li><li>Образ</li></ul></figcaption></figure>
-    </div>
-    <div class="galf"><span>Ещё 30+ примеров фото и видео 18+, за которые фанаты платят больше всего, в закрытой галерее.</span><a class="btn gh" href="https://ai-creators.ru/primery" target="_blank" rel="noopener">Смотреть примеры 18+</a></div>
-  </div>
-</section>
 
 <section id="sim">
   <div class="wrap simx">
