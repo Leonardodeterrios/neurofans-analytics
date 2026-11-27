@@ -55,7 +55,6 @@ www.{$LAB_ROOT:neurofans.ru}, new.{$LAB_ROOT:neurofans.ru} {
 # без промежуточного редиректа на go.ai-creators.ru.
 #   хост/    → канал по умолчанию: «л…» — Threads (/t/), «к…» — видео (/v/)
 #   хост/t   → Threads,  хост/v → видео (Shorts/Reels/TikTok)
-#   хост/t01…t48, хост/r01…r15 → ссылка конкретного аккаунта из таблицы (та же метка, что у go./my./hi.)
 # Таблица ниже сгенерирована, порядок доменов — как в чеке Spaceship.
 # Новый хост: строка в map + имя в обоих списках хостов (https и http) + A-запись (tools/spaceship_dns.py).
 loradaily.shop, lyravibe.shop, linaflow.shop, loranotes.shop, lanavibe.shop, lizaweb.shop, lilynotes.shop, liananotes.shop, letavibe.shop, leomira.shop, lukaflow.shop, lubadaily.shop, lanaflow.shop, lenavibe.shop, lorablog.shop, lidastudio.shop, kseniadaily.shop, katyanotes.shop, kamiladaily.shop, kiranotes.shop, ksyushaflow.shop, go.loradaily.shop, my.loradaily.shop, hi.loradaily.shop, go.lyravibe.shop, my.lyravibe.shop, hi.lyravibe.shop, go.linaflow.shop, my.linaflow.shop, hi.linaflow.shop, go.loranotes.shop, my.loranotes.shop, hi.loranotes.shop, go.lanavibe.shop, my.lanavibe.shop, hi.lanavibe.shop, go.lizaweb.shop, my.lizaweb.shop, hi.lizaweb.shop, go.lilynotes.shop, my.lilynotes.shop, hi.lilynotes.shop, go.liananotes.shop, my.liananotes.shop, hi.liananotes.shop, go.letavibe.shop, my.letavibe.shop, hi.letavibe.shop, go.leomira.shop, my.leomira.shop, hi.leomira.shop, go.lukaflow.shop, my.lukaflow.shop, hi.lukaflow.shop, go.lubadaily.shop, my.lubadaily.shop, hi.lubadaily.shop, go.lanaflow.shop, my.lanaflow.shop, hi.lanaflow.shop, go.lenavibe.shop, my.lenavibe.shop, hi.lenavibe.shop, go.lorablog.shop, my.lorablog.shop, hi.lorablog.shop, go.lidastudio.shop, my.lidastudio.shop, hi.lidastudio.shop, go.kseniadaily.shop, my.kseniadaily.shop, hi.kseniadaily.shop, go.katyanotes.shop, my.katyanotes.shop, hi.katyanotes.shop, go.kamiladaily.shop, my.kamiladaily.shop, hi.kamiladaily.shop, go.kiranotes.shop, my.kiranotes.shop, hi.kiranotes.shop, go.ksyushaflow.shop, my.ksyushaflow.shop, hi.ksyushaflow.shop {
@@ -236,15 +235,6 @@ loradaily.shop, lyravibe.shop, linaflow.shop, loranotes.shop, lanavibe.shop, liz
 	@threads path /t /t/
 	@video path /v /v/
 	@root path /
-	# ссылки аккаунтов из таблицы: loradaily.shop/t01…t48, kseniadaily.shop/r01…r15 (3 аккаунта на домен);
-	# какой метке трекера соответствует код и подходит ли он к домену, решает app (/acc/, acc_label)
-	@acc path_regexp acc ^/([tr][0-9]{2})/?$
-	handle @acc {
-		rewrite * /acc/{host}/{re.acc.1}
-		reverse_proxy app:8080 {
-			header_up X-Real-IP {remote_host}
-		}
-	}
 	handle @threads {
 		rewrite * /t/{nf_label}
 		reverse_proxy app:8080 {

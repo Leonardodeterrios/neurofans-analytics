@@ -1899,44 +1899,19 @@ def funnel(days=7, by="ch"):
     rows.sort(key=lambda r: (r["group"] != "Все", -r["steps"]["start"]))
     return {"days": days, "by": by, "steps": FUNNEL_STEPS, "rows": rows}
 
-# ================= аккаунты на коротких доменах: хост/t01…t48, хост/r01…r15 =================
-# Таблица аккаунтов (NeuroFans_Accounts_63.csv) даёт каждому аккаунту ссылку вида loradaily.shop/t01:
-# 3 аккаунта на домен, по порядку доменов. Это те же 63 метки, что у поддоменов go./my./hi.:
-# tNN → leo(17+NN) (Threads), rNN → kate(5+NN) (видео). Caddy шлёт такие пути на /acc/<хост>/<код>.
-ACC_L = ("loradaily lyravibe linaflow loranotes lanavibe lizaweb lilynotes liananotes letavibe leomira "
-         "lukaflow lubadaily lanaflow lenavibe lorablog lidastudio").split()
-ACC_K = "kseniadaily katyanotes kamiladaily kiranotes ksyushaflow".split()
-
-def acc_label(host, code):
-    """(метка трекера, канал) для хост/код или None, если такой ссылки нет (чужой домен, номер вне диапазона)."""
-    m = re.fullmatch(r"([tr])(\d{1,2})", (code or "").lower())
-    base = (host or "").lower().split(":")[0]
-    if not m or not base.endswith(".shop"):
-        return None
-    kind, n = m.group(1), int(m.group(2))
-    doms, first, prefix, ch = (ACC_L, 18, TEAM_A_PREFIX, "threads") if kind == "t" else (ACC_K, 6, TEAM_B_PREFIX, "video")
-    if not 1 <= n <= len(doms) * 3 or base[:-5] != doms[(n - 1) // 3]:
-        return None
-    return f"{prefix}{first + n - 1:02d}", ch
-
-@app.route("/acc/<host>/<code>")
-def go_account(host, code):
-    hit = acc_label(host, code)
-    if not hit:
-        abort(404)
-    return _track_and_redirect(hit[0], hit[1])
-
+# ================= таблица аккаунтов (NeuroFans_Accounts) =================
+# Ссылки в био: https://<домен>.shop/t01…t48 → метка th_l_NN (Threads), /r01…r15 → rk_k_NN (видео) — делает Caddy.
 def label_from_url(url):
-    """Метка трекера из ссылки в био: хост/tNN, /t/<метка>, /v/<метка>, go./my./hi.-поддомен не разбираем (нет таблицы)."""
+    """Метка трекера из ссылки в био: хост/tNN → th_l_NN, хост/rNN → rk_k_NN, …/t/<метка>, …/v/<метка>."""
     try:
         from urllib.parse import urlparse
         u = urlparse((url or "").strip())
     except ValueError:
         return None
     path = (u.path or "").strip("/")
-    hit = acc_label(u.hostname or "", path)
-    if hit:
-        return hit[0]
+    m = re.fullmatch(r"([tr])(\d{2})", path)
+    if m:
+        return ("th_l_" if m.group(1) == "t" else "rk_k_") + m.group(2)
     m = re.fullmatch(r"(?:t|v|go)/([A-Za-z0-9_-]+)", path)
     return clean_label(m.group(1)) if m else None
 
