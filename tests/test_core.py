@@ -388,7 +388,7 @@ assert app.parse_payload("th_l_07-2s")[:2]==("th_l_07",100) and app.start_source
 import tempfile as _tf
 _nf=_tf.NamedTemporaryFile("w",suffix=".csv",delete=False,encoding="utf-8"); _nf.write("th_l_07,@lina.flow.ai\nrk_k_01,@ksenia.daily.ai\nмусор\n"); _nf.close()
 app.NAMES_FILE=_nf.name; app._stats_cache.clear(); assert app.partner_names()=={"th_l_07":"@lina.flow.ai","rk_k_01":"@ksenia.daily.ai"} and app.get_stats()["names"]["th_l_07"]=="@lina.flow.ai"
-B=app.bot_stats(0); assert B["count"]["f1"]>=1 and B["count"]["upgrade"]>=1 and B["count"]["asks"]>=3 and B["count"]["human"]>=1 and B["asks"][0]["q"]
+B=app.bot_stats(0); assert any(x["key"]=="threads" for x in B["sources"]) and any(x["key"]=="leo01" for x in B["partners"]) and B["count"]["f1"]>=1 and B["count"]["upgrade"]>=1 and B["count"]["asks"]>=3 and B["count"]["human"]>=1 and B["asks"][0]["q"]
 assert app.bot_stats(1)["cfg"]["pb"] is True and "BOT_PAGE" in dir(app)
 app.bg=_bgsave; app.notify_all=_na; app.PB_TOKEN=""
 print("автоматика бота: догон брошенной оплаты, метка «оплатил», ИИ-ассистент и «Катя» ✅")

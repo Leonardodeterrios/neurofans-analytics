@@ -2220,11 +2220,28 @@ def bot_stats(days=7):
         cnt["waiting"] = one("SELECT COUNT(*) FROM bot_people WHERE pay_open_ts>=? AND paid_ts IS NULL", hi)
         asks = [dict(r) for r in c.execute(
             "SELECT ts, tg_uid, q, a, human FROM bot_asks ORDER BY id DESC LIMIT 40")]
+        # откуда пришли новые люди за период: по первому старту каждого человека
+        firsts = c.execute("SELECT s.tg_uid, s.label, s.ch FROM starts s JOIN (SELECT tg_uid, MIN(id) mid FROM starts "
+                           "WHERE tg_uid>0 GROUP BY tg_uid HAVING MIN(ts)>=?) f ON s.id=f.mid", (since,)).fetchall()
+        paid_uids = {r[0] for r in c.execute("SELECT tg_uid FROM bot_people WHERE paid_ts IS NOT NULL")}
+        open_uids = {r[0] for r in c.execute("SELECT tg_uid FROM bot_people WHERE pay_open_ts IS NOT NULL")}
+    by_src, by_partner = {}, {}
+    for r in firsts:
+        src, partner = start_source({"label": r["label"], "ch": r["ch"]})
+        for key, bucket in ((src, by_src), (partner, by_partner)):
+            if bucket is by_partner and not partner:
+                continue
+            b = bucket.setdefault(key, {"people": 0, "pay_open": 0, "paid": 0})
+            b["people"] += 1; b["pay_open"] += r["tg_uid"] in open_uids; b["paid"] += r["tg_uid"] in paid_uids
+    names = partner_names()
+    sources = [{"key": k, "name": FROM_TEXT.get(k, k), **v} for k, v in sorted(by_src.items(), key=lambda x: -x[1]["people"])]
+    partners = [{"key": k, "name": names.get(k, ""), "team": team_of(k), **v}
+                for k, v in sorted(by_partner.items(), key=lambda x: (-x[1]["paid"], -x[1]["people"]))[:30]]
     for a in asks:
         a["from"] = uid_source_text(a["tg_uid"]) if a.get("tg_uid") else "неизвестно"
     cfg = {"pb": bool(PB_TOKEN), "ai": bool(AI_KEY or (AI_URL and AI_SECRET)), "tg": bool(BOT_TOKEN),
            "tribute": bool(TRIBUTE_KEY), "quiet": _quiet_now()}
-    return {"days": days, "count": cnt, "cfg": cfg, "asks": asks}
+    return {"days": days, "count": cnt, "cfg": cfg, "asks": asks, "sources": sources, "partners": partners}
 
 @app.route("/api/bot")
 def api_bot():
@@ -2254,11 +2271,13 @@ h1{font-size:22px;margin:0 0 4px}h2{font-size:17px;margin:26px 0 10px}p.s{color:
 .k .g{border-color:rgba(46,230,214,.4)}
 .wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:640px}th,td{padding:9px 10px;border-bottom:1px solid #1b2238;text-align:left;vertical-align:top}
 th{color:#8a93ae;font-weight:600;font-size:13px}td.t{white-space:nowrap;color:#8a93ae;font-size:13px}td.a{color:#c4cade;font-size:14px;max-width:460px}
-.h{color:#ff4f8b;font-weight:700;font-size:12px}.note{color:#8a93ae;font-size:13px;margin-top:10px}
+span.t{color:#8a93ae;font-size:13px;margin-left:4px}.h{color:#ff4f8b;font-weight:700;font-size:12px}.note{color:#8a93ae;font-size:13px;margin-top:10px}
 </style></head><body><h1>Бот: автоматика</h1><p class="s">Что настроено, что бот сделал сам и о чём спрашивают люди. <a id="fl" href="/funnel">Воронка бота →</a></p>
 <h2>Настройки</h2><div class="cfg" id="cfg"></div>
 <h2>Что сработало</h2><div class="bar" id="d"></div><div class="k" id="k"></div>
 <p class="note">Догоны и апгрейд бот шлёт сам с 10:00 до 22:00 по Москве. Купившим продающие сообщения не приходят.</p>
+<h2>Откуда пришли</h2><div class="wrap"><table id="src"></table></div>
+<h2>Аккаунты и партнёры, которые привели людей</h2><div class="wrap"><table id="prt"></table></div>
 <h2>Вопросы ИИ-помощнику</h2><div class="wrap"><table id="t"></table></div>
 <script>
 const Q=new URLSearchParams(location.search),tok=Q.get("token")||"";let days=+(Q.get("days")||7);
@@ -2289,6 +2308,9 @@ async function load(){
   box(c.upgrade,"предложений апгрейда"),
   box(c.asks,"вопросов ИИ от "+c.askers+" чел."),
   box(c.human,"попросили Катю","g")].join("");
+ const row3=(n,x)=>`<td><b>${x.people}</b></td><td>${x.pay_open} <span class="t">${pct(x.pay_open,x.people)}</span></td><td>${x.paid} <span class="t">${pct(x.paid,x.people)}</span></td>`;
+ document.getElementById("src").innerHTML="<tr><th>Откуда</th><th>Новых людей</th><th>Открыли оплату</th><th>Оплатили</th></tr>"+((j.sources||[]).length?j.sources.map(x=>`<tr><td>${esc(x.name)}</td>${row3(0,x)}</tr>`).join(""):'<tr><td colspan="4" class="t">Пока никого за этот период</td></tr>');
+ document.getElementById("prt").innerHTML="<tr><th>Аккаунт</th><th>Новых людей</th><th>Открыли оплату</th><th>Оплатили</th></tr>"+((j.partners||[]).length?j.partners.map(x=>`<tr><td>${esc(x.name||x.key)}${x.name?`<br><span class="t">${esc(x.key)}</span>`:""}</td>${row3(0,x)}</tr>`).join(""):'<tr><td colspan="4" class="t">Пока никого за этот период</td></tr>');
  document.getElementById("t").innerHTML="<tr><th>Когда</th><th>Вопрос</th><th>Ответ</th></tr>"+(j.asks.length?j.asks.map(a=>
   `<tr><td class="t">${esc((a.ts||"").replace("T"," ").slice(0,16))}<br>id ${esc(a.tg_uid)}<br>${esc(a.from||"")}</td><td>${a.human?'<span class="h">ПОЗВАЛИ КАТЮ</span><br>':''}${esc(a.q)}</td><td class="a">${esc(a.a)}</td></tr>`).join(""):'<tr><td colspan="3" class="t">Пока вопросов нет</td></tr>');
 }
