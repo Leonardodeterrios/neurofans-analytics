@@ -1577,7 +1577,7 @@ _ACT_PAGE = """<!doctype html><html lang="ru"><head><meta charset="utf-8">
 (function(){var to=__JSURL__,done=false;function go(){if(!done){done=true;location.replace(to)}}
 var h=new URLSearchParams(location.hash.slice(1)),q=new URLSearchParams(location.search);
 var b=new URLSearchParams();b.set("init",h.get("tgWebAppData")||"");b.set("u",q.get("u")||"");
-try{fetch(location.pathname,{method:"POST",body:b,keepalive:true,credentials:"omit"}).then(go,go)}catch(e){go()}
+try{if(navigator.sendBeacon&&navigator.sendBeacon(location.pathname,b)){go()}else{fetch(location.pathname,{method:"POST",body:b,keepalive:true,credentials:"omit"}).then(go,go)}}catch(e){go()}
 setTimeout(go,1500)})();
 </script></body></html>"""
 

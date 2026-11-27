@@ -255,6 +255,7 @@ body.adult .age{display:none}
 </div>
 
 <script>
+var cols0 = 2;   // колонок в сетке (первые 2 ряда превью грузятся сразу)
 /* Список работ — в media.json рядом со страницей (лежит только на зарубежном сервере, не в репозитории).
    Формат: {"site":"https://neurofans.ru/","items":[{"src":"media/g1.jpeg","type":"photo|video","title":"…","group":"Модель G"}]} */
 const $ = s => document.querySelector(s);
@@ -298,7 +299,7 @@ async function load() {
 function fan() {
   const pick = ALL.filter(x => x.type === "photo").slice(0, 3);
   if (pick.length < 3) return;
-  $("#fan").insertAdjacentHTML("afterbegin", pick.map((x, i) => `<div class="fc"><img src="${esc(x.src)}" alt=""><span class="ai">100% ИИ</span></div>`).join(""));
+  $("#fan").insertAdjacentHTML("afterbegin", pick.map((x, i) => `<div class="fc"><img src="${esc(x.thumb || x.src)}" alt="" decoding="async"><span class="ai">100% ИИ</span></div>`).join(""));
 }
 
 function chips() {
@@ -318,17 +319,20 @@ function render() {
   view = cur === "Все" ? ALL : cur === "Видео" ? ALL.filter(x => x.type === "video") : ALL.filter(x => x.group === cur);
   $("#cnt").textContent = view.length ? `${view.length} ${plural(view.length, "работа", "работы", "работ")}` : "";
   $("#ser").innerHTML = ALL.length ? `<div><h2>${cur === "Все" ? "Все работы" : esc(cur)}</h2><p>${esc(DESC[cur] || "")}</p></div>` : "";
+  cols0 = innerWidth < 700 ? 2 : innerWidth < 1100 ? 3 : 4;
   if (!view.length) { $("#grid").innerHTML = `<p class="empty">${ALL.length ? "Здесь пока пусто." : "Галерея обновляется, загляни чуть позже."}</p>`; return; }
   const html = view.map((x, k) => {
     const v = x.type === "video";
-    const m = v ? `<video src="${esc(x.src)}#t=0.5" muted playsinline preload="metadata"></video>`
-                : `<img src="${esc(x.src)}" alt="${esc(x.title)}" loading="lazy" decoding="async">`;
+    /* в сетке только лёгкие превью (optimize.sh); сам файл грузится при открытии */
+    const m = x.thumb ? `<img src="${esc(x.thumb)}" alt="${esc(x.title)}" loading="${k < cols0 * 2 ? "eager" : "lazy"}" decoding="async"${x.w ? ` width="${x.w}" height="${x.h}"` : ""}>`
+      : v ? `<video src="${esc(x.src)}#t=0.5" muted playsinline preload="metadata"></video>`
+          : `<img src="${esc(x.src)}" alt="${esc(x.title)}" loading="lazy" decoding="async">`;
     return `<button class="it" data-k="${k}">
       <div class="m">${m}<span class="tag${v ? " v" : ""}">${v ? "ВИДЕО ИИ" : "ФОТО ИИ"}</span>
       ${v ? `<span class="pl"><svg width="18" height="18" viewBox="0 0 18 18" fill="#fff"><path d="M5 3l10 6-10 6z"/></svg></span>` : ""}
       <div class="cap"><b>${esc(x.title)}</b>${x.group && x.group !== "Видео" ? `<span>${esc(x.group)}</span>` : ""}</div></div></button>`;
   });
-  const n = innerWidth < 700 ? 2 : innerWidth < 1100 ? 3 : 4; cols = n;
+  const n = cols0; cols = n;
   const c = Array.from({ length: n }, () => []);
   html.forEach((h, i) => c[i % n].push(h));
   $("#grid").innerHTML = c.map(a => `<div class="col">${a.join("")}</div>`).join("");
@@ -354,8 +358,9 @@ function show(k) {
   if (k < 0) k = view.length - 1; if (k >= view.length) k = 0;
   lbI = k; const x = view[k];
   $("#lbs").innerHTML = x.type === "video"
-    ? `<video src="${esc(x.src)}" controls autoplay playsinline loop></video>`
-    : `<img src="${esc(x.src)}" alt="${esc(x.title)}">`;
+    ? `<video src="${esc(x.web || x.src)}"${x.thumb ? ` poster="${esc(x.thumb)}"` : ""} controls autoplay playsinline loop preload="auto"></video>`
+    : `<img src="${esc(x.web || x.src)}" alt="${esc(x.title)}">`;
+  [k - 1, k + 1].forEach(j => { const y = view[(j + view.length) % view.length]; if (y && y.type === "photo") new Image().src = y.web || y.src; });  // соседние фото заранее
   $("#lbc").innerHTML = `<span>${esc(x.title || "")}${x.group && x.group !== "Видео" ? ", " + esc(x.group) : ""}</span><em>${k + 1} / ${view.length}</em>`;
   $("#lb").classList.add("on"); body.style.overflow = "hidden"; $("#lbx").focus();
 }

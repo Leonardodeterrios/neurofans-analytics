@@ -29,9 +29,15 @@
 		root * /srv/fonts
 		file_server
 	}
-	@data path /media.json /media/*
-	handle @data {
-		header Cache-Control "public, max-age=300"
+	encode zstd gzip
+	# файлы галереи меняются редко: браузер хранит их 30 дней; список работ — проверяет раз в минуту
+	handle /media.json {
+		header Cache-Control "public, max-age=60"
+		root * /srv/gallery-data
+		file_server
+	}
+	handle /media/* {
+		header Cache-Control "public, max-age=2592000"
 		root * /srv/gallery-data
 		file_server
 	}
