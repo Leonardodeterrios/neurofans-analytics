@@ -2255,7 +2255,11 @@ def api_bot():
 @app.route("/bot")
 def bot_page():
     _need(admin=True)
-    return Response(BOT_PAGE, mimetype="text/html")
+    page = BOT_PAGE
+    if request.args.get("embed"):  # внутри арены: без заголовка и отступов, ссылки — в новой вкладке
+        page = page.replace("</style>", "html{background:#070914}body{background:#070914;padding:12px 14px 40px;max-width:none}"
+                            "h1,p.s{display:none}h2:first-of-type{margin-top:4px}</style>", 1)
+    return Response(page, mimetype="text/html")
 
 BOT_PAGE = r"""<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex"><title>Бот: автоматика</title><style>

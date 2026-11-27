@@ -94,7 +94,7 @@ html,body{height:100%;background:#05060f;color:var(--ink);font:500 14px/1.4 Man,
 @keyframes evin{from{opacity:0;transform:translateX(-14px)}}
 .btns{position:absolute;right:14px;top:calc(86px + env(safe-area-inset-top));display:none;gap:6px;flex-direction:column}
 .ui-btn{pointer-events:auto;width:38px;height:38px;border-radius:11px;border:1px solid var(--line);background:var(--glass);color:var(--ink);font:800 15px Man;display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(6px)}
-a.ui-btn{text-decoration:none}.ui-btn[hidden]{display:none!important}
+a.ui-btn{text-decoration:none}.ui-btn[hidden],.page[hidden],.dots i[hidden]{display:none!important}
 .ui-btn.on{border-color:var(--amber);color:var(--amber)}
 .corner{position:absolute;right:18px;bottom:calc(64px + env(safe-area-inset-bottom));display:flex;gap:6px;pointer-events:auto}
 .dots{position:fixed;left:50%;bottom:calc(4px + env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;gap:6px;pointer-events:none}
@@ -355,7 +355,7 @@ body.off-arena #jack{visibility:hidden}
     </div>
     <div class="me-chip" id="meChip"></div>
     <div class="tops"><div class="top3 a" id="topA" style="--c:var(--a)"></div><div class="top3 b" id="topB" style="--c:var(--b)"></div></div>
-    <div class="corner"><button class="ui-btn" id="bSnd" title="Звук" aria-label="Звук">🔇</button><button class="ui-btn" id="bMap" title="Карта ударов" aria-label="Карта ударов">◎</button><button class="ui-btn" id="bRate" title="Рейтинг" aria-label="Рейтинг">☰</button><button class="ui-btn" id="bAds" title="Аккаунты партнёров" aria-label="Аккаунты партнёров">▤</button><a class="ui-btn" id="bBot" href="#" target="_blank" rel="noopener" title="Бот: откуда пришли, оплаты, вопросы" aria-label="Бот" hidden>🤖</a></div>
+    <div class="corner"><button class="ui-btn" id="bSnd" title="Звук" aria-label="Звук">🔇</button><button class="ui-btn" id="bMap" title="Карта ударов" aria-label="Карта ударов">◎</button><button class="ui-btn" id="bRate" title="Рейтинг" aria-label="Рейтинг">☰</button><button class="ui-btn" id="bAds" title="Аккаунты партнёров" aria-label="Аккаунты партнёров">▤</button><button class="ui-btn" id="bBot" title="Бот" aria-label="Бот" hidden>🤖</button></div>
     <div class="bottom">
       <div class="radar card"><div class="h"><span>КАРТА УДАРОВ</span><i></i></div><canvas id="radar" width="272" height="272"></canvas><div class="c" id="rCity">ждём первый клик</div><div class="s">гео: DB-IP · только город</div></div>
       <div class="ticker card" id="tickerBox"><span class="lb"><i></i>LIVE</span><div class="lst" id="ticker"></div></div>
@@ -379,8 +379,12 @@ body.off-arena #jack{visibility:hidden}
       <div class="ad-side" id="adSide"></div>
     </div>
   </section>
+  <section class="page sub" id="pg-bot" hidden>
+    <div class="hq-h"><button class="back" data-go="1">← Арена</button><div style="flex:1;min-width:200px"><div class="rt-h">Бот</div><div class="rt-s">настройки, что бот сделал сам, откуда пришли люди, вопросы ИИ-помощнику</div></div><a class="ui-btn" id="botNew" href="#" target="_blank" rel="noopener" title="Открыть в отдельной вкладке" style="width:auto;padding:0 12px;font-size:13px">↗</a></div>
+    <iframe id="botF" title="Бот" style="width:100%;height:calc(100% - 70px);min-height:520px;border:0;border-radius:14px;background:#070914"></iframe>
+  </section>
 </div>
-<div class="dots"><i></i><i class="on"></i><i></i><i></i></div>
+<div class="dots"><i></i><i class="on"></i><i></i><i></i><i id="dBot" hidden></i></div>
 <div class="ov" id="lbox"><span>ПОВТОР</span></div>
 <div class="ov" id="jack"><div class="coins" id="jkC"></div><div class="glow"><div class="ovc"><div class="ovl">оплата клуба · джекпот</div><div class="jt">+1000</div><div class="jn">КЛУБ ОПЛАЧЕН</div><div class="js" id="jkS"></div></div></div></div>
 <div class="ov" id="banner"><div class="glow"><div class="ovc"><div class="ovl">серия ударов</div><div class="bt" id="bnT">×5</div><div class="bs" id="bnS"></div><div class="bseg" id="bnSeg"></div></div></div></div>
@@ -1834,7 +1838,7 @@ function rankToast(label,rank,c){const d=document.createElement('div');d.classNa
   d.innerHTML=`<div class="glow"><div class="ovc"><span class="ic">▲</span><span class="ovl">новый ранг</span><b>${esc(rank.toUpperCase())}</b><span class="tn">${esc(nm(label))}${ME&&label===ME?' · это ты!':''}</span></div></div>`;
   $('toasts').appendChild(d);while($('toasts').children.length>2)$('toasts').firstChild.remove();setTimeout(()=>d.remove(),3500)}
 function applyStats(st,first){
-  SP=st.start_power||3;NAMES=st.names||NAMES;{const bb=$('bBot');if(bb&&st.role==='admin'&&bb.hidden){bb.href='/bot?'+AUTH;bb.hidden=false}}state={...state,...st};state.prefB=(st.partners.find(p=>p.team==='B')||{source:'kate'}).source.replace(/\d+$/,'')||'kate';
+  SP=st.start_power||3;NAMES=st.names||NAMES;{const bb=$('bBot');if(bb&&st.role==='admin'&&bb.hidden){bb.hidden=false;$('pg-bot').hidden=false;$('dBot').hidden=false;$('botNew').href='/bot?'+AUTH}}state={...state,...st};state.prefB=(st.partners.find(p=>p.team==='B')||{source:'kate'}).source.replace(/\d+$/,'')||'kate';
   if(st.server_now)skew=Date.parse(st.server_now)-Date.now();
   target.A=st.teams[0].today;target.B=st.teams[1].today;if(first){shown.A=target.A;shown.B=target.B}
   for(const p of st.partners){const pr=prevRanks[p.source];if(!first&&pr!=null&&p.rank>pr){rankToast(p.source,p.rank_name,COL[p.team]||AMBER);snd.rank()}prevRanks[p.source]=p.rank}
@@ -2165,8 +2169,9 @@ $('adT').onclick=e=>{const b=e.target.closest('button');if(!b)return;adTeam=b.da
 $('adQ').oninput=e=>{adQ=e.target.value;adList()};
 $('adF').onclick=e=>{const b=e.target.closest('button');if(!b)return;adDays=+b.dataset.d;[...$('adF').children].forEach(x=>x.classList.toggle('on',x===b));adLoad()};
 $('bAds').onclick=()=>goPage(3);
+$('bBot').onclick=()=>goPage(4);let botLoaded=0;const botLoad=()=>{if(botLoaded)return;botLoaded=1;$('botF').src='/bot?embed=1&'+AUTH};
 setInterval(()=>{if(curPage===3&&!document.hidden)adLoad()},30000);
-$('pager').addEventListener('scroll',()=>{const p=$('pager'),i=Math.round(p.scrollLeft/p.clientWidth);curPage=i;document.body.classList.toggle('off-arena',i!==1);[...document.querySelectorAll('.dots i')].forEach((d,k)=>d.classList.toggle('on',k===i));if(!TOUCH)p.style.pointerEvents=i!==1?'auto':'none';if(i===0)mp.x=null;if(i===3&&i!==adT){adLoad()}adT=i},{passive:true});
+$('pager').addEventListener('scroll',()=>{const p=$('pager'),i=Math.round(p.scrollLeft/p.clientWidth);curPage=i;document.body.classList.toggle('off-arena',i!==1);[...document.querySelectorAll('.dots i')].forEach((d,k)=>d.classList.toggle('on',k===i));if(!TOUCH)p.style.pointerEvents=i!==1?'auto':'none';if(i===0)mp.x=null;if(i===4)botLoad();if(i===3&&i!==adT){adLoad()}adT=i},{passive:true});
 
 /* ================= данные: SSE + запасной опрос ================= */
 let cur={c:null,s:null,a:null},es=null,esFails=0,pollT=null;
