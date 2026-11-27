@@ -112,7 +112,7 @@ class Notifier:
                 users = c.execute("SELECT COUNT(*) FROM users WHERE blocked=0").fetchone()[0]
                 active = c.execute("SELECT COUNT(DISTINCT uid) FROM clicks WHERE wk=? AND scored=1",
                                    (self.week_key(now - dt.timedelta(days=7)),)).fetchone()[0]
-                r = self._send_document(chat, path, f"NeuroFans Lab — резервная копия базы ({os.path.basename(path)}).\n"
+                r = self._send_document(chat, path, f"NeuroFans Lab: резервная копия базы ({os.path.basename(path)}).\n"
                                                     f"Учеников: {users}, активны на прошлой неделе: {active}.\n"
                                                     "Храни этот файл в надёжном месте: в нём ники и хэши паролей учеников.")
                 if r.get("ok"):
@@ -175,14 +175,14 @@ class Notifier:
                                  + (f"Тариф курса: «{pay.COURSE_NAME[course]}».\n\n" if course else "") +
                                  "Пришлю: первого человека по новой ссылке, вехи по людям, места в лиге, "
                                  "новые ачивки, воскресный дайджест и итоги недели. Не больше 4 сообщений "
-                                 "в день, ночью — тишина.\n\nВыключить: /stop")
+                                 "в день, ночью тишина.\n\nВыключить: /stop")
             else:
                 self._send(chat, "Чтобы подключить уведомления, открой кабинет NeuroFans Lab → меню → "
                                  f"«Уведомления в Telegram» → «Подключить».\nhttps://{self.lab_host}/")
         elif text.startswith("/stop"):
             c.execute("UPDATE users SET tg_mode='off' WHERE tg_chat_id=?", (chat,))
             c.commit()
-            self._send(chat, "Уведомления выключены. Включить снова — в кабинете, раздел «Уведомления в Telegram».")
+            self._send(chat, "Уведомления выключены. Включить снова можно в кабинете, раздел «Уведомления в Telegram».")
 
     def poll(self, c, now, timeout=20):
         if not self.enabled:
@@ -279,7 +279,7 @@ class Notifier:
             if m:
                 ic, nm, ds = game.BADGES[b]
                 q += self.enqueue(c, m["uid"], f"badge:{mid}:{b}",
-                                  f"{ic} Новая ачивка у {m['name']}: «{nm}» — {ds}.\n{cab}", "badge", now)
+                                  f"{ic} Новая ачивка у {m['name']}: «{nm}»: {ds}.\n{cab}", "badge", now)
         # 1) первый живой человек по ссылке (за последние сутки — без старого «хвоста»)
         since = (now - dt.timedelta(hours=24)).isoformat(timespec="seconds")
         for r in c.execute(
@@ -298,7 +298,7 @@ class Notifier:
             if reached:
                 ms = reached[-1]
                 rk = game.rank_of(p)
-                extra = f" Новый ранг — {rk['icon']} {rk['name']}!" if ms in [x[0] for x in game.RANKS] else ""
+                extra = f" Новый ранг: {rk['icon']} {rk['name']}!" if ms in [x[0] for x in game.RANKS] else ""
                 q += self.enqueue(c, models[mid]["uid"], f"ms:{mid}:{ms}",
                                   f"🔥 {models[mid]['name']}: {ms} {plural(ms, 'живой человек', 'живых человека', 'живых людей')} "
                                   f"за всё время.{extra}\n{cab}", "milestone", now)
@@ -310,19 +310,19 @@ class Notifier:
             p, pts = places.get(mid, (None, 0))
             if p and pts >= 5:
                 ahead = cur[p - 2]["pts"] - pts + 1 if p > 1 else 0
-                tail = f" До #{p - 1} — {ahead} {plural(ahead, 'человек', 'человека', 'человек')}." if p > 1 else " Ты лидер недели 👑"
+                tail = f" До #{p - 1}: {ahead} {plural(ahead, 'человек', 'человека', 'человек')}." if p > 1 else " Ты лидер недели 👑"
                 if p <= 3 and n >= 5:
                     q += self.enqueue(c, m["uid"], f"top3:{wk}:{mid}",
-                                      f"🏆 {m['name']} — #{p} в лиге недели!{tail}\n{cab}", "top", now)
+                                      f"🏆 {m['name']}: #{p} в лиге недели!{tail}\n{cab}", "top", now)
                 elif p <= 10 and n >= 12:
                     q += self.enqueue(c, m["uid"], f"top10:{wk}:{mid}",
-                                      f"🏅 {m['name']} — в топ-10 лиги недели: #{p}.{tail}\n{cab}", "top", now)
+                                      f"🏅 {m['name']} в топ-10 лиги недели: #{p}.{tail}\n{cab}", "top", now)
             kvk = f"pl:{wk}:{mid}"
             was = c.execute("SELECT v FROM kv WHERE k=?", (kvk,)).fetchone()
             if was and int(was[0]) <= 3 and (not p or p > 3) and n >= 5:
                 gap = (cur[2]["pts"] - pts + 1) if n >= 3 else 1
                 q += self.enqueue(c, m["uid"], f"down3:{mid}:{loc.date()}",
-                                  f"⚔️ {m['name']} обогнали: теперь #{p or '—'}. До пьедестала — {gap} "
+                                  f"⚔️ {m['name']} обогнали: теперь #{p or '—'}. До пьедестала: {gap} "
                                   f"{plural(gap, 'человек', 'человека', 'человек')}.\n{cab}", "down", now)
             if p:
                 c.execute("INSERT OR REPLACE INTO kv(k,v) VALUES(?,?)", (kvk, str(p)))
@@ -333,7 +333,7 @@ class Notifier:
                 if m:
                     x = f"{r['x']:.1f}".replace(".", ",")
                     q += self.enqueue(c, m["uid"], f"rush:{wk}:{r['mid']}",
-                                      f"🚀 {m['name']} — #{i + 1} в «Рывке недели»: ×{x} к прошлой неделе.\n{cab}",
+                                      f"🚀 {m['name']}: #{i + 1} в «Рывке недели»: ×{x} к прошлой неделе.\n{cab}",
                                       "rush", now)
         # 5) воскресный дайджест, 19:00
         if loc.weekday() == 6 and loc.hour >= 19:
@@ -347,7 +347,7 @@ class Notifier:
                     s = game.model_week(c, m["id"], wk, pwk)
                     pl = f"#{s['place']} из {s['total']}" if s["place"] else "пока без очков"
                     nxt = f", до #{s['place'] - 1}: {s['ahead']}" if s["place"] and s["place"] > 1 else ""
-                    lines.append(f"• {m['name']} — {pl}, {s['pts']} {plural(s['pts'], 'очко', 'очка', 'очков')}{nxt}")
+                    lines.append(f"• {m['name']}: {pl}, {s['pts']} {plural(s['pts'], 'очко', 'очка', 'очков')}{nxt}")
                 q += self.enqueue(c, uid, f"digest:{wk}",
                                   f"⏳ До конца недели ~{left} ч.\n" + "\n".join(lines) +
                                   f"\n\nПоследний рывок решает места 💪\n{cab}", "digest", now)
@@ -358,11 +358,11 @@ class Notifier:
                 res = [(models[m]["name"], *pboard[m]) for m in models if models[m]["uid"] == uid and m in pboard]
                 if res:
                     res.sort(key=lambda x: x[1])
-                    body = "\n".join(f"• {nm} — #{p} из {len(prev)} ({pts} {plural(pts, 'очко', 'очка', 'очков')})"
+                    body = "\n".join(f"• {nm}: #{p} из {len(prev)} ({pts} {plural(pts, 'очко', 'очка', 'очков')})"
                                      for nm, p, pts in res[:3])
                     q += self.enqueue(c, uid, f"results:{pwk}",
                                       f"🏁 Итоги недели {pwk.split('-W')[1]}:\n{body}\n\n"
-                                      f"Карточка для сторис — в кабинете, новая неделя уже идёт.\n{cab}", "results", now)
+                                      f"Карточка для сторис ждёт в кабинете, новая неделя уже идёт.\n{cab}", "results", now)
         c.commit()
         return q
 

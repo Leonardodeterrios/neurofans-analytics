@@ -58,7 +58,10 @@ img,svg,canvas{display:block}
 h1{font:800 clamp(32px,4vw,54px)/1.08 var(--disp);letter-spacing:-.01em;margin:0 0 20px}
 .lead{color:var(--tx2);font-size:19px;max-width:33em;margin:0 0 28px}
 .cta{display:flex;flex-wrap:wrap;gap:12px}
-.proof{display:grid;grid-template-columns:repeat(3,auto);gap:10px 34px;margin:34px 0 0;justify-content:start}
+.chips{display:flex;flex-wrap:wrap;gap:8px;list-style:none;margin:-8px 0 26px;padding:0}
+.chips li{font-size:14px;color:var(--tx2);border:1px solid var(--line2);border-radius:999px;padding:6px 12px;background:rgba(46,230,214,.04)}
+.plbl{color:var(--di);font-size:13px;margin:30px 0 8px}
+.proof{display:grid;grid-template-columns:repeat(3,auto);gap:10px 34px;margin:0;justify-content:start}
 .proof div{display:flex;flex-direction:column}
 .proof b{font:600 30px/1.1 var(--num)}
 .proof b.g{color:var(--cy)}
@@ -124,7 +127,9 @@ h3{font:800 20px/1.3 var(--body);margin:0 0 8px}
 /* софт: главный блок */
 .soft{position:relative}
 .soft:before{content:"";position:absolute;inset:0;background:radial-gradient(700px 400px at 50% 0%,rgba(46,230,214,.08),transparent 70%);pointer-events:none}
-.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+.tabsw{position:relative;margin-bottom:18px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tabhint{display:none}
 .tabs button{font:800 14px/1 var(--body);color:var(--mu);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px;cursor:pointer;display:flex;align-items:center;gap:8px}
 .tabs button[aria-selected=true]{color:var(--tx);border-color:rgba(46,230,214,.5);box-shadow:inset 0 0 0 1px rgba(46,230,214,.2),0 0 24px rgba(46,230,214,.12)}
 .tabs button i{width:8px;height:8px;border-radius:50%;background:var(--line2)}
@@ -144,10 +149,13 @@ h3{font:800 20px/1.3 var(--body);margin:0 0 8px}
 .demo{color:var(--mg);border:1px solid rgba(255,79,139,.4);border-radius:6px;padding:2px 7px;font-size:11px}
 .kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .kpi div{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--panel)}
-.kpi span{color:var(--mu);font-size:12px}
+.kpi div>span{color:var(--mu);font-size:12px}
 .kpi b{display:block;font:600 24px/1.2 var(--num);margin-top:4px}
 .kpi b em{font:500 12px var(--body);font-style:normal;color:var(--cy);margin-left:4px}
 .scr svg.ch{width:100%;height:130px;margin:14px 0 6px}
+.alert{display:flex;align-items:center;gap:8px;margin:-4px 0 10px;padding:7px 10px;border:1px solid rgba(255,79,139,.45);border-radius:10px;background:rgba(255,79,139,.07);font-size:12px;color:var(--tx);box-shadow:0 0 18px rgba(255,79,139,.15);animation:fi .3s ease}
+.alert b{color:var(--mg);font:600 12px var(--num)}
+.alert[hidden]{display:none}
 .tbl{width:100%;border-collapse:collapse;font-size:13px}
 .tbl td{padding:8px 4px;border-top:1px solid var(--line)}
 .tbl td:last-child{text-align:right;font:600 14px var(--num);color:var(--cy)}
@@ -188,9 +196,12 @@ h3{font:800 20px/1.3 var(--body);margin:0 0 8px}
 .vs td:last-child{color:var(--tx)}
 
 /* галерея */
-.gal{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(220px,24%);gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:10px;scrollbar-width:thin;scrollbar-color:var(--line2) transparent}
-.gal figure{margin:0;scroll-snap-align:start;position:relative;border-radius:var(--r);overflow:hidden;border:1px solid var(--line);aspect-ratio:3/4;background:var(--panel)}
-.gal img{width:100%;height:100%;object-fit:cover}
+.gal{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.gal figure{margin:0;position:relative;border-radius:var(--r);overflow:hidden;border:1px solid var(--line);aspect-ratio:3/4;background:linear-gradient(110deg,var(--panel) 30%,var(--panel2) 50%,var(--panel) 70%);background-size:200% 100%;animation:shim 1.4s linear infinite}
+.gal figure.ok{animation:none;background:var(--panel)}
+.gal img{width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .4s}
+.gal figure.ok img{opacity:1}
+@keyframes shim{to{background-position:-200% 0}}
 .gal figcaption{position:absolute;left:10px;bottom:10px;font-size:11px;color:var(--tx);background:rgba(4,5,12,.7);border:1px solid var(--line2);border-radius:999px;padding:3px 9px;backdrop-filter:blur(6px)}
 .galf{display:flex;gap:16px;align-items:center;justify-content:space-between;margin-top:18px;color:var(--mu);font-size:15px}
 
@@ -324,15 +335,22 @@ footer p{margin:6px 0 0;max-width:48em}
   .math>div:last-child{border-bottom:0}
   .math .op{display:none}
   .scale{flex-direction:column;align-items:flex-start}
-  .tabs{flex-wrap:nowrap;overflow-x:auto;margin-right:-18px;padding-right:18px}
-  .tabs button{flex:0 0 auto}
+  .tabs{flex-wrap:nowrap;overflow-x:auto;scroll-behavior:smooth;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-right:-18px;padding-right:48px}
+  .tabs::-webkit-scrollbar{display:none}
+  .tabs button{flex:0 0 auto;scroll-snap-align:start}
+  .tabsw:after{content:"";position:absolute;right:-18px;top:0;bottom:0;width:56px;pointer-events:none;background:linear-gradient(90deg,transparent,var(--bg) 80%);transition:opacity .2s}
+  .tabsw.end:after{opacity:0}
+  .tabhint{display:flex;align-items:center;justify-content:space-between;margin-top:10px;color:var(--di);font-size:12px}
+  .tabhint .dots{display:flex;gap:5px}
+  .tabhint .dots i{width:6px;height:6px;border-radius:50%;background:var(--line2);transition:background .2s,width .2s}
+  .tabhint .dots i.on{background:var(--cy);width:16px;border-radius:3px}
   .kpi{grid-template-columns:1fr 1fr}
   .kpi div:nth-child(3){display:none}
   .app .scr{padding:16px;min-height:0}
   .app .txt{padding:22px 18px}
   .vs th:nth-child(2),.vs td:nth-child(2){display:none}
   .vs th,.vs td{padding:12px 14px;font-size:14px}
-  .gal{grid-auto-columns:70%}
+  .gal{grid-template-columns:1fr 1fr;gap:10px}
   .galf{flex-direction:column;align-items:flex-start}
   .mods,.cases,.stats,.tar{grid-template-columns:1fr}
   .pc,.tc{padding:22px}
@@ -369,11 +387,13 @@ footer p{margin:6px 0 0;max-width:48em}
   <div class="wrap">
     <div>
       <h1>Создание и монетизация ИИ-моделей 18+</h1>
-      <p class="lead">Пошаговая система: своя виртуальная модель с нуля, без показа лица, и продажи контента на Fanvue и в Telegram. Вместе с курсом ты получаешь наш собственный софт: аналитику трафика, ИИ-Студию и нейро-чаттер.</p>
+      <p class="lead">Пошаговая система запуска ИИ-модели: от первой генерации до продаж на Fanvue и в Telegram, без показа лица. Плюс собственный софт, которого нет у других курсов.</p>
+      <ul class="chips" aria-label="Софт в кабинете ученика"><li>Аналитика трафика</li><li>ИИ-Студия</li><li>Нейро-чаттер</li><li>Лига учеников</li></ul>
       <div class="cta">
         <a class="btn pr" href="#price">Забрать систему обучения</a>
         <a class="btn gh" href="#soft">Посмотреть софт</a>
       </div>
+      <p class="plbl">Ориентиры из кейсов учеников</p>
       <div class="proof">
         <div><b class="g">$6 840</b><span>лучший первый месяц ученика</span></div>
         <div><b>$840+</b><span>первые деньги учеников за 2 недели</span></div>
@@ -448,34 +468,36 @@ footer p{margin:6px 0 0;max-width:48em}
       <h2>Софт, которого нет у других курсов</h2>
       <p>Обычный курс даёт видео и чат. Мы даём рабочий инструмент с первого дня: видно, откуда приходят люди, что публиковать завтра и что ответить фанату. Посмотри, как это выглядит внутри.</p>
     </div>
-    <div class="tabs" role="tablist" aria-label="Разделы кабинета">
+    <div class="tabsw" id="tabsw"><div class="tabs" role="tablist" aria-label="Разделы кабинета">
       <button role="tab" aria-selected="true" aria-controls="p1" id="t1"><i></i>Аналитика ссылок</button>
       <button role="tab" aria-selected="false" aria-controls="p2" id="t2"><i></i>ИИ-Студия</button>
       <button role="tab" aria-selected="false" aria-controls="p3" id="t3"><i></i>Нейро-чаттер</button>
       <button role="tab" aria-selected="false" aria-controls="p4" id="t4"><i></i>Лига учеников</button>
       <button role="tab" aria-selected="false" aria-controls="p5" id="t5"><i></i>Уведомления</button>
-    </div>
+    </div><div class="tabhint" aria-hidden="true"><span>5 разделов: листай вбок или свайпай экран</span><span class="dots"><i></i><i></i><i></i><i></i><i></i></span></div></div>
     <div class="app">
       <div class="scr">
         <div class="pane on" id="p1" role="tabpanel" aria-labelledby="t1">
-          <div class="bar"><b>ЭФИР</b><span class="demo">пример данных</span></div>
+          <div class="bar"><b>ЭФИР · NF CORE</b><span class="demo">DEMO</span></div>
+          <div class="alert" id="alert" hidden></div>
           <div class="kpi">
-            <div><span>Люди за неделю</span><b>412<em>+38%</em></b></div>
-            <div><span>Сегодня</span><b>57</b></div>
+            <div><span>Люди за неделю</span><b><span id="kW">412</span><em>+38%</em></b></div>
+            <div><span>Сегодня</span><b id="kD">57</b></div>
             <div><span>Стран</span><b>14</b></div>
           </div>
           <svg class="ch" viewBox="0 0 300 130" preserveAspectRatio="none" aria-hidden="true">
             <defs><linearGradient id="g2" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#2ee6d6" stop-opacity=".3"/><stop offset="1" stop-color="#2ee6d6" stop-opacity="0"/></linearGradient></defs>
             <g stroke="#1b2238"><path d="M0 32H300M0 64H300M0 96H300"/></g>
-            <path d="M0 100 C20 96 30 90 45 92 S70 104 90 94 120 70 140 76 170 90 190 78 220 50 240 56 270 40 300 24 L300 130 0 130Z" fill="url(#g2)"/>
-            <path d="M0 100 C20 96 30 90 45 92 S70 104 90 94 120 70 140 76 170 90 190 78 220 50 240 56 270 40 300 24" fill="none" stroke="#2ee6d6" stroke-width="2"/>
-            <path d="M0 112 C25 110 40 104 60 108 S95 114 115 106 150 92 170 98 200 102 220 92 255 74 300 66" fill="none" stroke="#ff4f8b" stroke-width="1.5" opacity=".75"/>
+            <path id="pA" d="" fill="url(#g2)"/>
+            <path id="pL" d="" fill="none" stroke="#2ee6d6" stroke-width="2"/>
+            <path id="pC" d="" fill="none" stroke="#ff4f8b" stroke-width="1.5" opacity=".75"/>
+            <circle id="pDot" r="4" fill="#2ee6d6"/>
           </svg>
           <table class="tbl"><tbody>
-            <tr><td>TikTok <span>· anna-tt</span></td><td>186</td></tr>
-            <tr><td>Threads <span>· anna-t</span></td><td>121</td></tr>
-            <tr><td>Reels <span>· anna-i</span></td><td>74</td></tr>
-            <tr><td>Telegram <span>· anna-tg</span></td><td>31</td></tr>
+            <tr><td>TikTok <span>· anna-tt</span></td><td id="c0">186</td></tr>
+            <tr><td>Threads <span>· anna-t</span></td><td id="c1">121</td></tr>
+            <tr><td>Reels <span>· anna-i</span></td><td id="c2">74</td></tr>
+            <tr><td>Telegram <span>· anna-tg</span></td><td id="c3">31</td></tr>
           </tbody></table>
         </div>
         <div class="pane plan" id="p2" role="tabpanel" aria-labelledby="t2" hidden>
@@ -576,7 +598,7 @@ footer p{margin:6px 0 0;max-width:48em}
           <li>Знакомство и план работы</li>
           <li>Сервисы и оплата нейросетей из России</li>
           <li>Внешность модели и первые 100 фото</li>
-          <li>18+ фото с живой кожей, без «пластика»</li>
+          <li>18+ фото с живой кожей, без эффекта пластика</li>
           <li>Работа с референсами</li>
           <li>Референс плюс промпт</li>
           <li>Кастомные заказы под фаната</li>
@@ -760,6 +782,7 @@ function show(i, focus) {
     p.hidden = !on; p.classList.toggle("on", on);
     document.getElementById("d" + (k + 1)).hidden = !on;
   });
+  document.querySelectorAll(".tabhint .dots i").forEach((d, k) => d.classList.toggle("on", k === i));
   const bar = tabs[i].parentElement, b = tabs[i];
   if (bar.scrollWidth > bar.clientWidth) bar.scrollTo({left: b.offsetLeft - 18, behavior: reduce ? "auto" : "smooth"});
   if (focus) tabs[i].focus();
@@ -771,19 +794,71 @@ tabs.forEach((t, i) => {
   });
 });
 show(0);
+const tbar = document.querySelector(".tabs"), tw = document.getElementById("tabsw");
+const tEnd = () => tw.classList.toggle("end", tbar.scrollLeft + tbar.clientWidth >= tbar.scrollWidth - 4);
+tbar.addEventListener("scroll", tEnd, {passive: true}); addEventListener("resize", tEnd); tEnd();
+/* свайп по экрану приложения переключает разделы */
+let sx = null, sy = 0;
+const scr = document.querySelector(".app .scr");
+scr.addEventListener("touchstart", e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, {passive: true});
+scr.addEventListener("touchend", e => {
+  if (sx === null) return;
+  const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; sx = null;
+  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) { auto = false; show((cur + (dx < 0 ? 1 : tabs.length - 1)) % tabs.length); }
+}, {passive: true});
 const soft = document.getElementById("soft");
 let inView = false;
 if ("IntersectionObserver" in window) new IntersectionObserver(e => inView = e[0].isIntersecting, {threshold: .35}).observe(soft);
 if (!reduce) setInterval(() => { if (auto && inView && !document.hidden) show((cur + 1) % tabs.length); }, 6000);
 
+/* Живой демо-эфир в первой вкладке: пульс, счётчики, детектор всплеска */
+(() => {
+  const N = 40, pts = [], clk = [];
+  let v = 40;
+  for (let i = 0; i < N; i++) { v = Math.max(8, Math.min(100, v + (Math.random() - .45) * 14)); pts.push(v); clk.push(Math.min(118, v + 8 + Math.random() * 10)); }
+  const X = i => i * 300 / (N - 1), Y = v => 128 - v;
+  const path = a => a.map((v, i) => (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1)).join(" ");
+  const pA = document.getElementById("pA"), pL = document.getElementById("pL"), pC = document.getElementById("pC"), dot = document.getElementById("pDot");
+  const kW = document.getElementById("kW"), kD = document.getElementById("kD"), al = document.getElementById("alert");
+  const cs = [0, 1, 2, 3].map(i => document.getElementById("c" + i));
+  const CH = ["TikTok · anna-tt", "Threads · anna-t", "Reels · anna-i", "Telegram · anna-tg"];
+  let w = 412, d = 57, burst = 0, cool = 4;
+  function draw() {
+    const l = path(pts);
+    pL.setAttribute("d", l); pA.setAttribute("d", l + " L300 130 L0 130Z"); pC.setAttribute("d", path(clk));
+    dot.setAttribute("cx", 300); dot.setAttribute("cy", Y(pts[N - 1]));
+  }
+  function tick() {
+    if (!(inView && cur === 0 && !document.hidden)) return;
+    cool--;
+    if (cool <= 0 && !burst && Math.random() < .35) { burst = 4; cool = 7; const k = (Math.random() * 4) | 0;
+      al.innerHTML = `<b>ВСПЛЕСК ×${(2 + Math.random() * 1.6).toFixed(1).replace(".", ",")}</b>${CH[k]} выстреливает: закрепи этот формат`; al.hidden = false; al.dataset.k = k; }
+    const up = burst ? 18 : 0;
+    v = Math.max(8, Math.min(108, pts[N - 1] + (Math.random() - .45) * 14 + up * .5));
+    pts.shift(); pts.push(v); clk.shift(); clk.push(Math.min(120, v + 8 + Math.random() * 10));
+    const add = 1 + ((Math.random() * (burst ? 5 : 2)) | 0);
+    w += add; d += add; kW.textContent = w; kD.textContent = d;
+    const k = burst ? +al.dataset.k : (Math.random() * 4) | 0; cs[k].textContent = +cs[k].textContent + add;
+    if (burst && !--burst) setTimeout(() => al.hidden = true, 2500);
+    draw();
+  }
+  draw();
+  if (!reduce) setInterval(tick, 1400);
+})();
+
 /* Галерея: фото со старого сайта (все модели созданы ИИ) */
 const gal = document.getElementById("gal");
-for (let i = 1; i <= 8; i++) {
+/* только кадры без откровенности: открытая витрина */
+for (const i of [1, 4, 7, 3]) {
   const f = document.createElement("figure");
-  f.innerHTML = `<img src="https://ai-creators.ru/P${i}.jpg" alt="Пример генерации ИИ-модели ${i}" loading="lazy" decoding="async"><figcaption>100% ИИ</figcaption>`;
-  f.querySelector("img").onerror = () => { f.remove(); if (!gal.children.length) document.getElementById("real").hidden = true; };
+  f.innerHTML = `<img src="https://ai-creators.ru/P${i}.jpg" alt="Пример генерации ИИ-модели" loading="lazy" decoding="async" referrerpolicy="no-referrer"><figcaption>100% ИИ</figcaption>`;
+  const img = f.querySelector("img");
+  img.onload = () => f.classList.add("ok");
+  img.onerror = () => { f.remove(); if (!gal.children.length) document.getElementById("real").hidden = true; };
   gal.appendChild(f);
 }
+/* если картинки так и не пришли за 12 с, пустые места убираем */
+setTimeout(() => { gal.querySelectorAll("figure:not(.ok)").forEach(f => f.remove()); if (!gal.children.length) document.getElementById("real").hidden = true; }, 12000);
 </script>
 </body>
 </html>

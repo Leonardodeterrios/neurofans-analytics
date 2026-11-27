@@ -572,9 +572,9 @@ def api_register():
     nick = (d.get("nick") or "").strip()
     pw = d.get("password") or ""
     if not NICK_RE.match(nick):
-        return err("Ник: 3–24 символа — буквы, цифры, точка, _ или -.")
+        return err("Ник: 3–24 символа, буквы, цифры, точка, _ или -.")
     if len(pw) < 8 or len(pw) > 200:
-        return err("Пароль — минимум 8 символов.")
+        return err("Пароль: минимум 8 символов.")
     with _wlock, closing(db()) as c:
         inv = c.execute("SELECT * FROM invites WHERE code=?", (code,)).fetchone()
         if not inv or inv["uses"] >= inv["max_uses"]:
@@ -621,7 +621,7 @@ def api_password():
         return err("Старый пароль не подходит.")
     new = d.get("new") or ""
     if len(new) < 8:
-        return err("Новый пароль — минимум 8 символов.")
+        return err("Новый пароль: минимум 8 символов.")
     with closing(db()) as c:
         c.execute("UPDATE users SET pw=? WHERE id=?", (generate_password_hash(new), u["id"]))
         c.execute("DELETE FROM sessions WHERE uid=? AND tok<>?", (u["id"], request.cookies.get("nfs", "")))
@@ -677,7 +677,7 @@ def onboarding(c, u, models):
     steps = [
         {"id": "model", "title": "Добавь модель", "hint": "имя и куда вести: Fanvue, Telegram или сайт", "done": bool(models)},
         {"id": "link", "title": "Возьми ссылку под канал", "hint": "своя ссылка на Threads, TikTok, Instagram…", "done": bool(links)},
-        {"id": "check", "title": "Проверь ссылку", "hint": "кнопка «Проверить» — в статистику не попадёт",
+        {"id": "check", "title": "Проверь ссылку", "hint": "кнопка «Проверить», в статистику не попадёт",
          "done": any(l["checked_at"] for l in links)},
         {"id": "person", "title": "Поставь в био и получи первого человека", "hint": "клики появятся в обзоре сами",
          "done": any(l["first_at"] for l in links)},
@@ -746,7 +746,7 @@ def api_conv():
             except (TypeError, ValueError):
                 return err("Укажи число подписчиков.")
             if not 0 <= subs <= 100000:
-                return err("Число подписчиков — от 0 до 100 000.")
+                return err("Число подписчиков: от 0 до 100 000.")
             own_model(c, u["id"], mid)
             wk = d.get("wk") if d.get("wk") in (week_key(), prev_week_key()) else week_key()
             c.execute("INSERT OR REPLACE INTO conv(mid, wk, subs, updated) VALUES(?,?,?,?)", (mid, wk, subs, iso()))
@@ -834,7 +834,7 @@ def api_link_add():
             if not SLUG_RE.match(want) or want in RESERVED:
                 return err("Метка: латиница, цифры и дефис, 2–40 символов.")
             if c.execute("SELECT 1 FROM links WHERE slug=?", (want,)).fetchone():
-                return err("Такая метка уже занята — придумай другую.")
+                return err("Такая метка уже занята, придумай другую.")
             slug = want
         else:
             slug = unique_slug(c, "links", f"{m['slug']}-{CHANNELS[ch][1]}")
@@ -1083,7 +1083,7 @@ def api_tg_link():
     u = need_user(); need_json()
     n = notifier()
     if not n.enabled:
-        return err("Уведомления пока не включены — бот кабинета ещё не подключён.")
+        return err("Уведомления пока не включены: бот кабинета ещё не подключён.")
     name = n.username()
     if not name:
         return err("Бот кабинета не отвечает. Попробуй позже.", 503)
@@ -1166,7 +1166,7 @@ def api_admin_setup():
         return err("Токен не подходит. Возьми его на сервере: cat lab-data/admin_token.txt", 403)
     pw = d.get("password") or ""
     if len(pw) < 10:
-        return err("Пароль админки — минимум 10 символов.")
+        return err("Пароль админки: минимум 10 символов.")
     with closing(db()) as c:
         kv_set(c, "admin_pw", generate_password_hash(pw))
         c.execute("DELETE FROM sessions WHERE uid=?", (ADMIN_UID,))
@@ -1693,8 +1693,8 @@ def _course_news(tg, ev, kind):
             N._send(tg, text)
         if admin:
             who = f"ученик {u['nick']}" if u else f"Telegram ID {tg}, ещё не зарегистрировался"
-            N._send(int(admin), f"💰 Оплата курса: {COURSE_KIND.get(kind, kind)} — {who}." if ev == "paid"
-                    else f"↩️ Возврат по курсу — {who}. Тариф курса пересчитан.")
+            N._send(int(admin), f"💰 Оплата курса: {COURSE_KIND.get(kind, kind)}, {who}." if ev == "paid"
+                    else f"↩️ Возврат по курсу: {who}. Тариф курса пересчитан.")
     except Exception as e:
         log.warning("course news failed: %s", e)
 

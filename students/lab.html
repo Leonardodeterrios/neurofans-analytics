@@ -293,6 +293,8 @@ canvas{display:block;width:100%}
 /* конверсия */
 .cv-top{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:0 0 4px}
 .cv-big{font-family:var(--mono);font-weight:600;font-size:40px;line-height:1}
+.cv-cap{flex:1 1 160px;min-width:0;line-height:1.4}
+.cv-warn{margin:10px 0 0;padding:8px 10px;border:1px solid rgba(255,125,110,.35);border-radius:10px;color:var(--co,#ff7d6e);font-size:12px;line-height:1.45}
 .cbars{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;align-items:end;height:92px;margin:14px 0 6px}
 .cbars div{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;height:100%;min-width:0;font-family:var(--mono);font-size:10px;color:var(--di)}
 .cbars div.cur{color:var(--tx)}
@@ -510,7 +512,7 @@ label.f em.fn{display:block;margin-top:4px}
  <div class="au-l">
   <div class="brand"><svg><use href="#logo"/></svg><b>NEUROFANS</b><span>LAB</span></div>
   <div>
-   <h1>Трафик ваших моделей — по секундам и без ботов.</h1>
+   <h1>Трафик ваших моделей по секундам и без ботов.</h1>
    <p>Отдельная ссылка под каждый канал, живой пульс переходов, всплески и прогноз недели, лига среди учеников курса. Считаем только людей: боты и превью соцсетей отсекаются автоматически.</p>
    <div class="au-chart"><canvas id="auCv"></canvas></div>
   </div>
@@ -528,7 +530,7 @@ label.f em.fn{display:block;margin-top:4px}
    <label class="f"><span>Ник</span><input class="in" name="nick" autocomplete="username" placeholder="например, leo_creator" required></label>
    <label class="f"><span>Пароль, от 8 символов</span><input class="in" name="password" type="password" autocomplete="new-password" minlength="8" required></label>
    <div class="err"></div><button class="btn" style="width:100%;padding:11px">Создать кабинет</button>
-   <p class="mu sm" style="margin:14px 0 0">Забыли пароль — напишите куратору, он сбросит.</p>
+   <p class="mu sm" style="margin:14px 0 0">Забыли пароль? Напишите куратору, он сбросит.</p>
   </form>
  </div></div>
 </section>
@@ -603,13 +605,13 @@ label.f em.fn{display:block;margin-top:4px}
   </div>
 
   <div id="pg-st" class="hide">
-   <div class="st-top"><div><h1>Студия</h1><p>План постов на неделю, ответы фанатам и паспорт модели. ИИ пишет её голосом, а к каждому посту даёт ссылку кабинета — так видно, какой пост привёл людей.</p></div><button class="tchip" id="stTariff" title="Тариф и лимиты"></button></div>
+   <div class="st-top"><div><h1>Студия</h1><p>План постов на неделю, ответы фанатам и паспорт модели. ИИ пишет её голосом, а к каждому посту даёт ссылку кабинета, так видно, какой пост привёл людей.</p></div><button class="tchip" id="stTariff" title="Тариф и лимиты"></button></div>
    <div class="st-bar"><div class="mbar" id="stModels"></div><div class="seg" id="stTabs"><button data-t="plan"><svg class="i"><use href="#i-cast"/></svg>План недели</button><button data-t="chat"><svg class="i"><use href="#i-chat"/></svg>Чаттер</button><button data-t="pass"><svg class="i"><use href="#i-user"/></svg>Паспорт модели</button></div></div>
    <div id="stBody"></div>
   </div>
 
   <div id="pg-lk" class="hide">
-   <div class="pgt"><div><h1>Модели и ссылки</h1><p>Ставьте ссылку в био, описание или закреп — переходы появятся в эфире.</p></div><button class="btn" id="addModel"><svg class="i"><use href="#i-plus"/></svg>Добавить модель</button></div>
+   <div class="pgt"><div><h1>Модели и ссылки</h1><p>Ставьте ссылку в био, описание или закреп, и переходы появятся в эфире.</p></div><button class="btn" id="addModel"><svg class="i"><use href="#i-plus"/></svg>Добавить модель</button></div>
    <div id="models"></div>
   </div>
 
@@ -623,14 +625,14 @@ label.f em.fn{display:block;margin-top:4px}
      <section class="pn"><div class="pn-h"><h3>Рывок недели</h3><span class="meta">РОСТ К ПРОШЛОЙ</span></div><table class="board" id="rush"></table></section>
      <section class="pn"><div class="pn-h"><h3>Победители прошлой недели</h3></div><table class="board" id="winners"></table></section>
      <section class="pn"><details class="rules"><summary>Как считаются очки <svg class="i"><use href="#i-plus"/></svg></summary><ul>
-      <li>Очко — новый человек, перешедший по ссылкам модели за неделю. Повторные клики того же человека очков не добавляют.</li>
+      <li>Очко: новый человек, перешедший по ссылкам модели за неделю. Повторные клики того же человека очков не добавляют.</li>
       <li>Свои клики не считаются: браузер, где вы входили в кабинет, отмечен. «Проверить» тоже не считается.</li>
-      <li>Один человек засчитывается максимум трём моделям за неделю, с одного IP — не больше 100 очков.</li>
+      <li>Один человек засчитывается максимум трём моделям за неделю, с одного IP не больше 100 очков.</li>
       <li>Боты и превью ссылок в соцсетях не считаются.</li>
-      <li>Дивизион — по людям до этой недели: «Старт» до 50, «Про» 50–999, «Элита» 1000+.</li>
-      <li>В таблице — модели, которые уже набрали очки на этой неделе; скрытые из лиги не показываются.</li>
-      <li>«Рывок» — рост к прошлой неделе, от 10 очков.</li>
-      <li>Неделя — с понедельника 00:00 до воскресенья 23:59 (<span id="tzR"></span>).</li>
+      <li>Дивизион: по людям до этой недели: «Старт» до 50, «Про» 50–999, «Элита» 1000+.</li>
+      <li>В таблице только модели, которые уже набрали очки на этой неделе. Скрытые из лиги не показываются.</li>
+      <li>«Рывок»: рост к прошлой неделе, от 10 очков.</li>
+      <li>Неделя: с понедельника 00:00 до воскресенья 23:59 (<span id="tzR"></span>).</li>
      </ul></details></section>
     </div>
    </div>
@@ -745,7 +747,7 @@ function spark(cv,vals,mg){const[x,w,h]=setupCanvas(cv,28);const mx=Math.max(1,.
 function renderStats(){const st=S.stats,t=st.totals,el=$("#hScore");
   if(!S.counted&&!REDUCED){S.counted=true;const t0=performance.now(),T=t.week_people;(function f(n){const k=Math.min(1,(n-t0)/900),e=1-Math.pow(1-k,3);el.textContent=fmt(Math.round(T*e));if(k<1)requestAnimationFrame(f)})(t0)}else el.textContent=fmt(t.week_people);
   const p=pct(t.week_people,t.prev_week_people),d=t.week_people-t.prev_week_people;
-  $("#hDelta").innerHTML=t.prev_week_people?`<span class="${d>=0?"pos":"neg"}">${d>=0?"▲ +":"▼ "}${fmt(d)} (${p>=0?"+":""}${p.toFixed(1).replace(".",",")}%)</span> <span class="di">vs прошлая неделя · ${fmt(t.prev_week_people)}</span>`:`<span class="di">первая неделя — каждый человек на счету</span>`;
+  $("#hDelta").innerHTML=t.prev_week_people?`<span class="${d>=0?"pos":"neg"}">${d>=0?"▲ +":"▼ "}${fmt(d)} (${p>=0?"+":""}${p.toFixed(1).replace(".",",")}%)</span> <span class="di">vs прошлая неделя · ${fmt(t.prev_week_people)}</span>`:`<span class="di">первая неделя: каждый человек на счету</span>`;
   const mname=S.mid==="all"?"ВСЕ МОДЕЛИ":(activeModels().find(m=>String(m.id)===String(S.mid))||{name:""}).name.toUpperCase();
   $("#hLbl").textContent=`ЛЮДИ · НЕДЕЛЯ ${S.me.week.split("-W")[1]} · ${mname}`;
   const mw=heroMW();
@@ -759,12 +761,12 @@ function renderStats(){const st=S.stats,t=st.totals,el=$("#hScore");
     .map(([l,v,s,id])=>`<div><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div>${id?`<canvas id="${id}"></canvas>`:""}</div>`).join("");
   S.sparks=[pd,cd,cum];drawCanvases();
   const mx=Math.max(1,...st.channels.map(c=>c.clicks));
-  $("#chBars").innerHTML=st.channels.length?st.channels.map(c=>`<div class="row">${chI(c.ch)}<div><div class="nm"><span>${esc(c.name)}</span></div><div class="tr"><div class="fl" style="width:${Math.max(2,c.clicks/mx*100)}%"></div></div></div><div class="v">${fmt(c.people)} / ${fmt(c.clicks)}</div></div>`).join(""):`<div class="empty">Пока тихо. Поставьте ссылку в био — здесь появятся каналы.</div>`;
+  $("#chBars").innerHTML=st.channels.length?st.channels.map(c=>`<div class="row">${chI(c.ch)}<div><div class="nm"><span>${esc(c.name)}</span></div><div class="tr"><div class="fl" style="width:${Math.max(2,c.clicks/mx*100)}%"></div></div></div><div class="v">${fmt(c.people)} / ${fmt(c.clicks)}</div></div>`).join(""):`<div class="empty">Пока тихо. Поставьте ссылку в био, и здесь появятся каналы.</div>`;
   $("#cities").innerHTML=st.cities.length?`<table class="tbl">${st.cities.slice(0,7).map((c,i)=>`<tr><td class="mono di" style="width:26px">${String(i+1).padStart(2,"0")}</td><td>${CC(c.cc)} ${esc(c.city)}</td><td class="r mono">${fmt(c.n)}</td></tr>`).join("")}</table>`:`<div class="empty">Города появятся с первыми переходами</div>`;
   const am=Math.max(1,...st.apps.map(a=>a.n));
   $("#apps").innerHTML=st.apps.length?st.apps.slice(0,6).map(a=>`<div class="row"><div><div class="nm"><span>${esc(a.k)}</span></div><div class="tr"><div class="fl" style="width:${Math.max(2,a.n/am*100)}%;background:var(--mu)"></div></div></div><div class="v">${fmt(a.n)}</div></div>`).join(""):`<div class="empty">—</div>`;
   const dt=st.devices.reduce((s,x)=>s+x.n,0)||1;$("#devs").textContent=st.devices.map(x=>`${{iOS:"IOS",Android:"ANDROID",Desktop:"DESKTOP"}[x.k]||x.k} ${Math.round(x.n/dt*100)}%`).join("   ");
-  const ph=st.hours.indexOf(Math.max(...st.hours));$("#peak").textContent=Math.max(...st.hours)?`Пик ${String(ph).padStart(2,"0")}:00–${String(ph+1).padStart(2,"0")}:00 — публикуйте за час до пика.`:"";
+  const ph=st.hours.indexOf(Math.max(...st.hours));$("#peak").textContent=Math.max(...st.hours)?`Пик ${String(ph).padStart(2,"0")}:00–${String(ph+1).padStart(2,"0")}:00. Публикуйте за час до пика.`:"";
   const first=S.seen.size===0;
   $("#feed").innerHTML=st.recent.length?`<tr><th>ВРЕМЯ</th><th class="c-ch">КАНАЛ</th><th>МОДЕЛЬ / МЕТКА</th><th>ГЕО</th><th class="c-app">ОТКУДА</th><th class="r">СТАТУС</th></tr>`+st.recent.slice(0,10).map(r=>{const k=r.ts+r.slug,isNew=!first&&!S.seen.has(k);S.seen.add(k);
     const why={own:"СВОЙ",repeat:"ПОВТОР",cap_vis:"ЛИМИТ",cap_ip:"ЛИМИТ IP"}[r.why]||"";
@@ -803,7 +805,7 @@ function renderOnb(){const o=S.me.onboarding,box=$("#onb");if(!o||o.hidden){box.
    <div class="pipe">${o.steps.map((s,i)=>`<div class="st ${s.done?"done":""} ${next&&s.id===next.id?"next":""}"><div class="n">${s.done?"✓ ":""}STEP ${String(i+1).padStart(2,"0")}</div><b>${esc(s.title)}</b><span>${esc(s.hint)}</span></div>`).join("")}</div>`;
   if(next)$("#onbGo").onclick=ONB_ACT[next.id];
   $("#onbHide").onclick=async()=>{await api("/api/onboarding/hide",{method:"POST",body:{}});S.me.onboarding.hidden=true;renderOnb()}}
-function onboardHTML(){return`<section class="pn"><div class="pn-b" style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;justify-content:space-between"><div><h2 style="margin:0 0 4px">Начнём с первой модели</h2><p class="mu" style="margin:0">Имя и ссылка на Fanvue или Telegram — кабинет сразу выдаст ссылки под каждый канал.</p></div><button class="btn" onclick="openModel()">${ic("i-plus")}Добавить модель</button></div></section>`}
+function onboardHTML(){return`<section class="pn"><div class="pn-b" style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;justify-content:space-between"><div><h2 style="margin:0 0 4px">Начнём с первой модели</h2><p class="mu" style="margin:0">Имя и ссылка на Fanvue или Telegram, и кабинет сразу выдаст ссылки под каждый канал.</p></div><button class="btn" onclick="openModel()">${ic("i-plus")}Добавить модель</button></div></section>`}
 
 function renderAch(){const A=S.ach;if(!A)return;let ms=A.models;if(S.mid!=="all")ms=ms.filter(m=>String(m.mid)===String(S.mid));
   const known=new Set((LS.get("nf_badges")||"").split(",").filter(Boolean)),now=A.models.flatMap(m=>m.badges.map(b=>m.mid+":"+b.id));
@@ -811,16 +813,17 @@ function renderAch(){const A=S.ach;if(!A)return;let ms=A.models;if(S.mid!=="all"
   $("#ach").innerHTML=ms.length?ms.map(m=>{const rk=m.rank,got=new Set(m.badges.map(b=>b.id));
     return`<div class="ach"><div><div style="display:flex;gap:10px;align-items:center">${tierHTML(rk.lvl)}<b>${esc(m.name)}</b><span class="mu">${esc(rk.name)}</span></div>
      <div class="di sm" style="margin-top:4px">${rk.next_at?`до «${esc(rk.next_name)}»: <span class="mono">${fmt(rk.next_at-rk.people)}</span> ${plural(rk.next_at-rk.people,"человек","человека","человек")}`:"максимальный ранг"}</div><div class="prog"><i style="width:${Math.max(2,rk.progress*100)}%"></i></div></div>
-     <div class="bdg">${A.defs.map(d=>`<span class="${got.has(d.id)?"on":""}" title="${esc(d.desc)}">${ic("b-"+d.id)}${esc(d.name)}</span>`).join("")}</div></div>`}).join(""):`<div class="empty">Добавьте модель — здесь появятся ранг и ачивки</div>`}
+     <div class="bdg">${A.defs.map(d=>`<span class="${got.has(d.id)?"on":""}" title="${esc(d.desc)}">${ic("b-"+d.id)}${esc(d.name)}</span>`).join("")}</div></div>`}).join(""):`<div class="empty">Добавьте модель, и здесь появятся ранг и ачивки</div>`}
 
 async function loadConv(){const ms=activeModels();if(!ms.length)return;const mid=S.mid!=="all"?S.mid:ms[0].id;let C;try{C=await api("/api/conv?mid="+mid)}catch(e){return}renderConv(C,mid)}
-function renderConv(C,mid){const m=activeModels().find(x=>String(x.id)===String(mid))||{},cur=C.weeks[C.weeks.length-1],mxr=Math.max(.1,...C.weeks.map(w=>w.rate||0)),pr=v=>String(v).replace(".",",");
+function renderConv(C,mid){const m=activeModels().find(x=>String(x.id)===String(mid))||{},cur=C.weeks[C.weeks.length-1],cap=v=>Math.min(100,v||0),mxr=Math.max(.1,...C.weeks.map(w=>cap(w.rate))),pr=v=>v>100?"100+":String(v).replace(".",","),over=cur.rate!=null&&cur.rate>100;
   $("#convBox").innerHTML=`<div class="pn-h"><h3>Конверсия в подписку</h3><span class="meta">ВИДИТЕ ТОЛЬКО ВЫ</span></div><div class="pn-b">
-   <div class="cv-top"><div class="cv-big ${cur.rate!=null?"pos":"di"}">${cur.rate!=null?pr(cur.rate)+"%":"—"}</div><div class="mu sm">${cur.rate!=null?`${fmt(cur.subs)} ${plural(cur.subs,"подписка","подписки","подписок")} из ${fmt(cur.people)} ${plural(cur.people,"человека","человек","человек")} · неделя ${cur.n}`:`неделя ${cur.n} · ${fmt(cur.people)} ${plural(cur.people,"человек","человека","человек")} по ссылкам`}</div></div>
+   <div class="cv-top"><div class="cv-big ${cur.rate!=null?(over?"neg":"pos"):"di"}">${cur.rate!=null?pr(cur.rate)+"%":"—"}</div><div class="mu sm cv-cap">${cur.rate!=null?`${fmt(cur.subs)} ${plural(cur.subs,"подписка","подписки","подписок")} из ${fmt(cur.people)} ${plural(cur.people,"человека","человек","человек")} · неделя ${cur.n}`:`неделя ${cur.n} · ${fmt(cur.people)} ${plural(cur.people,"человек","человека","человек")} по ссылкам`}</div></div>
    <div class="mu sm">${esc(m.name||"")}${cur.rate==null?" · впишите, сколько новых подписчиков пришло за неделю":""}</div>
-   <div class="cbars ${C.weeks.some(w=>w.rate!=null)?"":"e"}">${C.weeks.map((w,i)=>`<div class="${i===C.weeks.length-1?"cur":""}" title="Неделя ${w.n}: ${w.people} людей${w.subs!=null?", "+w.subs+" подписок":""}">${w.rate!=null?`<u>${pr(w.rate)}</u>`:""}<i class="${w.rate==null?"na":""}" style="${w.rate!=null?`height:${Math.max(3,w.rate/mxr*52)}px`:""}"></i>${w.n}</div>`).join("")}</div>
-   <form id="fConv" class="cvf"><input class="in mono" name="subs" type="number" min="0" max="100000" inputmode="numeric" placeholder="подписок за неделю ${cur.n}" value="${cur.subs??""}" aria-label="Новых подписчиков за неделю"><button class="btn s">Сохранить</button></form>
-   <p class="fn">Конверсия = подписки ÷ живые люди × 100. Номер под столбиком — неделя года.</p></div>`;
+   ${over?`<p class="cv-warn">Подписок больше, чем людей по ссылкам кабинета: часть подписчиков пришла другим путём. Проверьте, что в био стоят ссылки кабинета.</p>`:""}
+   <div class="cbars ${C.weeks.some(w=>w.rate!=null)?"":"e"}">${C.weeks.map((w,i)=>`<div class="${i===C.weeks.length-1?"cur":""}" title="Неделя ${w.n}: ${w.people} людей${w.subs!=null?", "+w.subs+" подписок":""}">${w.rate!=null?`<u>${pr(w.rate)}</u>`:""}<i class="${w.rate==null?"na":""}" style="${w.rate!=null?`height:${Math.max(3,cap(w.rate)/mxr*52)}px`:""}"></i>${w.n}</div>`).join("")}</div>
+   <form id="fConv" class="cvf"><input class="in mono" name="subs" type="number" min="0" max="100000" inputmode="numeric" placeholder="например, 12" value="${cur.subs??""}" aria-label="Новых подписчиков за неделю"><button class="btn s">Сохранить</button></form>
+   <p class="fn">Конверсия = подписки ÷ живые люди × 100. Номер под столбиком: неделя года.</p></div>`;
   $("#fConv").onsubmit=async e=>{e.preventDefault();const v=new FormData(e.target).get("subs");if(v==="")return;try{renderConv(await api("/api/conv",{method:"POST",body:{mid:+mid,subs:+v}}),mid);toast("Сохранено")}catch(x){toast(x.message)}}}
 
 function renderModels(){const box=$("#models"),ms=S.me.models;if(!ms.length){box.innerHTML=onboardHTML();return}
@@ -837,8 +840,8 @@ function renderModels(){const box=$("#models"),ms=S.me.models;if(!ms.length){box
      <div class="acts"><button class="btn s" data-copy="${esc(l.url)}">${ic("i-copy")}Копировать</button><a class="btn gh s" href="${esc(l.url)}?check=1" target="_blank" rel="noopener" data-check title="Откроется как у подписчика, в статистику не попадёт">${ic("i-play")}Проверить</a><button class="btn gh s ic more" data-lmenu="${l.id}" aria-label="Настройки ссылки">${ic("i-more")}</button></div></div>`}).join("")}
    ${m.archived?"":`<form class="addlk" data-mid="${m.id}"><label class="f"><span>Новая ссылка · канал</span><select class="in" name="ch">${chOpts}</select></label>
      <label class="f"><span>Своя метка (необязательно)</span><input class="in mono" name="slug" placeholder="например, ${esc(m.slug)}-reels" autocomplete="off" pattern="[a-z0-9][a-z0-9\\-]{1,39}"></label>
-     <label class="f"><span>Заметка (необязательно)</span><input class="in" name="note" autocomplete="off" placeholder="например, аккаунт @anna.ai"></label><button class="btn gh">${ic("i-plus")}Добавить</button><p class="fn">Пустая метка — кабинет придумает её сам по названию модели и канала.</p></form>`}
-  </section>`).join("")+`<p class="di sm" style="text-align:center">Архив только прячет ссылку из списка — в старых био она продолжает работать.</p>`;
+     <label class="f"><span>Заметка (необязательно)</span><input class="in" name="note" autocomplete="off" placeholder="например, аккаунт @anna.ai"></label><button class="btn gh">${ic("i-plus")}Добавить</button><p class="fn">Пустая метка? Кабинет придумает её сам по названию модели и канала.</p></form>`}
+  </section>`).join("")+`<p class="di sm" style="text-align:center">Архив только прячет ссылку из списка, а в старых био она продолжает работать.</p>`;
   $$("[data-copy]").forEach(b=>b.onclick=()=>copy(b.dataset.copy,"Ссылка скопирована"));
   $$("[data-check]").forEach(b=>b.addEventListener("click",()=>{toast("Тест-переход: в статистику не попадёт");setTimeout(refreshMe,4000)}));
   $$("[data-copyall]").forEach(b=>b.onclick=()=>{const m=S.me.models.find(x=>x.id==b.dataset.copyall);copy(m.links.filter(l=>!l.archived).map(l=>`${l.ch_name}: ${l.url}${l.note?" ("+l.note+")":""}`).join("\n"),"Все ссылки скопированы")});
@@ -846,7 +849,7 @@ function renderModels(){const box=$("#models"),ms=S.me.models;if(!ms.length){box
   $$("[data-lmenu]").forEach(b=>b.onclick=()=>openLink(b.dataset.lmenu));
   $$("[data-cmp]").forEach(b=>b.onclick=()=>openCompare(+b.dataset.cmp));
   $$(".addlk").forEach(f=>f.onsubmit=async e=>{e.preventDefault();const d=Object.fromEntries(new FormData(f));d.mid=+f.dataset.mid;
-    try{const r=await api("/api/links",{method:"POST",body:d});S.me.models=r.models;renderModels();toast("Ссылка готова — нажмите «Проверить»")}catch(x){toast(x.message)}});
+    try{const r=await api("/api/links",{method:"POST",body:d});S.me.models=r.models;renderModels();toast("Ссылка готова. Нажмите «Проверить»")}catch(x){toast(x.message)}});
   if(!S.stats&&activeModels().length)api("/api/stats?mid=all").then(r=>{S.stats=r;if(S.page==="lk")renderModels()}).catch(()=>{})}
 function modal(html,cls){$("#modalBox").innerHTML=html;$("#modal").className="modal "+(cls||"");$$("#modalBox [data-close]").forEach(b=>b.onclick=closeModal);setTimeout(()=>$("#modalBox input:not([type=checkbox]):not([type=radio])")?.focus(),40)}
 function closeModal(){$("#modal").classList.add("hide")}
@@ -872,21 +875,21 @@ function openModel(m){if(!(m&&m.id))m=null;
    <div class="err"></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn" style="flex:1">${m?"Сохранить":"Создать и получить ссылки"}</button>${m?`<button type="button" class="btn ${m.archived?"gh":"dg"}" id="arch">${m.archived?"Вернуть из архива":"В архив"}</button>`:""}</div></form>`);
   $("#fModel").onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.target),er=e.target.querySelector(".err");
     try{const r=m?await api("/api/models/"+m.id,{method:"PATCH",body:{name:fd.get("name"),target:fd.get("target"),hidden:fd.get("hidden")==="on"}}):await api("/api/models",{method:"POST",body:{name:fd.get("name"),target:fd.get("target"),channels:fd.getAll("ch")}});
-      S.me.models=r.models;closeModal();renderMbar();refreshMe();if(S.page!=="lk")go("lk");else renderModels();toast(m?"Сохранено":"Модель создана — ссылки готовы")}catch(x){er.textContent=x.message}};
+      S.me.models=r.models;closeModal();renderMbar();refreshMe();if(S.page!=="lk")go("lk");else renderModels();toast(m?"Сохранено":"Модель создана, ссылки готовы")}catch(x){er.textContent=x.message}};
   if(m)$("#arch").onclick=async()=>{const r=await api("/api/models/"+m.id,{method:"PATCH",body:{archived:!m.archived}});S.me.models=r.models;closeModal();renderMbar();renderModels()}}
 function openLink(id){let l,mm;S.me.models.forEach(m=>m.links.forEach(x=>{if(x.id==id){l=x;mm=m}}));if(!l)return;
   modal(MH(`${chI(l.ch)} ${esc(l.ch_name)}`)+`<form id="fLink" class="pn-b"><div class="mono" style="margin:0 0 14px;color:var(--ac)">${esc(l.url)}</div>
    <label class="f"><span>Заметка</span><input class="in" name="note" maxlength="60" value="${esc(l.note)}"></label>
-   <label class="f"><span>Своя ссылка назначения — пусто: ведёт на ссылку модели</span><input class="in mono" name="target" value="${esc(l.target)}" placeholder="${esc(mm.target)}"></label>
+   <label class="f"><span>Своя ссылка назначения (пусто: ведёт на ссылку модели)</span><input class="in mono" name="target" value="${esc(l.target)}" placeholder="${esc(mm.target)}"></label>
    <div class="err"></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" style="flex:1">Сохранить</button><button type="button" class="btn ${l.archived?"gh":"dg"}" id="larch">${l.archived?"Вернуть":"В архив"}</button></div>
-   <p class="di sm" style="margin:12px 0 0">Архив прячет ссылку из списка — она продолжает работать и считать переходы.</p></form>`);
+   <p class="di sm" style="margin:12px 0 0">Архив прячет ссылку из списка, но она продолжает работать и считать переходы.</p></form>`);
   $("#fLink").onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.target);try{const r=await api("/api/links/"+l.id,{method:"PATCH",body:{note:fd.get("note"),target:fd.get("target")}});S.me.models=r.models;closeModal();renderModels();toast("Сохранено")}catch(x){e.target.querySelector(".err").textContent=x.message}};
   $("#larch").onclick=async()=>{const r=await api("/api/links/"+l.id,{method:"PATCH",body:{archived:!l.archived}});S.me.models=r.models;closeModal();renderModels()}}
 function openPw(){modal(MH("Сменить пароль")+`<form id="fPw" class="pn-b"><label class="f"><span>Старый пароль</span><input class="in" type="password" name="old" autocomplete="current-password" required></label>
    <label class="f"><span>Новый пароль, от 8 символов</span><input class="in" type="password" name="new" autocomplete="new-password" minlength="8" required></label><div class="err"></div><button class="btn" style="width:100%">Сменить пароль</button></form>`);
   $("#fPw").onsubmit=async e=>{e.preventDefault();try{await api("/api/password",{method:"POST",body:Object.fromEntries(new FormData(e.target))});closeModal();toast("Пароль изменён")}catch(x){e.target.querySelector(".err").textContent=x.message}}}
 function openPrivacy(){modal(MH("Приватность")+`<div class="pn-b"><p class="mu" style="margin:0 0 14px">В лиге другие ученики видят только имя модели, ваш ник и очки. Ссылки, города и статистика видны только вам.</p>
-   <label class="toggle"><input type="checkbox" id="pubOk" ${S.me.public_ok?"checked":""}><span><b>Можно упоминать мой ник в итогах недели</b><br><span class="mu sm">Если модель попадёт в топ-3, куратор сможет отметить вас в канале курса. Без галочки — только имя модели.</span></span></label></div>`);
+   <label class="toggle"><input type="checkbox" id="pubOk" ${S.me.public_ok?"checked":""}><span><b>Можно упоминать мой ник в итогах недели</b><br><span class="mu sm">Если модель попадёт в топ-3, куратор сможет отметить вас в канале курса. Без галочки только имя модели.</span></span></label></div>`);
   $("#pubOk").onchange=async e=>{const r=await api("/api/privacy",{method:"POST",body:{public_ok:e.target.checked}});S.me.public_ok=r.public_ok;toast("Сохранено")}}
 function openCard(mid){const ms=activeModels();if(!ms.length){toast("Сначала добавьте модель");return}
   const st={mid:mid||(S.mid!=="all"?S.mid:ms[0].id),kind:"week",nick:false};
@@ -904,14 +907,14 @@ function openCard(mid){const ms=activeModels();if(!ms.length){toast("Снача�
 async function openTg(){let t;try{t=await api("/api/tg")}catch(e){return}
   if(!t.enabled){modal(MH("Уведомления в Telegram")+`<div class="pn-b"><p class="mu" style="margin:0">Скоро здесь можно будет подключить бота: первый человек по ссылке, места в лиге, ачивки и итоги недели.</p></div>`);return}
   const modes=[["all","Все события","первый человек, круглые числа, места, ачивки, итоги"],["digest","Только итоги недели","воскресный дайджест и итоги в понедельник"],["off","Выключены",""]];
-  modal(MH("Уведомления в Telegram")+`<div class="pn-b">${t.linked?`<p class="mu sm" style="margin:0 0 12px"><span class="pos">● Подключено.</span> Не больше 4 сообщений в день, с 23:00 до 9:00 — тишина.</p>
+  modal(MH("Уведомления в Telegram")+`<div class="pn-b">${t.linked?`<p class="mu sm" style="margin:0 0 12px"><span class="pos">● Подключено.</span> Не больше 4 сообщений в день, с 23:00 до 9:00 тишина.</p>
      <div style="display:flex;flex-direction:column;gap:6px" id="tgM">${modes.map(([k,n,d])=>`<label class="toggle"><input type="radio" name="tgm" value="${k}" ${t.mode===k?"checked":""}><span><b>${n}</b>${d?`<br><span class="mu sm">${d}</span>`:""}</span></label>`).join("")}</div>
      <button class="btn gh" id="tgUn" style="margin-top:12px">Отвязать Telegram</button>`
    :`<p class="mu" style="margin:0 0 16px">Бот напишет, когда по новой ссылке придёт первый человек, модель наберёт круглое число людей, войдёт в топ лиги или получит ачивку. Плюс воскресный дайджест и итоги недели.</p>
      <button class="btn" id="tgGo" style="width:100%">${ic("i-bell")}Подключить Telegram</button><p class="mu sm" id="tgWait" style="text-align:center;margin:12px 0 0"></p>`}</div>`);
   $$("#tgM input").forEach(i=>i.onchange=async()=>{await api("/api/tg/mode",{method:"POST",body:{mode:i.value}});toast("Сохранено")});
   if($("#tgUn"))$("#tgUn").onclick=async()=>{await api("/api/tg/unlink",{method:"POST",body:{}});closeModal();toast("Telegram отвязан");refreshMe()};
-  if($("#tgGo"))$("#tgGo").onclick=async()=>{try{const r=await api("/api/tg/link",{method:"POST",body:{}});window.open(r.url,"_blank");$("#tgWait").textContent="Нажмите «Старт» в боте — я подожду…";let n=0;
+  if($("#tgGo"))$("#tgGo").onclick=async()=>{try{const r=await api("/api/tg/link",{method:"POST",body:{}});window.open(r.url,"_blank");$("#tgWait").textContent="Нажмите «Старт» в боте, я подожду…";let n=0;
     const iv=setInterval(async()=>{n++;try{const s=await api("/api/tg");if(s.linked){clearInterval(iv);closeModal();celebrate("Telegram подключён");refreshMe()}}catch(e){}if(n>60)clearInterval(iv)},3000)}catch(x){$("#tgWait").textContent=x.message}}}
 
 function palItems(){const it=[["Навигация","Эфир","i-ov",()=>go("ov")],["Навигация","Студия","i-studio",()=>go("st")],["Навигация","Модели и ссылки","i-lk",()=>go("lk")],["Студия","Написать план недели","i-cast",()=>{ST.tab="plan";go("st")}],["Студия","Чаттер: ответить фанату","i-chat",()=>{ST.tab="chat";go("st")}],["Студия","Паспорт модели","i-user",()=>{ST.tab="pass";go("st")}],["Студия","Тариф и лимиты","i-spark",()=>openTariff()],["Навигация","Лига недели","i-lg",()=>go("lg")],
@@ -930,7 +933,7 @@ let deferredPrompt=null;addEventListener("beforeinstallprompt",e=>{e.preventDefa
 const isStandalone=()=>matchMedia("(display-mode: standalone)").matches||navigator.standalone;
 function pwaInit(){if(isStandalone()||LS.get("nf_pwa_x")||!S.me)return;const ios=/iphone|ipad|ipod/i.test(navigator.userAgent),mob=/android|iphone|ipad/i.test(navigator.userAgent);
   if(!mob||!(deferredPrompt||ios)||(S.me.onboarding&&S.me.onboarding.done<2))return;
-  $("#pwaText").textContent=ios?"Добавьте кабинет на экран «Домой» — откроется как приложение.":"Установите кабинет как приложение — открывается в один тап.";
+  $("#pwaText").textContent=ios?"Добавьте кабинет на экран «Домой», и он откроется как приложение.":"Установите кабинет как приложение: открывается в один тап.";
   $("#pwaBanner").classList.remove("hide");$("#pwaGo").onclick=()=>installApp();$("#pwaX").onclick=()=>{LS.set("nf_pwa_x",1);$("#pwaBanner").classList.add("hide")}}
 async function installApp(){if(deferredPrompt){deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;$("#pwaBanner").classList.add("hide");return}
   if(isStandalone()){toast("Кабинет уже установлен");return}
@@ -940,17 +943,17 @@ async function loadLeague(){const q=new URLSearchParams();if(S.lgCh)q.set("ch",S
   try{S.league=await api("/api/league"+(q.toString()?"?"+q:""));S.sync=Date.now()}catch(e){return}
   const L=S.league;if(S.lgDiv===null){S.lgDiv=L.my_div;return loadLeague()}
   const dn=(L.divs.find(d=>d.id===S.lgDiv)||{}).name,tot=S.lgDiv?L.div_total:L.models_total;
-  $("#lgSub").textContent=`Неделя ${L.week.split("-W")[1]}. ${dn?`Дивизион «${dn}»: `:"Вся лига: "}${L.rows.length} из ${tot} ${plural(tot,"модели","моделей","моделей")} уже ${L.rows.length===1?"набрала":"набрали"} очки${L.ch?" в канале "+((L.channels.find(c=>c.id===L.ch)||{}).name||""):""}.`;
+  $("#lgSub").textContent=`Неделя ${L.week.split("-W")[1]}. ${dn?`Дивизион «${dn}»: `:"Вся лига: "}${L.rows.length?`${L.rows.length<tot?`в таблице ${L.rows.length} из ${tot} ${plural(tot,"модели","моделей","моделей")}, остальные пока без переходов`:`в таблице все ${tot} ${plural(tot,"модель","модели","моделей")}`}`:`в дивизионе ${tot} ${plural(tot,"модель","модели","моделей")}, очков на этой неделе пока нет ни у кого`}${L.ch?" в канале "+((L.channels.find(c=>c.id===L.ch)||{}).name||""):""}.`;
   $("#lgDiv").innerHTML=[...L.divs.map(d=>`<button data-d="${d.id}" title="${esc(d.range)}">${esc(d.name)}${d.id===L.my_div?" ·":""}</button>`),`<button data-d="">Все</button>`].join("");
   $$("#lgDiv button").forEach(b=>{b.classList.toggle("on",b.dataset.d===(S.lgDiv||""));b.onclick=()=>{S.lgDiv=b.dataset.d;loadLeague()}});
   $("#lgCh").innerHTML=[`<option value="">Все каналы</option>`,...L.channels.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`)].join("");$("#lgCh").value=S.lgCh;$("#lgCh").onchange=e=>{S.lgCh=e.target.value;loadLeague()};
   const row=(r,extra)=>`<tr class="${r.place<=3?"p"+r.place:""} ${r.mine?"mine":""}"><td class="pl">${String(r.place).padStart(2,"0")}</td><td class="nm"><b>${esc(r.model)}${r.mine?' <span class="tag ac">ВЫ</span>':""}</b><span>@${esc(r.nick)} ${r.lvl!=null?tierHTML(r.lvl):""}</span></td><td class="r"><div class="pts">${fmt(r.pts)}</div>${extra||""}</td></tr>`;
-  $("#board").innerHTML=L.rows.length?L.rows.map(r=>{const d=r.pts-r.prev;return row(r,`<div class="d ${r.prev?(d>=0?"pos":"neg"):"di"}">${r.prev?(d>=0?"+":"")+fmt(d):"NEW"}</div>`)}).join(""):`<tr><td class="empty">Здесь пока никто не набрал очков на этой неделе. Первый человек по вашей ссылке — и модель в таблице.</td></tr>`;
+  $("#board").innerHTML=L.rows.length?L.rows.map(r=>{const d=r.pts-r.prev;return row(r,`<div class="d ${r.prev?(d>=0?"pos":"neg"):"di"}">${r.prev?(d>=0?"+":"")+fmt(d):"NEW"}</div>`)}).join(""):`<tr><td class="empty">Здесь пока никто не набрал очков на этой неделе. Первый человек по вашей ссылке, и модель в таблице.</td></tr>`;
   $("#rush").innerHTML=L.rush.length?L.rush.slice(0,5).map((r,i)=>row({...r,place:i+1},`<div class="d pos">×${String(r.x).replace(".",",")}</div>`)).join(""):`<tr><td class="empty">Появится при росте к прошлой неделе от 10 очков</td></tr>`;
-  $("#winners").innerHTML=L.winners.length?L.winners.map(r=>row(r)).join(""):`<tr><td class="empty">Первая неделя лиги — победители появятся в понедельник</td></tr>`;
+  $("#winners").innerHTML=L.winners.length?L.winners.map(r=>row(r)).join(""):`<tr><td class="empty">Первая неделя лиги. Победители появятся в понедельник</td></tr>`;
   const mine=L.mine;
   $("#myplace").innerHTML=mine.length?`<div style="display:flex;gap:18px;align-items:center"><div class="big">#${mine[0].place}</div><div><b>${esc(mine[0].model)}</b><div class="mu sm"><span class="mono">${fmt(mine[0].pts)}</span> ${plural(mine[0].pts,"очко","очка","очков")}${mine[0].place>1?` · до #${mine[0].place-1}: <span class="mono">${fmt(L.rows[mine[0].place-2].pts-mine[0].pts+1)}</span>`:" · лидер дивизиона"}</div>
-    ${mine.slice(1,4).map(x=>`<div class="di sm">${esc(x.model)} — #${x.place}</div>`).join("")}</div></div><button class="btn s" data-card style="margin-top:14px">${ic("i-img")}Карточка для сторис</button>`:`<p class="mu" style="margin:0">Пока без очков в этом дивизионе.</p>`;
+    ${mine.slice(1,4).map(x=>`<div class="di sm">${esc(x.model)}: #${x.place}</div>`).join("")}</div></div><button class="btn s" data-card style="margin-top:14px">${ic("i-img")}Карточка для сторис</button>`:`<p class="mu" style="margin:0">Пока без очков в этом дивизионе.</p>`;
   tick();clearInterval(S.timerT);S.timerT=setInterval(tick,1000)}
 function tick(){if(!S.league)return;const s=Math.max(0,(new Date(S.league.week_end)-Date.now())/1000),p=v=>String(v).padStart(2,"0");
   $("#clock").innerHTML=`${p(Math.floor(s/86400))}<small>d</small>${p(Math.floor(s%86400/3600))}<small>h</small>${p(Math.floor(s%3600/60))}<small>m</small>${p(Math.floor(s%60))}<small>s</small>`}
@@ -992,7 +995,7 @@ function coreBurst(scored,g){if(REDUCED)return;const t=performance.now();CORE.bu
   for(let i=0;i<5;i++)CORE.parts.push({t:t+i*60,y:Math.random(),mg:!scored});if(CORE.parts.length>60)CORE.parts.splice(0,CORE.parts.length-60);
   if(g&&g.lat!=null)CORE.pings.push({lat:g.lat,lon:g.lon,t,mg:!scored});if(CORE.pings.length>30)CORE.pings.shift()}
 async function loadCore(){try{CORE.data=await api("/api/core?mid="+S.mid)}catch(e){return}
-  const live=!isDemo();if(CORE.wasLive===false&&live&&!CORE.forced){fadeScene();toast("Пошли живые данные — сцена в режиме LIVE")}CORE.wasLive=live;
+  const live=!isDemo();if(CORE.wasLive===false&&live&&!CORE.forced){fadeScene();toast("Пошли живые данные, сцена в режиме LIVE")}CORE.wasLive=live;
   if(!live&&!CORE.D)demoInit();if(live&&CORE.data.geo){/* свежие точки суток */}
   coreChrome();renderCoreSide();coreHud();coreStart()}
 function fadeScene(){const cv=$("#coreCv");cv.classList.add("fade");setTimeout(()=>cv.classList.remove("fade"),360)}
@@ -1026,7 +1029,7 @@ function coreHud(){if(!CORE.data&&!CORE.D)return;const d=isDemo(),sc=CORE.scene;
   else if(sc==="orbit"){const g=cGeo().filter(x=>x.age<86400),cities=new Set(g.map(x=>x.city)),cc=new Set(g.map(x=>x.cc));const top={};g.forEach(x=>top[x.city]=(top[x.city]||0)+1);const tc=Object.entries(top).sort((a,b)=>b[1]-a[1])[0];
     lbl="ГЕОГРАФИЯ · 24 Ч";big=fmt(cities.size);sub=`${plural(cities.size,"город","города","городов")} · стран <b>${cc.size}</b>${tc?` · топ <b>${esc(tc[0])}</b>`:""}`}
   else{const fc=cForecast(),s=fsum(fc),f0=fc[0];lbl="ПРОГНОЗ НА ВОСКРЕСЕНЬЕ";big=fc.length?"≈"+fmt(s.proj):"—";
-    sub=fc.length?`сейчас <b>${fmt(s.pts)}</b> · темп <b>${n1(s.rate)}</b>/ч${fc.length===1&&f0.place_proj?` · место <b>#${f0.place||"—"} → #${f0.place_proj}</b>`:""}`:"добавьте модель"}
+    sub=fc.length?`сейчас <b>${fmt(s.pts)}</b> · темп <b>${n1(s.rate)}</b>/ч${fc.length===1&&f0.place_proj?` · место <b>${f0.place&&f0.place===f0.place_proj?`держит #${f0.place}`:`#${f0.place||"—"} → #${f0.place_proj}`}</b>`:""}`:"добавьте модель"}
   $("#cLbl").textContent=lbl;$("#cBig").textContent=big;$("#cSub").innerHTML=sub;
   const sg=sigList().find(x=>x.kind==="spike"),al=$("#cAlert");
   if(sg&&sc!=="cast"){al.className="alert sp";al.innerHTML=`${ic("i-spark")}<em>ВСПЛЕСК ${esc(sg.val)}</em><span>${esc(sg.title)}</span>`}else al.className="alert hide"}
@@ -1034,22 +1037,22 @@ function coreHud(){if(!CORE.data&&!CORE.D)return;const d=isDemo(),sc=CORE.scene;
 function renderCoreSide(){if(!CORE.data&&!CORE.D)return;const d=isDemo(),sg=sigList(),fc=cForecast(),conf=d||CORE.data.confident;
   const sigH=sg.length?sg.map(x=>`<div class="sig ${x.kind} ${x.kind==="spike"?"glow":""}"><span class="ico">${chI(x.ch)}</span><div style="min-width:0"><b>${esc(x.title)}</b><span>${esc(x.sub)}</span></div><em>${esc(x.val)}</em></div>`).join("")
     :`<p class="fn" style="font-size:12px;color:var(--mu)">Всё ровно: за последние 3 часа ни одна ссылка не вышла за норму.</p>`;
-  const fcH=fc.length?fc.slice(0,3).map(f=>{const rk=f.rank;return`<div class="fc"><div><b>${esc(f.name)}</b><span>сейчас ${fmt(f.pts)} · ${n1(f.rate_h)}/ч</span></div><div class="r"><b>≈${fmt(f.proj)}</b><span>${f.place_proj?`#${f.place||"—"} → #${f.place_proj} из ${f.rivals}`:"вне таблицы"}</span></div>
+  const fcH=fc.length?fc.slice(0,3).map(f=>{const rk=f.rank;return`<div class="fc"><div><b>${esc(f.name)}</b><span>сейчас ${fmt(f.pts)} · ${n1(f.rate_h)}/ч</span></div><div class="r"><b>≈${fmt(f.proj)}</b><span>${f.place_proj?(f.place===f.place_proj?`держит #${f.place} из ${f.rivals}`:`#${f.place||"—"} → #${f.place_proj} из ${f.rivals}`):"вне таблицы"}</span></div>
      ${rk.next_at?`<div class="bar"><i style="width:${Math.max(3,rk.progress*100)}%"></i></div><span style="grid-column:1/-1">до «${esc(rk.next_name)}» ${fmt(rk.next_at-rk.people)} ${plural(rk.next_at-rk.people,"человек","человека","человек")}${f.rank_eta_days!=null?` · ≈${n1(f.rank_eta_days)} дн. при нынешнем темпе`:""}</span>`:""}</div>`}).join("")
-    :`<p class="fn">Добавьте модель — появится прогноз.</p>`;
+    :`<p class="fn">Добавьте модель, и появится прогноз.</p>`;
   const ins=insights();
   $("#coreSide").innerHTML=`<div class="sd"><div class="sd-h">Сигналы<span>3 Ч ПРОТИВ НОРМЫ 7 Д</span></div>${sigH}</div>
    <div class="sd"><div class="sd-h">Прогноз к воскресенью<span>${conf?"ТЕМП 48 Ч":"МАЛО ДАННЫХ"}</span></div>${fcH}</div>
    <div class="sd"><div class="sd-h">Выводы</div><ul class="ins">${ins.map(x=>`<li class="${x[1]?"m":""}">${x[0]}</li>`).join("")}</ul></div>
-   <p class="fn">${d?"Демо: пример того, как блок выглядит с трафиком. ":""}Сигналы и прогноз считаются формулами по вашим кликам: последние 3 часа против средней нормы за 7 дней, прогноз — по темпу за 48 часов.</p>`}
+   <p class="fn">${d?"Демо: пример того, как блок выглядит с трафиком. ":""}Сигналы и прогноз считаются формулами по вашим кликам: последние 3 часа против средней нормы за 7 дней, прогноз по темпу за 48 часов.</p>`}
 function insights(){const out=[],sg=sigList(),fc=cForecast();
   const sp=sg.find(x=>x.kind==="spike");if(sp)out.push([`<b>${esc(sp.title)}</b> выстреливает: ${esc(sp.sub)}. Закрепите этот формат и повторите публикацию.`,1]);
-  const dr=sg.find(x=>x.kind==="drop");if(dr)out.push([`<b>${esc(dr.title)}</b> просел (${esc(dr.val)} к норме) — проверьте, жива ли ссылка в био.`,1]);
+  const dr=sg.find(x=>x.kind==="drop");if(dr)out.push([`<b>${esc(dr.title)}</b> просел (${esc(dr.val)} к норме). Проверьте, жива ли ссылка в био.`,1]);
   const f=fc.slice().sort((a,b)=>(a.place_proj||99)-(b.place_proj||99))[0];
   if(f&&f.place_proj&&f.place&&f.place_proj<f.place)out.push([`<b>${esc(f.name)}</b> идёт на подъём: с #${f.place} на #${f.place_proj} к воскресенью${f.target_proj?`, до следующего места нужно ≈${fmt(f.target_proj-f.proj+1)}`:""}.`]);
   else if(f&&f.target_proj)out.push([`<b>${esc(f.name)}</b>: чтобы подняться выше, к воскресенью нужно ещё ≈${fmt(f.target_proj-f.proj+1)} ${plural(f.target_proj-f.proj+1,"человек","человека","человек")} сверх темпа.`]);
-  if(!isDemo()&&S.stats){const hs=S.stats.hours,mx=Math.max(...hs);if(mx){const ph=hs.indexOf(mx);out.push([`Пик кликов — ${String(ph).padStart(2,"0")}:00. Публикуйте примерно к ${String((ph+23)%24).padStart(2,"0")}:00.`])}}
-  else if(isDemo())out.push(["Пик кликов — 22:00. Публикуйте примерно к 21:00."]);
+  if(!isDemo()&&S.stats){const hs=S.stats.hours,mx=Math.max(...hs);if(mx){const ph=hs.indexOf(mx);out.push([`Пик кликов: ${String(ph).padStart(2,"0")}:00. Публикуйте примерно к ${String((ph+23)%24).padStart(2,"0")}:00.`])}}
+  else if(isDemo())out.push(["Пик кликов: 22:00. Публикуйте примерно к 21:00."]);
   if(!out.length)out.push(["Пока без отклонений. Новые выводы появятся, когда наберётся трафик за несколько дней."]);return out.slice(0,3)}
 
 /* холст */
@@ -1183,8 +1186,8 @@ function tariffChip(t){if(!t)return;ST.t=t;const P=t.plans[t.plan],u=t.used,left
   $("#stTariff").innerHTML=`<span class="tag ${t.plan==="pro"?"ac":t.plan==="trial"?"mg":""}">${esc(t.name)}${days!=null?` · ${days} ${plural(days,"день","дня","дней")}`:""}</span>
    <span class="qm" title="планы недели на этой неделе">${ic("i-cast")}<b>${left("plan")}</b>/${P.plan}</span><span class="qm" title="посты сегодня">${ic("i-lk")}<b>${left("post")}</b>/${P.post}</span><span class="qm" title="ответы чаттера сегодня">${ic("i-chat")}<b>${left("chat")}</b>/${P.chat}</span>`}
 function renderStudio(){const D=ST.d;if(!D)return;const box=$("#stBody");
-  const pf=D.persona_filled,warn=pf[0]<2&&ST.tab!=="pass"?`<div class="pn banner glow cy"><svg class="i lg"><use href="#i-user"/></svg><p><b>Паспорт модели заполнен на ${pf[0]} из ${pf[1]}.</b> Без характера и примеров речи ИИ пишет безлико — 5 минут на паспорт окупаются каждым постом.</p><button class="btn s" data-st="pass">Заполнить</button></div>`:"";
-  const noai=!D.tariff.ai_ready?`<div class="pn banner"><svg class="i lg"><use href="#i-shield"/></svg><p>ИИ ещё не подключён куратором — паспорт и собеседников уже можно заполнять, генерация заработает после подключения.</p></div>`:"";
+  const pf=D.persona_filled,warn=pf[0]<2&&ST.tab!=="pass"?`<div class="pn banner glow cy"><svg class="i lg"><use href="#i-user"/></svg><p><b>Паспорт модели заполнен на ${pf[0]} из ${pf[1]}.</b> Без характера и примеров речи ИИ пишет безлико, а 5 минут на паспорт окупаются каждым постом.</p><button class="btn s" data-st="pass">Заполнить</button></div>`:"";
+  const noai=!D.tariff.ai_ready?`<div class="pn banner"><svg class="i lg"><use href="#i-shield"/></svg><p>ИИ ещё не подключён куратором, но паспорт и собеседников уже можно заполнять, генерация заработает после подключения.</p></div>`:"";
   box.innerHTML=noai+warn+(ST.tab==="chat"?chatHTML():ST.tab==="pass"?passHTML():planHTML());
   $$("[data-st]").forEach(b=>b.onclick=()=>{ST.tab=b.dataset.st;LS.set("nf_st_tab",ST.tab);loadStudio()});
   if(ST.tab==="plan")bindPlan();else if(ST.tab==="chat")bindChat();else bindPass()}
@@ -1193,7 +1196,7 @@ function renderStudio(){const D=ST.d;if(!D)return;const box=$("#stBody");
 function planHTML(){const D=ST.d,P=D.plan,J=ST.job;
   if(J&&J.status==="run")return`<section class="pn"><div class="pn-b gen"><div class="gen-t"><span class="dot live"></span><b>Пишу неделю для ${esc(D.model.name)}…</b><span class="mono di">${J.step}/${J.total}</span></div>
     <div class="segbar">${Array.from({length:J.total},(_,i)=>`<i class="${i<J.step?"on":""}"></i>`).join("")}</div><p class="fn">Сначала сюжет недели, потом посты на каждый день под ваши каналы: ${D.channels.map(CHN).join(", ")}. Обычно до минуты.</p></div></section>`;
-  if(!P)return`<section class="pn"><div class="pn-b empty-st"><h2>План постов на неделю</h2><p class="mu">Сюжет недели по воронке «доверие → прогрев → продажа» и посты на каждый день — под каналы, где у модели есть ссылки: <b>${D.channels.map(CHN).join(", ")}</b>. К каждому посту — готовая ссылка для био.</p>
+  if(!P)return`<section class="pn"><div class="pn-b empty-st"><h2>План постов на неделю</h2><p class="mu">Сюжет недели по воронке «доверие → прогрев → продажа» и посты на каждый день под каналы, где у модели есть ссылки: <b>${D.channels.map(CHN).join(", ")}</b>. К каждому посту готовая ссылка для био.</p>
     <label class="f" style="margin-top:14px"><span>События недели (необязательно)</span><textarea class="in" id="plScn" rows="3" placeholder="например, она едет на море, в пятницу выходит новый сет"></textarea></label>
     ${J&&J.status==="error"?`<p class="err">${esc(J.error||"Не получилось.")}</p>`:""}<button class="btn ac" id="plGo">${ic("i-spark")}Написать неделю</button><p class="fn" style="margin-top:8px">Списывает 1 план недели из лимита тарифа.</p></div></section>`;
   const di=ST.day,day=P.days[di],chs=D.channels;
@@ -1203,7 +1206,7 @@ function planHTML(){const D=ST.d,P=D.plan,J=ST.job;
     ${p.hook?`<div class="post-hook"><span class="mono di">${p.ch==="reddit"?"ЗАГОЛОВОК":"КРЮЧОК"}</span> ${esc(p.hook)}</div>`:""}
     <div class="post-t" id="pt${pi}">${esc(p.text).split(/\n-{2,}\n/).join('<hr class="part">')}</div>${p.hashtags?`<div class="mu sm">${esc(p.hashtags)}</div>`:""}
     ${p.imagePrompt||p.sound?`<details class="post-m"><summary>${ic("i-img")}Что снять${p.sound?" · звук":""}</summary>${p.imagePrompt?`<p class="mono">${esc(p.imagePrompt)}</p>`:""}${p.sound?`<p class="mu sm">Звук: ${esc(p.sound)}</p>`:""}</details>`:""}
-    <div class="post-l">${url?`<span class="mono">${esc(url.replace("https://",""))}</span><button class="btn gh s" data-cl="${esc(url)}">${ic("i-copy")}Ссылка для био</button>`:`<span class="di sm">Для ${esc(CHN(p.ch))} нет ссылки кабинета — переходы не посчитаются.</span><button class="btn gh s" data-go="lk">${ic("i-plus")}Создать</button>`}</div>
+    <div class="post-l">${url?`<span class="mono">${esc(url.replace("https://",""))}</span><button class="btn gh s" data-cl="${esc(url)}">${ic("i-copy")}Ссылка для био</button>`:`<span class="di sm">Для ${esc(CHN(p.ch))} нет ссылки кабинета, переходы не посчитаются.</span><button class="btn gh s" data-go="lk">${ic("i-plus")}Создать</button>`}</div>
     <div class="post-a"><button class="btn s" data-cp="${pi}">${ic("i-copy")}Копировать текст</button><button class="btn gh s" data-re="${pi}">${ic("i-auto")}Переписать</button><button class="btn gh s" data-ed="${pi}">Править</button><label class="pdone"><input type="checkbox" data-done="${pi}" ${p.done?"checked":""}>опубликовано</label></div></article>`}).join("")||`<div class="empty">В этот день постов нет</div>`;
   return`<section class="pn plan-h"><div class="pn-b"><div class="plan-top"><div><div class="lbl mono di">СЮЖЕТ НЕДЕЛИ ${S.me.week.split("-W")[1]}</div><h2>${esc(P.storyline||"—")}</h2></div><button class="btn gh s" id="plAgain">${ic("i-auto")}Новая неделя</button></div>
     <div class="days">${tabs}</div><div class="beat"><span class="tag ${day.goal==="Продажа"?"mg":"ac"}">${esc(day.goal)}</span><span>${esc(day.beat)}</span></div></div></section>
@@ -1215,14 +1218,14 @@ function bindPlan(){const D=ST.d;
   $$("[data-day]").forEach(b=>b.onclick=()=>{ST.day=+b.dataset.day;renderStudio()});
   const P=D.plan;if(!P)return;const posts=P.days[ST.day].posts;
   $$("[data-cp]").forEach(b=>b.onclick=()=>{const p=posts[+b.dataset.cp];copy(p.text+(p.hashtags?"\n\n"+p.hashtags:""),"Текст скопирован")});
-  $$("[data-cl]").forEach(b=>b.onclick=()=>copy(b.dataset.cl,"Ссылка скопирована — поставьте её в био"));
+  $$("[data-cl]").forEach(b=>b.onclick=()=>copy(b.dataset.cl,"Ссылка скопирована. Поставьте её в био"));
   $$("[data-done]").forEach(i=>i.onchange=async()=>{try{const r=await api("/api/studio/plan",{method:"POST",body:{mid:ST.mid,day:ST.day,post:+i.dataset.done,done:i.checked}});D.plan=r.plan;renderStudio()}catch(e){toast(e.message)}});
   $$("[data-del]").forEach(b=>b.onclick=async()=>{if(!confirm("Удалить пост из плана?"))return;const r=await api("/api/studio/plan",{method:"POST",body:{mid:ST.mid,day:ST.day,post:+b.dataset.del,delete:true}});D.plan=r.plan;renderStudio()});
   $$("[data-re]").forEach(b=>b.onclick=()=>aiPost({post:+b.dataset.re},b));
   $$("[data-ed]").forEach(b=>b.onclick=()=>{const pi=+b.dataset.ed,el=$("#pt"+pi);el.outerHTML=`<textarea class="in" id="pe${pi}" rows="6">${esc(posts[pi].text)}</textarea><div style="display:flex;gap:6px;margin-top:6px"><button class="btn s" id="ps${pi}">Сохранить</button></div>`;
     $("#ps"+pi).onclick=async()=>{const r=await api("/api/studio/plan",{method:"POST",body:{mid:ST.mid,day:ST.day,post:pi,text:$("#pe"+pi).value}});D.plan=r.plan;renderStudio();toast("Сохранено")}});
   $("#plIdea").onclick=()=>{modal(MH("Пост из своей идеи")+`<div class="pn-b"><label class="f"><span>Канал</span><select class="in" id="idCh">${D.channels.map(c=>`<option value="${c}">${esc(CHN(c))}</option>`).join("")}</select></label>
-     <label class="f"><span>О чём пост — своими словами</span><textarea class="in" id="idT" rows="5" placeholder="например, хочу пост про то, как она впервые попробовала сёрфинг и упала 10 раз"></textarea></label>
+     <label class="f"><span>О чём пост, своими словами</span><textarea class="in" id="idT" rows="5" placeholder="например, хочу пост про то, как она впервые попробовала сёрфинг и упала 10 раз"></textarea></label>
      <label class="toggle" style="margin:0 0 12px"><input type="checkbox" id="idL"><span><b>Только причесать</b><br><span class="mu sm">Сохранить ваши слова, убрать воду и добавить крючок</span></span></label>
      <button class="btn ac" id="idGo" style="width:100%">${ic("i-spark")}Написать пост</button><p class="fn" style="margin-top:8px">Пост добавится в выбранный день. Списывает 1 пост из лимита.</p></div>`);
     $("#idGo").onclick=async()=>{const idea=$("#idT").value.trim();if(!idea){toast("Опишите идею");return}const b=$("#idGo");closeModal();await aiPost({idea,light:$("#idL").checked,ch:$("#idCh").value},null)}}}
@@ -1238,7 +1241,7 @@ function pollJob(id){clearTimeout(ST.poll);ST.job=ST.job&&ST.job.id===id?ST.job:
 /* --- чаттер --- */
 async function loadFans(){try{ST.fans=(await api("/api/fans?mid="+ST.mid)).fans}catch(e){ST.fans=[]}if(ST.fan)ST.fan=ST.fans.find(f=>f.id===ST.fan.id)||null}
 function chatHTML(){const F=ST.fan,stages=ST.d.stages;
-  const list=ST.fans.map(f=>{const last=f.history[f.history.length-1];return`<button class="fan ${F&&F.id===f.id?"on":""}" data-fan="${f.id}"><span class="ava">${esc((f.name[0]||"?").toUpperCase())}</span><span class="fn-m"><b>${esc(f.name)}</b><span>${last?esc((last.role==="fan"?"":"Вы: ")+last.text):"нет сообщений"}</span></span><span class="tag ${f.stage>=4?"mg":""}">${f.stage}</span></button>`}).join("")||`<p class="fn" style="padding:6px 2px">Добавьте первого собеседника — того, кто написал модели в личку.</p>`;
+  const list=ST.fans.map(f=>{const last=f.history[f.history.length-1];return`<button class="fan ${F&&F.id===f.id?"on":""}" data-fan="${f.id}"><span class="ava">${esc((f.name[0]||"?").toUpperCase())}</span><span class="fn-m"><b>${esc(f.name)}</b><span>${last?esc((last.role==="fan"?"":"Вы: ")+last.text):"нет сообщений"}</span></span><span class="tag ${f.stage>=4?"mg":""}">${f.stage}</span></button>`}).join("")||`<p class="fn" style="padding:6px 2px">Добавьте первого собеседника: того, кто написал модели в личку.</p>`;
   const conv=F?`<div class="pn-h"><h3>${esc(F.name)}</h3><button class="btn gh s ic" id="fDel" aria-label="Удалить собеседника">${ic("i-x")}</button></div><div class="pn-b">
      <div class="stg">${[1,2,3,4,5].map(i=>`<button data-stg="${i}" class="${F.stage===i?"on":""} ${i>=4?"m":""}"><b>${i}</b>${esc(stages[i])}</button>`).join("")}</div>
      <details class="notes"${F.notes?"":" open"}><summary>Что о нём знаю</summary><textarea class="in" id="fNotes" rows="2" placeholder="например, из Техаса, любит мотоциклы, покупал сет в пятницу">${esc(F.notes)}</textarea></details>
@@ -1246,7 +1249,7 @@ function chatHTML(){const F=ST.fan,stages=ST.d.stages;
      <div class="cin"><textarea class="in" id="fMsg" rows="2" placeholder="его новое сообщение"></textarea><button class="btn ac" id="fGo">${ic("i-spark")}3 ответа</button></div>
      ${ST.replies?`<div class="reps">${ST.replies.map((r,i)=>`<div class="rep"><span class="mono di">${["ТЁПЛЫЙ","ИГРИВЫЙ","ШАГ ВПЕРЁД"][i]||""}</span><p>${esc(r.text)}</p>${r.translation?`<p class="mu sm">${esc(r.translation)}</p>`:""}<div><button class="btn s" data-rc="${i}">${ic("i-copy")}Копировать</button><button class="btn gh s" data-rs="${i}">${ic("i-check")}Отправил этот</button></div></div>`).join("")}</div>`:""}
      <p class="fn" style="margin-top:10px">Модель общается в своём характере, но на прямой вопрос «ты настоящая?» честно отвечает, что она ИИ-модель. Это защищает аккаунт и доверие фанатов.</p></div>`
-    :`<div class="pn-b empty"><b>Выберите собеседника слева</b><br>или добавьте нового — вставьте его сообщение и получите 3 варианта ответа голосом модели.</div>`;
+    :`<div class="pn-b empty"><b>Выберите собеседника слева</b><br>или добавьте нового: вставьте его сообщение и получите 3 варианта ответа голосом модели.</div>`;
   return`<div class="chat"><section class="pn"><div class="pn-h"><h3>Собеседники</h3><button class="btn gh s" id="fAdd">${ic("i-plus")}Новый</button></div><div class="fans">${list}</div></section><section class="pn">${conv}</section></div>`}
 function bindChat(){
   $$("[data-fan]").forEach(b=>b.onclick=()=>{ST.fan=ST.fans.find(f=>f.id===+b.dataset.fan);ST.replies=null;renderStudio();const h=$("#hist");if(h)h.scrollTop=h.scrollHeight});
@@ -1274,13 +1277,13 @@ function passHTML(){const D=ST.d,p=D.persona,A=D.archetypes;
      ${f("life_facts","Факты из жизни","например, живёт в Майами, кошка Луна, сёрфинг по утрам, работает бариста",3,"Ими ИИ оживляет посты: конкретные детали вместо общих слов.")}
      ${f("story","История и сюжет","например, переехала из маленького города, копит на свою студию",3)}</div></section>
     <section class="pn"><div class="pn-h"><h3>Голос и внешность</h3></div><div class="pn-b">
-     ${f("voice","Как она пишет — 3–5 примеров сообщений","например:\nну привет 🙃\nты опять пропал, я уже начала скучать\nне скажу. угадай",6,"Самое важное поле: ИИ копирует длину фраз, регистр, эмодзи и сленг.")}
+     ${f("voice","Как она пишет: 3–5 примеров сообщений","например:\nну привет 🙃\nты опять пропал, я уже начала скучать\nне скажу. угадай",6,"Самое важное поле: ИИ копирует длину фраз, регистр, эмодзи и сленг.")}
      ${f("appearance","Внешность (на английском, для промптов фото)","e.g. 24 y.o. woman, long wavy auburn hair, green eyes, freckles, athletic",2)}
      ${f("offer","Что продаёт в закрытой части","например, подписка Fanvue и сеты в личке")}
      ${f("bans","Запреты","например, не упоминать алкоголь, не писать про бывших")}</div></section></div>
    <button class="btn" style="min-width:200px">${ic("i-check")}Сохранить паспорт</button></form>`}
 function bindPass(){$("#fPass").onsubmit=async e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.target));d.mid=ST.mid;
-  try{const r=await api("/api/studio/persona",{method:"POST",body:d});ST.d.persona=r.persona;ST.d.persona_filled=r.persona_filled;toast("Паспорт сохранён — ИИ будет писать её голосом");ST.tab="plan";LS.set("nf_st_tab","plan");$$("#stTabs button").forEach(x=>x.classList.toggle("on",x.dataset.t==="plan"));renderStudio()}catch(x){toast(x.message)}}}
+  try{const r=await api("/api/studio/persona",{method:"POST",body:d});ST.d.persona=r.persona;ST.d.persona_filled=r.persona_filled;toast("Паспорт сохранён. ИИ будет писать её голосом");ST.tab="plan";LS.set("nf_st_tab","plan");$$("#stTabs button").forEach(x=>x.classList.toggle("on",x.dataset.t==="plan"));renderStudio()}catch(x){toast(x.message)}}}
 
 /* --- тариф --- */
 async function openTariff(){let t;try{t=await api("/api/tariff")}catch(e){return}tariffChip(t);
@@ -1290,18 +1293,18 @@ async function openTariff(){let t;try{t=await api("/api/tariff")}catch(e){return
   modal(MH("Тариф и лимиты")+`<div class="pn-b"><div class="cv-top"><div class="cv-big ${t.plan==="pro"?"pos":""}">${esc(t.name)}</div><div class="mu sm">${until}</div></div>
     <table class="tbl trf"><tr><th></th>${col("trial")}${col("base")}${col("pro")}</tr>${rows.map(([k,l,w])=>`<tr><td>${l}<br><span class="di xs">${w} · использовано ${t.used[k]}</span></td>${["trial","base","pro"].map(p=>`<td class="r mono ${t.plan===p?"cur":""}">${t.plans[p][k]}</td>`).join("")}</tr>`).join("")}
      <tr><td>Аналитика, лига, NF Core</td><td class="r cur-all" colspan="3">всегда без ограничений</td></tr></table>
-    <p class="fn" style="margin:10px 0 14px">Тест — ${t.trial_days} дней с регистрации. Лимиты обнуляются каждый день (планы — по понедельникам).</p>
-    ${t.plan==="pro"?`<p class="mu sm">Pro активен. Продление — там же, где оформляли.</p>`:t.pro_url?`
-      ${t.tg_linked?"":`<div class="pn banner" style="margin:0 0 10px"><svg class="i lg"><use href="#i-bell"/></svg><p class="sm">Сначала подключите Telegram в кабинете — по нему мы узнаем вашу оплату и включим Pro автоматически.</p><button class="btn gh s" id="trTg">Подключить</button></div>`}
+    <p class="fn" style="margin:10px 0 14px">Тест: ${t.trial_days} дней с регистрации. Лимиты обнуляются каждый день (планы по понедельникам).</p>
+    ${t.plan==="pro"?`<p class="mu sm">Pro активен. Продление там же, где оформляли.</p>`:t.pro_url?`
+      ${t.tg_linked?"":`<div class="pn banner" style="margin:0 0 10px"><svg class="i lg"><use href="#i-bell"/></svg><p class="sm">Сначала подключите Telegram в кабинете: по нему мы узнаем вашу оплату и включим Pro автоматически.</p><button class="btn gh s" id="trTg">Подключить</button></div>`}
       <a class="btn ac" href="${esc(t.pro_url)}" target="_blank" rel="noopener" style="width:100%">${ic("i-spark")}Оформить Pro${t.price?" · "+esc(t.price):""}</a><p class="fn" style="margin-top:8px">Оплата через Tribute в Telegram (карта РФ/СБП). Pro включится в течение минуты после оплаты.</p>`
-      :`<p class="mu sm">Pro скоро можно будет оформить прямо здесь. Пока — напишите куратору.</p>`}</div>`);
+      :`<p class="mu sm">Pro скоро можно будет оформить прямо здесь. Пока напишите куратору.</p>`}</div>`);
   if($("#trTg"))$("#trTg").onclick=()=>{closeModal();openTg()}}
 
 async function bootAdmin(){$("#admin").classList.remove("hide");const tok=qs.get("token");if(tok)history.replaceState(null,"","/admin");
   let st;try{st=await api("/api/admin/state")}catch(e){return}if(!st.logged)return adminAuth(st,tok);$("#adTop").classList.remove("hide");renderAdmin()}
 function adminAuth(st,tok){$("#adMain").innerHTML=`<div style="max-width:420px;margin:8vh auto 0"><section class="pn">
    ${st.has_password?`<div class="pn-h"><h3>Вход для куратора</h3></div><form id="fA" class="pn-b"><label class="f"><span>Пароль админки</span><input class="in" type="password" name="password" autocomplete="current-password" required></label><div class="err"></div><button class="btn" style="width:100%">Войти</button>
-     <p class="mu sm" style="margin:14px 0 0">Забыли пароль — задайте новый с токеном с сервера: <a href="#" id="toSetup">сбросить</a>.</p></form>`
+     <p class="mu sm" style="margin:14px 0 0">Забыли пароль? Задайте новый с токеном с сервера: <a href="#" id="toSetup">сбросить</a>.</p></form>`
     :`<div class="pn-h"><h3>Защитим админку паролем</h3></div><p class="mu sm pn-b" style="margin:0;padding-bottom:0">Один раз: токен с сервера + новый пароль. Дальше вход только по паролю, токен остаётся ключом восстановления.</p>`}
    <form id="fS" class="pn-b ${st.has_password?"hide":""}"><label class="f"><span>Токен с сервера (lab-data/admin_token.txt)</span><input class="in mono" name="token" autocomplete="off" required value="${esc(tok||"")}"></label>
     <label class="f"><span>Новый пароль админки, от 10 символов</span><input class="in" type="password" name="password" autocomplete="new-password" minlength="10" required></label><div class="err"></div><button class="btn" style="width:100%">Сохранить пароль и войти</button></form></section></div>`;
@@ -1317,9 +1320,9 @@ async function renderAdmin(){let A;try{A=await api("/api/admin/overview")}catch(
     <section class="pn"><div class="pn-h"><h3>Кому нужна помощь</h3><span class="meta">${A.stuck.length} STUCK</span></div><div class="pn-b" style="padding-top:4px"><table class="tbl">${A.stuck.length?A.stuck.slice(0,12).map((s,i)=>`<tr><td><b>${esc(s.nick)}</b><br><span class="mu sm">${esc(s.label)}</span></td><td class="r"><button class="btn gh s" data-msg="${i}">${ic("i-copy")}Текст</button></td></tr>`).join(""):`<tr><td class="empty">Никто не застрял</td></tr>`}</table></div></section></div>
    <div class="g2"><section class="pn"><div class="pn-h"><h3>Ученики</h3><span class="meta">SORT: PEOPLE · WEEK</span></div><div class="pn-b tw" style="padding-top:4px"><table class="tbl"><tr><th>НИК</th><th class="r">МОД.</th><th class="r">ССЫЛ.</th><th class="r">НЕДЕЛЯ</th><th class="r">КЛИКИ</th><th style="padding-left:16px">БЫЛ</th><th></th></tr>
      ${A.users.map(u=>`<tr><td><b>${esc(u.nick)}</b>${u.blocked?' <span class="tag" style="color:var(--neg)">OFF</span>':""}<div class="di xs mono">${esc(u.invite)}</div></td><td class="r mono">${u.models}</td><td class="r mono">${u.links}</td><td class="r mono">${fmt(u.week_people)}</td><td class="r mono">${fmt(u.all_clicks)}</td><td class="mu sm" style="padding-left:16px;white-space:nowrap">${u.seen?ago(u.seen):"—"}</td>
-      <td class="r" style="white-space:nowrap"><span class="tag ${u.plan==="pro"?"ac":u.plan==="trial"?"mg":""}" title="ИИ-действий за неделю: ${u.ai_week}">${{trial:"Тест",base:"Базовый",pro:"Pro"}[u.plan]||""}</span> <select class="in s" data-course="${u.id}" title="Тариф курса. Оплаты Tribute подтягиваются сами, здесь — выдать вручную" style="width:auto;display:inline-block;padding:4px 28px 4px 8px"><option value="" ${!u.course?"selected":""}>Без курса</option><option value="base" ${u.course==="base"?"selected":""}>Базовый</option><option value="adv" ${u.course==="adv"?"selected":""}>Продвинутый</option></select> <button class="btn gh s" data-pro="${u.id}">Pro +30</button> <button class="btn gh s" data-rp="${u.id}">Сброс пароля</button> <button class="btn s ${u.blocked?"gh":"dg"}" data-bl="${u.id}" data-v="${u.blocked?0:1}">${u.blocked?"Включить":"Отключить"}</button></td></tr>`).join("")||`<tr><td class="empty">Пока никого — создайте инвайт</td></tr>`}</table></div></section>
+      <td class="r" style="white-space:nowrap"><span class="tag ${u.plan==="pro"?"ac":u.plan==="trial"?"mg":""}" title="ИИ-действий за неделю: ${u.ai_week}">${{trial:"Тест",base:"Базовый",pro:"Pro"}[u.plan]||""}</span> <select class="in s" data-course="${u.id}" title="Тариф курса. Оплаты Tribute подтягиваются сами, здесь можно выдать вручную" style="width:auto;display:inline-block;padding:4px 28px 4px 8px"><option value="" ${!u.course?"selected":""}>Без курса</option><option value="base" ${u.course==="base"?"selected":""}>Базовый</option><option value="adv" ${u.course==="adv"?"selected":""}>Продвинутый</option></select> <button class="btn gh s" data-pro="${u.id}">Pro +30</button> <button class="btn gh s" data-rp="${u.id}">Сброс пароля</button> <button class="btn s ${u.blocked?"gh":"dg"}" data-bl="${u.id}" data-v="${u.blocked?0:1}">${u.blocked?"Включить":"Отключить"}</button></td></tr>`).join("")||`<tr><td class="empty">Пока никого. Создайте инвайт</td></tr>`}</table></div></section>
     <div><section class="pn" style="margin:0 0 12px"><div class="pn-h"><h3>Новые инвайты</h3></div><form id="fInv" class="pn-b"><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><label class="f"><span>Кодов</span><input class="in mono" name="count" type="number" min="1" max="100" value="1"></label><label class="f"><span>Регистраций на код</span><input class="in mono" name="max_uses" type="number" min="1" max="1000" value="1"></label></div>
-       <label class="f"><span>Заметка — кому</span><input class="in" name="note" placeholder="например, поток ноябрь"></label><button class="btn" style="width:100%">Создать</button><div id="newCodes" style="margin-top:10px"></div></form></section>
+       <label class="f"><span>Заметка: кому</span><input class="in" name="note" placeholder="например, поток ноябрь"></label><button class="btn" style="width:100%">Создать</button><div id="newCodes" style="margin-top:10px"></div></form></section>
      <section class="pn"><div class="pn-h"><h3>Все инвайты</h3><span class="meta">BACKUP: ${A.backups.last?esc(A.backups.last):"—"}</span></div><div class="pn-b" style="max-height:380px;overflow:auto;padding-top:4px"><table class="tbl">${A.invites.map(i=>`<tr><td class="mono" style="color:${i.uses>=i.max_uses?"var(--di)":"var(--ac)"}">${esc(i.code)}</td><td class="mu sm">${esc(i.note)}${i.used_by?" · "+esc(i.used_by):""}</td><td class="r mono di">${i.uses}/${i.max_uses}</td><td class="r">${i.uses<i.max_uses?`<button class="btn gh s ic" data-ci="${esc(i.url)}" aria-label="Скопировать ссылку">${ic("i-copy")}</button>`:""}</td></tr>`).join("")||`<tr><td class="empty">Инвайтов ещё нет</td></tr>`}</table></div></section></div></div>`;
   $$("[data-msg]").forEach(b=>b.onclick=()=>{const s=A.stuck[+b.dataset.msg];modal(MH("Сообщение · "+esc(s.nick))+`<div class="pn-b"><p class="mu sm" style="margin:0 0 8px">${esc(s.label)}</p><textarea class="in" rows="6" id="msgT">${esc(s.message)}</textarea><button class="btn" style="width:100%;margin-top:10px" id="msgC">${ic("i-copy")}Скопировать</button></div>`);$("#msgC").onclick=()=>copy($("#msgT").value,"Текст скопирован")});
   $$("[data-ci]").forEach(b=>b.onclick=()=>copy(b.dataset.ci,"Ссылка-приглашение скопирована"));
@@ -1327,7 +1330,7 @@ async function renderAdmin(){let A;try{A=await api("/api/admin/overview")}catch(
   $$("[data-pro]").forEach(b=>b.onclick=async()=>{await api("/api/admin/users/"+b.dataset.pro,{method:"PATCH",body:{pro_days:30}});toast("Pro на 30 дней выдан");renderAdmin()});
   $$("[data-bl]").forEach(b=>b.onclick=async()=>{if(b.dataset.v==="1"&&!confirm("Отключить ученика? Его ссылки перестанут работать."))return;await api("/api/admin/users/"+b.dataset.bl,{method:"PATCH",body:{blocked:b.dataset.v==="1"}});renderAdmin()});
   $$("[data-rp]").forEach(b=>b.onclick=async()=>{if(!confirm("Сбросить пароль? Ученика выкинет из кабинета."))return;const r=await api("/api/admin/users/"+b.dataset.rp,{method:"PATCH",body:{reset_password:true}});
-    modal(MH("Новый пароль")+`<div class="pn-b"><p class="mu sm" style="margin:0">Передайте ученику лично — он сменит его в меню кабинета.</p><div class="mono" style="font-size:22px;margin:14px 0;color:var(--ac)">${esc(r.password)}</div><button class="btn" id="cpw">${ic("i-copy")}Скопировать</button></div>`);$("#cpw").onclick=()=>copy(r.password)});
+    modal(MH("Новый пароль")+`<div class="pn-b"><p class="mu sm" style="margin:0">Передайте ученику лично, он сменит его в меню кабинета.</p><div class="mono" style="font-size:22px;margin:14px 0;color:var(--ac)">${esc(r.password)}</div><button class="btn" id="cpw">${ic("i-copy")}Скопировать</button></div>`);$("#cpw").onclick=()=>copy(r.password)});
   $("#fInv").onsubmit=async e=>{e.preventDefault();const r=await api("/api/admin/invites",{method:"POST",body:Object.fromEntries(new FormData(e.target))});if(r.codes.length>1)copy(r.codes.map(c=>c.url).join("\n"),"Все ссылки-приглашения скопированы");
     $("#newCodes").innerHTML=`<table class="tbl">${r.codes.map(c=>`<tr><td class="mono pos">${c.code}</td><td class="r"><button type="button" class="btn s" data-ci2="${esc(c.url)}">${ic("i-copy")}Ссылка</button></td></tr>`).join("")}</table>`;$$("[data-ci2]").forEach(b=>b.onclick=()=>copy(b.dataset.ci2,"Ссылка-приглашение скопирована"))};
   $("#adTg").onclick=async()=>{try{const r=await api("/api/admin/tg/link",{method:"POST",body:{}});window.open(r.url,"_blank");toast("Нажмите «Старт» в боте")}catch(x){toast(x.message)}}}
