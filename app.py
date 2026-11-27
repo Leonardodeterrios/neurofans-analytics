@@ -257,6 +257,50 @@ def course_kind(ev):
         return "base"
     return ""
 
+TRIBUTE_TEST_IDS = set(re.findall(r"\d+", os.getenv("TRIBUTE_TEST_IDS") or ""))
+
+def is_test_buy(ev):
+    """Тестовый товар («NEUROFANS Базовый тест»): вся цепочка оплаты, но без +1000 на арене."""
+    p = (ev or {}).get("payload") or {}
+    t = str(p.get("product_name") or p.get("product_title") or p.get("name") or p.get("title") or "").lower()
+    return "тест" in t or "test" in t or str(p.get("product_id") or "") in TRIBUTE_TEST_IDS
+
+def _ok(r):
+    return isinstance(r, dict) and (r.get("code") in (0, "0", 200) or r.get("ok") is True or r.get("status") in ("ok", "success"))
+
+def _test_buy_report(uid, kind, raw, sig):
+    """Проверка тестовой покупки по шагам → отчёт админам (всё в фоне: PuzzleBot и Telegram из РФ медленные)."""
+    steps = [("Вебхук Tribute дошёл, подпись верная", True)]
+    with _conn() as c:
+        st = c.execute("SELECT label, scored FROM starts WHERE tg_uid=? ORDER BY id LIMIT 1", (uid,)).fetchone()
+    steps.append(("Человек есть в боте (нажимал «Старт»)", bool(st)))
+    steps.append((f"Тариф по названию товара: {COURSE_TEXT.get(kind, 'не узнан — в названии нужно Базовый/Продвинутый/Апгрейд')}", bool(kind)))
+    r1 = pb_call("variableChange", variable=PB_PAID_VAR, expression="1", user_id=uid) if PB_TOKEN else {"code": -1}
+    steps.append((f"PuzzleBot: метка {PB_PAID_VAR}=1 (бот перестаёт продавать)", _ok(r1)))
+    r2 = pb_call("sendCommand", command_name=PB_CMD_PAID, platform_chat_id=uid) if PB_TOKEN and PB_CMD_PAID else {"code": -1}
+    steps.append((f"PuzzleBot: блок «{PB_CMD_PAID}» отправлен", _ok(r2)))
+    fw = None
+    if TRIBUTE_FORWARD:
+        try:
+            fr = httpx.post(TRIBUTE_FORWARD, content=raw, headers={"trbt-signature": sig, "content-type": "application/json"}, timeout=15)
+            fw = fr.status_code == 200 and (fr.json() or {}).get("course") == "paid"
+        except Exception as e:
+            log.info("test forward failed: %s", e)
+            fw = False
+    steps.append(("Кабинет записал покупку и открыл тариф", bool(fw)))
+    bad = [t for t, ok in steps if not ok]
+    text = "🧪 ТЕСТОВАЯ ОПЛАТА (на арене не считается)\nTelegram ID: " + str(uid) + "\n\n" + "\n".join(
+        ("✅ " if ok else "❌ ") + t for t, ok in steps)
+    text += "\n\nСледом бот кабинета пришлёт ссылку на регистрацию (или напиши ему /start buy)." if not bad else \
+        "\n\nЕсть ❌ — пришли этот отчёт Claude."
+    if r1 and not _ok(r1):
+        log.info("test pb var: %s", r1)
+    if r2 and not _ok(r2):
+        log.info("test pb cmd: %s", r2)
+    _notify_all_now(text)
+
+COURSE_TEXT = {"base": "Базовый", "adv": "Продвинутый", "up": "Апгрейд"}
+
 def remove_paid(uid):
     with _conn() as c:
         n = c.execute("DELETE FROM actions WHERE tg_uid=? AND act='paid'", (uid,)).rowcount
@@ -1279,12 +1323,24 @@ def tribute_webhook():
     raw, sig, ev = request.get_data(), request.headers.get("trbt-signature", ""), {}
     if not tribute_sig_ok(raw, sig):
         abort(401)
-    if TRIBUTE_FORWARD:
-        bg(_tribute_forward, raw, sig)
     try:
         ev = json.loads(raw or b"{}")
+    except ValueError:
+        ev = {}
+    test = is_test_buy(ev)
+    if TRIBUTE_FORWARD and not (test and ev.get("name") in PAID_EVENTS):
+        bg(_tribute_forward, raw, sig)
+    try:
         what = tribute_event(ev)
-        if "paid" in what:
+        if "paid" in what and test:
+            uid = what["paid"]
+            kind = course_kind(ev)
+            with _conn() as c:     # как у настоящей оплаты, но без +1000 и без «💰 ОПЛАТА КЛУБА»
+                c.execute("INSERT INTO bot_people(tg_uid, paid_ts, paid_kind) VALUES(?,?,?) ON CONFLICT(tg_uid) "
+                          "DO UPDATE SET paid_ts=excluded.paid_ts, paid_kind=excluded.paid_kind", (uid, _now_iso(), "test"))
+            bg(_test_buy_report, uid, kind, raw, sig)
+            res = {"ok": True, "test": True}
+        elif "paid" in what:
             note_paid(what["paid"], True, course_kind(ev))
             res = record_action(what["paid"], "paid")
             if res.get("ok"):
@@ -2281,7 +2337,7 @@ def bot_stats(days=7):
         cnt = {
             "starts":  one("SELECT COUNT(*) FROM (SELECT tg_uid FROM starts WHERE tg_uid>0 GROUP BY tg_uid HAVING MIN(ts)>=?)", since),
             "pay_open": one("SELECT COUNT(*) FROM bot_people WHERE pay_open_ts>=?", since),
-            "paid":    one("SELECT COUNT(*) FROM bot_people WHERE paid_ts>=?", since),
+            "paid":    one("SELECT COUNT(*) FROM bot_people WHERE paid_ts>=? AND COALESCE(paid_kind,'')<>'test'", since),
             "nudge":   one("SELECT COUNT(*) FROM bot_people WHERE nudge_ts>=?", since),
             "f1":      one("SELECT COUNT(*) FROM bot_people WHERE f1_ts>=?", since),
             "f2":      one("SELECT COUNT(*) FROM bot_people WHERE f2_ts>=?", since),
@@ -2298,7 +2354,7 @@ def bot_stats(days=7):
         # откуда пришли новые люди за период: по первому старту каждого человека
         firsts = c.execute("SELECT s.tg_uid, s.label, s.ch FROM starts s JOIN (SELECT tg_uid, MIN(id) mid FROM starts "
                            "WHERE tg_uid>0 GROUP BY tg_uid HAVING MIN(ts)>=?) f ON s.id=f.mid", (since,)).fetchall()
-        paid_uids = {r[0] for r in c.execute("SELECT tg_uid FROM bot_people WHERE paid_ts IS NOT NULL")}
+        paid_uids = {r[0] for r in c.execute("SELECT tg_uid FROM bot_people WHERE paid_ts IS NOT NULL AND COALESCE(paid_kind,'')<>'test'")}
         open_uids = {r[0] for r in c.execute("SELECT tg_uid FROM bot_people WHERE pay_open_ts IS NOT NULL")}
     by_src, by_partner = {}, {}
     for r in firsts:

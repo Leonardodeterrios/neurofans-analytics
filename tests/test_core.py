@@ -335,6 +335,14 @@ app.TRIBUTE_CLUB_IDS=set()
 assert trib({"name":"refunded_payment","payload":{"telegram_user_id":888}})["refunded"]==1
 assert app.get_stats()["action_points"]==b
 assert app.tribute_sig_ok(b"x", _b64.b64encode(_h.new(b"trbkey",b"x",_hl.sha256).digest()).decode())  # base64-подпись тоже
+# тестовый товар: вся цепочка, но без +1000 и не в счёт оплат
+b=app.get_stats()["action_points"]; _bgq=[]; _obg=app.bg; app.bg=lambda fn,*a: _bgq.append((fn.__name__,a))
+r=trib({"name":"new_digital_product","payload":{"telegram_user_id":777001,"product_id":5,"product_name":"NEUROFANS Базовый тест"}})
+app.bg=_obg
+assert r.get("test") and app.get_stats()["action_points"]==b, r
+assert ("_test_buy_report",) == tuple(x[0] for x in _bgq) and _bgq[0][1][1]=="base", _bgq    # отчёт в фоне, без пересылки дважды
+with app._conn() as _c: assert _c.execute("SELECT paid_kind FROM bot_people WHERE tg_uid=777001").fetchone()[0]=="test"
+assert app.is_test_buy({"payload":{"product_name":"NEUROFANS Базовый: 18+ фото"}}) is False
 flask.request.headers=flask._Headers()
 print("оплата клуба: +1000 по вебхуку Tribute, один раз, возврат снимает ✅")
 F=app.funnel(0,"ch"); allr=F["rows"][0]

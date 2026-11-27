@@ -52,6 +52,7 @@ AI_SECRET = _env("LAB_AI_SECRET").strip().strip("\"'")                   # об�
 AI_MODEL = _env("LAB_AI_MODEL", "gpt-4o-mini")
 TRIBUTE_KEY = _env("TRIBUTE_API_KEY")               # API-ключ Tribute: им подписаны вебхуки (trbt-signature)
 TRIBUTE_PRO_URL = _env("TRIBUTE_PRO_URL")           # ссылка на подписку/товар Pro в Tribute
+TRIBUTE_TEST_IDS = {int(x) for x in re.findall(r"\d+", _env("TRIBUTE_TEST_IDS", ""))}  # id тестовых товаров (или «тест» в названии)
 TRIBUTE_PRODUCTS = ai.parse_products(_env("TRIBUTE_PRODUCTS"))   # "id:дней,…" для разовых товаров
 TRIBUTE_COURSE = pay.parse_course(_env("TRIBUTE_COURSE"))        # "id:base,id:adv,id:up" — товары курса → доступ в кабинет
 PRO_PRICE = _env("PRO_PRICE", "")
@@ -1277,9 +1278,9 @@ def api_admin_overview():
                    "admin_tg": bool(kv_get(c, "admin_chat"))}
         consent = one("SELECT COUNT(*) FROM users WHERE public_ok=1")
         sales = {"base": 0, "adv": 0, "up": 0}
-        for k, n in c.execute("SELECT kind, COUNT(*) FROM purchases WHERE refunded IS NULL GROUP BY kind"):
+        for k, n in c.execute("SELECT kind, COUNT(*) FROM purchases WHERE refunded IS NULL AND COALESCE(test,0)=0 GROUP BY kind"):
             sales[k] = n
-        sales["waiting"] = one("SELECT COUNT(DISTINCT p.tg_id) FROM purchases p WHERE p.refunded IS NULL "
+        sales["waiting"] = one("SELECT COUNT(DISTINCT p.tg_id) FROM purchases p WHERE p.refunded IS NULL AND COALESCE(p.test,0)=0 "
                                "AND NOT EXISTS (SELECT 1 FROM users u WHERE u.tg_chat_id=p.tg_id)")
         sales["ready"] = bool(course_map(c))
     for i in invites:
@@ -1668,20 +1669,22 @@ def api_tribute():
         pid = int(p.get("product_id")) if str(p.get("product_id") or "").isdigit() else 0
         course = None
         cmap = course_map(c)
+        ptitle = p.get("product_name") or p.get("product_title") or p.get("name") or p.get("title")
+        test = pay.is_test(ptitle) or pid in TRIBUTE_TEST_IDS
         if pid and name == "new_digital_product" and pid not in cmap:
             # id товара ещё не в .env: узнаём тариф по названию («NEUROFANS Базовый…») и запоминаем id
-            kind = pay.kind_by_name(p.get("product_name") or p.get("product_title") or p.get("name") or p.get("title"))
+            kind = pay.kind_by_name(ptitle)
             if kind:
                 learned = {k: v for k, v in cmap.items() if k not in TRIBUTE_COURSE}
                 learned[pid] = kind
                 kv_set(c, "course_learned", json.dumps(learned))
                 cmap[pid] = kind
         if tg and name == "new_digital_product" and pid in cmap:
-            if pay.record(c, tg, pid, cmap[pid], p.get("purchase_id") or key, iso()):
-                course = ("paid", cmap[pid])
+            if pay.record(c, tg, pid, cmap[pid], p.get("purchase_id") or key, iso(), test):
+                course = ("paid", cmap[pid], test)
         elif tg and "refund" in name.lower() and cmap:
             if pay.refund(c, tg, pid, p.get("purchase_id"), iso(), cmap):
-                course = ("refund", None)
+                course = ("refund", None, test)
         if course:
             u = pay.user_by_tg(c, tg)
             if u:
@@ -1697,7 +1700,7 @@ def _bg(fn, *a):
 
 COURSE_KIND = {"base": "Базовый", "adv": "Продвинутый", "up": "доплата до Продвинутого"}
 
-def _course_news(tg, ev, kind):
+def _course_news(tg, ev, kind, test=False):
     """В фоне (Telegram из РФ отвечает медленно): ученику — ссылку в кабинет, куратору — о продаже/возврате.
     Если ученик ещё не нажимал «Старт» в боте, Telegram откажет — это нормально: ссылку он получит по кнопке из товара."""
     N = notifier()
@@ -1709,12 +1712,13 @@ def _course_news(tg, ev, kind):
             c.commit()
             admin = kv_get(c, "admin_chat")
             u = pay.user_by_tg(c, tg)
-        if text:
-            N._send(tg, text)
+        sent = bool((N._send(tg, text) or {}).get("ok")) if text else False
         if admin:
             who = f"ученик {u['nick']}" if u else f"Telegram ID {tg}, ещё не зарегистрировался"
-            N._send(int(admin), f"💰 Оплата курса: {COURSE_KIND.get(kind, kind)}, {who}." if ev == "paid"
+            head = "🧪 ТЕСТ. " if test else ""
+            N._send(int(admin), head + (f"💰 Оплата курса: {COURSE_KIND.get(kind, kind)}, {who}." if ev == "paid"
                     else f"↩️ Возврат по курсу: {who}. Тариф курса пересчитан.")
+                    + (f"\nСообщение со ссылкой в кабинет ученику: {'отправлено ✅' if sent else 'не дошло (он ещё не нажимал Старт в боте кабинета) — придёт по кнопке из товара'}" if test and ev == "paid" else ""))
     except Exception as e:
         log.warning("course news failed: %s", e)
 

@@ -17,7 +17,7 @@ COURSE_NAME = {"base": "Базовый", "adv": "Продвинутый"}
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS purchases(ref TEXT PRIMARY KEY, tg_id INTEGER, product_id INTEGER, kind TEXT,
-  created TEXT, refunded TEXT);
+  created TEXT, refunded TEXT, test INTEGER DEFAULT 0);
 CREATE INDEX IF NOT EXISTS ix_purchases_tg ON purchases(tg_id);
 """
 USER_COLS = (("course", "TEXT"), ("course_admin", "TEXT"))
@@ -26,7 +26,7 @@ INVITE_COLS = (("tg_id", "INTEGER"),)
 
 def migrate(c):
     c.executescript(SCHEMA)
-    for table, cols in (("users", USER_COLS), ("invites", INVITE_COLS)):
+    for table, cols in (("users", USER_COLS), ("invites", INVITE_COLS), ("purchases", (("test", "INTEGER DEFAULT 0"),))):
         have = {r[1] for r in c.execute(f"PRAGMA table_info({table})")}
         for col, ddl in cols:
             if col not in have:
@@ -49,10 +49,11 @@ def best(*tiers):
 
 
 # ---------- покупки ----------
-def record(c, tg, product_id, kind, ref, now_iso):
-    """Записать покупку. Повтор того же ref (Tribute шлёт вебхук ещё раз) — ничего не меняет."""
-    cur = c.execute("INSERT OR IGNORE INTO purchases(ref,tg_id,product_id,kind,created) VALUES(?,?,?,?,?)",
-                    (str(ref), int(tg), int(product_id), kind, now_iso))
+def record(c, tg, product_id, kind, ref, now_iso, test=False):
+    """Записать покупку. Повтор того же ref (Tribute шлёт вебхук ещё раз) — ничего не меняет.
+    test — тестовый товар («NEUROFANS Базовый тест»): доступ даёт, но в продажи не считается."""
+    cur = c.execute("INSERT OR IGNORE INTO purchases(ref,tg_id,product_id,kind,created,test) VALUES(?,?,?,?,?,?)",
+                    (str(ref), int(tg), int(product_id), kind, now_iso, 1 if test else 0))
     return bool(cur.rowcount)
 
 
@@ -140,6 +141,12 @@ def welcome(c, tg, lab_host, now_iso):
             "Уведомления сюда, в этот чат, подключатся сами.\n\n"
             "Уже есть кабинет? Не регистрируйся заново: войди в него и нажми меню → «Уведомления в Telegram» "
             "→ «Подключить», тариф подтянется сам.")
+
+
+def is_test(title):
+    """Тестовый товар: в названии «тест»/«test» (проверка всей цепочки оплаты без учёта в продажах)."""
+    t = (title or "").lower()
+    return "тест" in t or "test" in t
 
 
 def kind_by_name(title):

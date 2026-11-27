@@ -435,6 +435,9 @@ assert lab.course_map(lab.db())[777] == "base"
 assert trb("new_digital_product", {"product_id": 777, "purchase_id": 9011, "telegram_user_id": 6061})["course"] == "paid"  # уже без названия
 assert "course" not in trb("new_digital_product", {"product_id": 778, "product_name": "Стикеры", "purchase_id": 9012, "telegram_user_id": 6062})
 assert trb("digital_product_refund", {"product_id": 777, "purchase_id": 9010, "telegram_user_id": 6060})["course"] == "refund"
+assert trb("new_digital_product", {"product_id": 779, "product_name": "NEUROFANS Базовый тест", "purchase_id": 9020,
+                                   "telegram_user_id": 6070})["course"] == "paid"           # тест: доступ даёт
+assert lab.db().execute("SELECT test FROM purchases WHERE ref='9020'").fetchone()[0] == 1   # но в продажи не идёт
 print("оплата курса → кабинет: OK")
 # прямой OpenAI-совместимый API (OpenRouter): Bearer-ключ вместо секрета ретранслятора
 import threading as _th
