@@ -360,7 +360,8 @@ with app._conn() as c: c.execute("UPDATE bot_people SET pay_open_ts=? WHERE tg_u
 assert app.run_nudges()==0                                         # купившего не догоняем
 app.note_paid(7002, False); assert calls[-1]==("variableChange",{"variable":"nf_paid","expression":"0","user_id":7002})
 sentb=[]; app.bot_send=lambda u,t: sentb.append((u,t)); app._ai_answer=lambda q: "Ответ — про тарифы"; notes=[]; _na=app.notify_all; app.notify_all=lambda t: notes.append(t)
-app.handle_ask(7001,"сколько стоит?"); assert sentb[-1][0]==7001 and "ИИ-ассистент" in sentb[-1][1]
+app.handle_ask(7001,"сколько стоит?"); assert sentb[-1][0]==7001 and "ИИ-помощник" in sentb[-1][1] and "«Катя»" in sentb[-1][1]
+app.handle_ask(7001,"а видео есть?"); assert "ИИ-помощник" not in sentb[-1][1]          # представляется один раз в сутки
 app.handle_ask(7001,"Катя"); assert notes and "7001" in notes[-1] and "сколько стоит" in notes[-1] and "Кате" in sentb[-1][1]
 app.bg=_bgsave; app.notify_all=_na; app.PB_TOKEN=""
 print("автоматика бота: догон брошенной оплаты, метка «оплатил», ИИ-ассистент и «Катя» ✅")
