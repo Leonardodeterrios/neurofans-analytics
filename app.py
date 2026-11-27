@@ -208,7 +208,10 @@ UPGRADE_AFTER_D = float(os.getenv("UPGRADE_AFTER_D", "5"))
 # догоны после конца цепочки PuzzleBot: (день после первого «Старт», колонка, блок-условие «не купил → …»)
 FOLLOWUPS = [(7, "f1_ts", os.getenv("PB_CMD_F1", "Не купил → Догон 1")),
              (10, "f2_ts", os.getenv("PB_CMD_F2", "Не купил → Догон 2")),
-             (14, "f3_ts", os.getenv("PB_CMD_F3", "Не купил → Догон 3"))]
+             (14, "f3_ts", os.getenv("PB_CMD_F3", "Не купил → Догон 3")),
+             (17, "f4_ts", os.getenv("PB_CMD_F4", "Не купил → Догон 4")),
+             (21, "f5_ts", os.getenv("PB_CMD_F5", "Не купил → Догон 5")),
+             (25, "f6_ts", os.getenv("PB_CMD_F6", "Не купил → Догон 6"))]   # 28.11: серия на 3,5 недели
 FOLLOWUP_WINDOW_D = 2                            # опоздали больше чем на 2 дня — не шлём (старым людям не пишем пачкой)
 ASK_PER_DAY = int(os.getenv("ASK_PER_DAY", "15"))
 AI_URL    = (os.getenv("LAB_AI_URL") or "").strip()
@@ -456,7 +459,7 @@ def init_db():
         bp = {r[1] for r in c.execute("PRAGMA table_info(bot_people)")}
         if "vid" not in {r[1] for r in c.execute("PRAGMA table_info(starts)")}:   # номер браузера с сайта (сквозная воронка)
             c.execute("ALTER TABLE starts ADD COLUMN vid TEXT")
-        for col in ("paid_kind", "upg_ts", "f1_ts", "f2_ts", "f3_ts"):  # что купил, апгрейд, догоны после цепочки
+        for col in ("paid_kind", "upg_ts", "f1_ts", "f2_ts", "f3_ts", "f4_ts", "f5_ts", "f6_ts"):  # что купил, апгрейд, догоны после цепочки
             if col not in bp:
                 c.execute(f"ALTER TABLE bot_people ADD COLUMN {col} TEXT")
         # своя аналитика сайта neurofans.ru (вместо Яндекс Метрики): анонимный id браузера, без IP
@@ -2001,7 +2004,7 @@ def run_upgrades(limit=20):
     return len(rows)
 
 def run_followups(limit=20):
-    """Неделя, 10 и 14 дней после первого «Старт», не купил — по одному сообщению (блоки «Догон 1–3»).
+    """7, 10, 14, 17, 21 и 25 дней после первого «Старт», не купил — по одному сообщению (блоки «Догон 1–6»).
     Блок-условие в PuzzleBot ещё раз проверяет nf_paid. Каждый догон один раз, только в своём окне."""
     if not PB_TOKEN or _quiet_now():
         return 0
@@ -2554,6 +2557,7 @@ def bot_stats(days=7):
             "f1":      one("SELECT COUNT(*) FROM bot_people WHERE f1_ts>=?", since),
             "f2":      one("SELECT COUNT(*) FROM bot_people WHERE f2_ts>=?", since),
             "f3":      one("SELECT COUNT(*) FROM bot_people WHERE f3_ts>=?", since),
+            "f456":    one("SELECT COUNT(*) FROM bot_people WHERE f4_ts>=? OR f5_ts>=? OR f6_ts>=?", since, since, since),
             "upgrade": one("SELECT COUNT(*) FROM bot_people WHERE upg_ts>=?", since),
             "asks":    one("SELECT COUNT(*) FROM bot_asks WHERE ts>=?", since),
             "askers":  one("SELECT COUNT(DISTINCT tg_uid) FROM bot_asks WHERE ts>=?", since),
@@ -2661,7 +2665,7 @@ async function load(){
   box(c.paid,"оплатили "+pct(c.paid,c.starts),"g"),
   box(c.waiting,"ждут решения (открыли оплату за 48 ч)"),
   box(c.nudge,"догон «сомнения перед оплатой»"),
-  box(c.f1+" · "+c.f2+" · "+c.f3,"догоны 7 / 10 / 14 день"),
+  box(c.f1+" · "+c.f2+" · "+c.f3+" · "+(c.f456||0),"догоны 7 / 10 / 14 / 17–25 день"),
   box(c.upgrade,"предложений апгрейда"),
   box(c.asks,"вопросов ИИ от "+c.askers+" чел."),
   box(c.human,"попросили Катю","g")].join("");
