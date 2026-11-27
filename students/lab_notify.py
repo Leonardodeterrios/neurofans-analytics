@@ -25,6 +25,7 @@ import os
 import lab_game as game
 import lab_ops as ops
 import lab_pay as pay
+import lab_care as care
 
 # Сервер в РФ не достаёт до api.telegram.org: ходим через свой сервер в Амстердаме (TG_API_BASE=https://ai.neurofans.ru/tg)
 TG_BASE = (os.environ.get("TG_API_BASE") or "https://api.telegram.org").strip().rstrip("/")
@@ -34,7 +35,7 @@ DAILY_CAP = 4
 QUIET = (23, 9)
 MAX_AGE_H = 24
 EXEMPT = {"digest", "results", "system"}
-DIGEST_ONLY = EXEMPT
+DIGEST_ONLY = EXEMPT | {"care"}   # план недели и отзыв приходят и в режиме «только дайджест»
 SCAN_EVERY = 120
 CH_NAMES = {"threads": "Threads", "instagram": "Instagram", "tiktok": "TikTok", "youtube": "YouTube",
             "telegram": "Telegram", "x": "X", "reddit": "Reddit", "other": "«Другое»"}
@@ -136,10 +137,16 @@ class Notifier:
         return code
 
     def handle_update(self, c, upd, now):
+        if upd.get("callback_query"):
+            care.on_callback(self, c, upd["callback_query"], now)
+            return
         msg = upd.get("message") or {}
         text = (msg.get("text") or "").strip()
         chat = (msg.get("chat") or {}).get("id")
         if not chat or (msg.get("chat") or {}).get("type") != "private":
+            return
+        if not text.startswith("/"):
+            care.on_message(self, c, msg, now)      # ученик пишет куратору / отвечает на просьбу об отзыве
             return
         if text.startswith("/start adm"):
             code = text[10:].strip()
@@ -191,7 +198,7 @@ class Notifier:
             return 0
         off = c.execute("SELECT v FROM kv WHERE k='tg_offset'").fetchone()
         r = self.http("getUpdates", {"offset": int(off[0]) if off else 0, "timeout": timeout,
-                                     "allowed_updates": ["message"]}, timeout + 10)
+                                     "allowed_updates": ["message", "callback_query"]}, timeout + 10)
         ups = (r or {}).get("result") or []
         for u in ups:
             try:
@@ -382,6 +389,10 @@ class Notifier:
                 except Exception as e:
                     log.warning("maintenance failed: %s", e)
                 self.scan(c, now)
+                try:
+                    care.scan(self, c, now); c.commit()
+                except Exception as e:
+                    log.warning("care scan failed: %s", e)
                 if self.enabled:
                     self.flush(c, now)
 

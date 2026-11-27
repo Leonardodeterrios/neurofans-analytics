@@ -8,6 +8,14 @@
 			header_up Host api.telegram.org
 		}
 	}
+	# файлы из Telegram (картинки из отзывов учеников): /tg/file/bot<токен>/<путь>
+	@tgf path_regexp ^/tg/file/bot[0-9]+:[A-Za-z0-9_-]+/[A-Za-z0-9_./-]+$
+	handle @tgf {
+		uri strip_prefix /tg
+		reverse_proxy https://api.telegram.org {
+			header_up Host api.telegram.org
+		}
+	}
 	handle {
 		reverse_proxy relay:8080
 	}

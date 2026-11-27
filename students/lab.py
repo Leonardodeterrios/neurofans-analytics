@@ -19,6 +19,7 @@ from flask import Flask, request, jsonify, redirect, abort, Response, send_from_
 import lab_game as game
 import lab_ops as ops
 import lab_core
+import lab_care as care
 import lab_ai as ai
 import lab_pay as pay
 from concurrent.futures import ThreadPoolExecutor
@@ -183,6 +184,7 @@ def init_db():
             if col not in cols:
                 c.execute(f"ALTER TABLE users ADD COLUMN {col} {ddl}")
         pay.migrate(c)
+        care.migrate(c)
         if not kv_get(c, "ai_launch"):          # с этого момента у уже зарегистрированных начинается Тест
             kv_set(c, "ai_launch", iso())
         c.commit()
@@ -1283,10 +1285,39 @@ def api_admin_overview():
         sales["waiting"] = one("SELECT COUNT(DISTINCT p.tg_id) FROM purchases p WHERE p.refunded IS NULL AND COALESCE(p.test,0)=0 "
                                "AND NOT EXISTS (SELECT 1 FROM users u WHERE u.tg_chat_id=p.tg_id)")
         sales["ready"] = bool(course_map(c))
+        reviews = care.admin_list(c)
     for i in invites:
         i["url"] = f"https://{LAB_HOST}/?invite={i['code']}"
     return jsonify({"ok": True, "users": users, "invites": invites, "totals": tot, "week": wk, "funnel": funnel,
-                    "tg_enabled": bool(LAB_BOT_TOKEN), "ai_ready": AI_READY, "pay_ready": bool(TRIBUTE_KEY), "stuck": stuck, "backups": backups, "consent": consent, "sales": sales})
+                    "reviews": reviews, "tg_enabled": bool(LAB_BOT_TOKEN), "ai_ready": AI_READY, "pay_ready": bool(TRIBUTE_KEY), "stuck": stuck, "backups": backups, "consent": consent, "sales": sales})
+
+@app.route("/api/admin/reviews/<int:rid>", methods=["PATCH"])
+def api_admin_review(rid):
+    """Скрыть/вернуть отзыв в админке (на сайт отзыв ставится вручную и только с согласием ученика)."""
+    need_admin(); d = need_json()
+    with _wlock, closing(db()) as c:
+        c.execute("UPDATE reviews SET hidden=? WHERE id=?", (1 if d.get("hidden") else 0, rid)); c.commit()
+    return jsonify({"ok": True})
+
+@app.route("/api/admin/reviews/<int:rid>/photo")
+def api_admin_review_photo(rid):
+    """Картинка из отзыва: берём у Telegram по file_id (через мост) и отдаём админу."""
+    need_admin()
+    with closing(db()) as c:
+        r = c.execute("SELECT photo FROM reviews WHERE id=?", (rid,)).fetchone()
+    N = notifier()
+    if not (r and r[0] and N.enabled):
+        abort(404)
+    f = (N.http("getFile", {"file_id": r[0]}, 15) or {}).get("result") or {}
+    if not f.get("file_path"):
+        abort(404)
+    import lab_notify
+    try:
+        with urllib.request.urlopen(f"{lab_notify.TG_BASE}/file/bot{LAB_BOT_TOKEN}/{f['file_path']}", timeout=30) as resp:
+            data = resp.read()
+    except Exception:
+        abort(404)
+    return Response(data, mimetype="image/jpeg", headers={"Cache-Control": "private, max-age=3600"})
 
 @app.route("/api/admin/invites", methods=["POST"])
 def api_admin_invites():

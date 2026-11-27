@@ -22,7 +22,7 @@ touch .env
 sed -i '/^WATCH_TG_TOKEN=/d;/^WATCH_CHATS=/d' .env
 printf 'WATCH_TG_TOKEN=%s\nWATCH_CHATS=%s\n' "$TOK" "$CH" >> .env
 mkdir -p watch-state
-docker compose up -d watch
+docker compose up -d --force-recreate caddy watch
 sleep 8
 docker compose logs --tail=5 watch
 REMOTE

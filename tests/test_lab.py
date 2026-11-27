@@ -439,6 +439,37 @@ assert trb("new_digital_product", {"product_id": 779, "product_name": "NEUROFANS
                                    "telegram_user_id": 6070})["course"] == "paid"           # тест: доступ даёт
 assert lab.db().execute("SELECT test FROM purchases WHERE ref='9020'").fetchone()[0] == 1   # но в продажи не идёт
 print("оплата курса → кабинет: OK")
+# забота: план первой недели, просьба об отзыве, переписка с куратором
+import lab_care
+cc = lab.db(); t0 = lab.now_utc() - dt.timedelta(days=1, hours=3)              # зарегистрировался вчера
+cc.execute("INSERT INTO users(nick,pw,created,invite,tg_chat_id,course) VALUES('care1','x',?,'',7171,'base')", (lab.iso(t0),))
+cuid = cc.execute("SELECT id FROM users WHERE nick='care1'").fetchone()[0]
+cc.execute("INSERT INTO purchases(ref,tg_id,product_id,kind,created) VALUES('c1',7171,111,'base',?)", (lab.iso(lab.now_utc() - dt.timedelta(days=14, hours=2)),))
+cc.commit()
+assert lab_care.scan(N2, cc, lab.now_utc()) == 2                                 # день 2 + отзыв
+assert lab_care.scan(N2, cc, lab.now_utc()) == 0                                 # повторно — ничего
+keys = {r[0] for r in cc.execute("SELECT key FROM notify WHERE uid=?", (cuid,))}
+assert keys == {"care:w2", "care:review"}, keys
+old = lab.iso(lab.now_utc() - dt.timedelta(days=40))                             # старый ученик — план не шлём
+cc.execute("UPDATE users SET created=? WHERE id=?", (old, cuid)); cc.execute("DELETE FROM notify WHERE uid=?", (cuid,)); cc.commit()
+assert lab_care.scan(N2, cc, lab.now_utc()) == 1                                 # только отзыв (по дате покупки)
+cc.execute("UPDATE notify SET status='sent', sent_at=? WHERE uid=? AND key='care:review'", (lab.iso(), cuid)); cc.commit()
+calls = []
+def http2(method, payload, timeout=30):
+    calls.append((method, payload)); return {"ok": True, "result": {}}
+N3 = lab_notify.Notifier(lab.db, lab.TZ, lab.week_key, "TOKEN", "lab.neurofans.ru", http=http2)
+N3.handle_update(cc, {"update_id": 50, "message": {"text": "Сделала первую модель, спасибо!", "chat": {"id": 7171, "type": "private"}}}, lab.now_utc())
+rv = cc.execute("SELECT id, text, consent FROM reviews WHERE uid=?", (cuid,)).fetchone()
+assert rv and "первую модель" in rv["text"] and rv["consent"] is None
+assert any(m == "sendMessage" and p.get("chat_id") == 9000 and "#u%d" % cuid in p["text"] for m, p in calls), calls   # куратору
+N3.handle_update(cc, {"update_id": 51, "callback_query": {"id": "q", "data": f"rv:{rv['id']}:1", "message": {"chat": {"id": 7171}}}}, lab.now_utc())
+assert cc.execute("SELECT consent FROM reviews WHERE id=?", (rv["id"],)).fetchone()[0] == 1
+calls.clear()                                                                    # куратор отвечает «ответом»
+N3.handle_update(cc, {"update_id": 52, "message": {"text": "Супер, так держать!", "chat": {"id": 9000, "type": "private"},
+                 "reply_to_message": {"text": f"⭐ Отзыв от care1 #u{cuid}"}}}, lab.now_utc())
+assert any(p.get("chat_id") == 7171 and "Куратор" in p["text"] for m, p in calls), calls
+assert [r["nick"] for r in lab_care.admin_list(cc)][0] == "care1"
+print("забота: план недели, отзывы с согласием, связь с куратором: OK")
 # прямой OpenAI-совместимый API (OpenRouter): Bearer-ключ вместо секрета ретранслятора
 import threading as _th
 from http.server import BaseHTTPRequestHandler as _B, HTTPServer as _S
