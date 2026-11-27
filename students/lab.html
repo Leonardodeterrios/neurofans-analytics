@@ -1183,7 +1183,7 @@ async function loadStudio(){const ms=activeModels();if(!ms.length){$("#stModels"
   if(!ms.find(m=>m.id===ST.mid))ST.mid=(ms.find(m=>String(m.id)===String(S.mid))||ms[0]).id;
   $("#stModels").innerHTML=ms.length>1?ms.map(m=>`<button data-sm="${m.id}" class="${m.id===ST.mid?"on":""}"><i></i>${esc(m.name)}</button>`).join(""):"";
   $$("#stModels button").forEach(b=>b.onclick=()=>{ST.mid=+b.dataset.sm;ST.fan=null;ST.replies=null;ST.day=null;loadStudio()});
-  $$("#stTabs button").forEach(b=>{b.classList.toggle("on",b.dataset.t===ST.tab);b.onclick=()=>{ST.tab=b.dataset.t;LS.set("nf_st_tab",ST.tab);$$("#stTabs button").forEach(x=>x.classList.toggle("on",x===b));renderStudio()}});
+  $$("#stTabs button").forEach(b=>{b.classList.toggle("on",b.dataset.t===ST.tab);b.onclick=async()=>{ST.tab=b.dataset.t;LS.set("nf_st_tab",ST.tab);$$("#stTabs button").forEach(x=>x.classList.toggle("on",x===b));if(ST.tab==="chat")await loadFans();renderStudio()}});
   try{ST.d=await api("/api/studio?mid="+ST.mid)}catch(e){return}
   if(ST.day==null)ST.day=ST.d.today;
   if(ST.tab==="chat")await loadFans();
